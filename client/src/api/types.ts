@@ -27,12 +27,3 @@ export interface CellarEntry {
   notes: string | null
   createdAt: string
 }
-
-export interface Recommendation {
-  wine: Wine
-  cellarEntry: CellarEntry
-  reason: string
-}
-
-export type CreateWine = Omit<Wine, 'id' | 'createdAt' | 'updatedAt' | 'cellarEntries'>
-export type CreateCellarEntry = Omit<CellarEntry, 'id' | 'createdAt' | 'wine'>

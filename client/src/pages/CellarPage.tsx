@@ -1,51 +1,73 @@
-import { useQuery } from '@tanstack/react-query'
+import { useState } from 'react'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { api } from '../api/client'
 import type { CellarEntry } from '../api/types'
+import ScanModal from '../components/ScanModal'
+
+type ModalMode = 'add' | 'remove' | null
 
 export default function CellarPage() {
+  const queryClient = useQueryClient()
+  const [modal, setModal] = useState<ModalMode>(null)
+
   const { data: entries, isLoading, error } = useQuery({
     queryKey: ['cellar'],
     queryFn: () => api.get<CellarEntry[]>('/cellar'),
   })
 
-  if (isLoading) return <p className="muted">Loading cellar...</p>
-  if (error) return <p className="error">Failed to load cellar.</p>
-
-  if (!entries?.length) return (
-    <div>
-      <h2>My Cellar</h2>
-      <p className="muted">No wines yet. Add one to get started.</p>
-    </div>
-  )
-
-  const totalBottles = entries.reduce((sum, e) => sum + e.quantity, 0)
+  function handleAdjusted() {
+    queryClient.invalidateQueries({ queryKey: ['cellar'] })
+  }
 
   return (
     <div>
-      <h2>My Cellar — {entries.length} wines, {totalBottles} bottles</h2>
-      <div className="grid">
-        {entries.map(entry => (
-          <div key={entry.id} className="card">
-            <strong>{entry.wine?.name}</strong>
-            {entry.wine?.vintage && <span className="muted"> {entry.wine.vintage}</span>}
-            <p className="muted" style={{ marginTop: '0.2rem' }}>
-              {entry.wine?.winery} &middot; {entry.wine?.varietal}
-            </p>
-            {(entry.wine?.region || entry.wine?.country) && (
-              <p className="muted">{[entry.wine.region, entry.wine.country].filter(Boolean).join(', ')}</p>
-            )}
-            <div style={{ marginTop: '0.75rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <span className="badge">{entry.quantity} {entry.quantity === 1 ? 'bottle' : 'bottles'}</span>
-              {entry.location && <span className="muted">{entry.location}</span>}
-            </div>
-            {(entry.drinkFrom || entry.drinkUntil) && (
-              <p className="muted" style={{ marginTop: '0.5rem', fontSize: '0.8rem' }}>
-                Drink {entry.drinkFrom ?? '?'}&ndash;{entry.drinkUntil ?? '?'}
-              </p>
-            )}
-          </div>
-        ))}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem' }}>
+        <h2 style={{ margin: 0 }}>My Cellar</h2>
+        <div style={{ display: 'flex', gap: '0.5rem' }}>
+          <button type="button" onClick={() => setModal('add')}>+ Add wine</button>
+          <button type="button" className="secondary" onClick={() => setModal('remove')}>− Remove wine</button>
+        </div>
       </div>
+
+      {isLoading && <p className="muted">Loading…</p>}
+      {error && <p className="error">Failed to load cellar.</p>}
+
+      {!isLoading && !error && !entries?.length && (
+        <p className="muted">Your cellar is empty. Scan a bottle to add it.</p>
+      )}
+
+      {entries && entries.length > 0 && (
+        <table className="wine-table">
+          <thead>
+            <tr>
+              <th>Wine</th>
+              <th>Winery</th>
+              <th>Vintage</th>
+              <th>Varietal</th>
+              <th style={{ textAlign: 'right' }}>Bottles</th>
+            </tr>
+          </thead>
+          <tbody>
+            {entries.map(entry => (
+              <tr key={entry.id}>
+                <td><strong>{entry.wine?.name}</strong></td>
+                <td className="muted">{entry.wine?.winery}</td>
+                <td className="muted">{entry.wine?.vintage ?? '—'}</td>
+                <td className="muted">{entry.wine?.varietal}</td>
+                <td style={{ textAlign: 'right' }}><span className="badge">{entry.quantity}</span></td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      )}
+
+      {modal && (
+        <ScanModal
+          mode={modal}
+          onClose={() => setModal(null)}
+          onAdjusted={handleAdjusted}
+        />
+      )}
     </div>
   )
 }

@@ -160,3 +160,85 @@ label {
   font-size: 0.875rem;
   margin-bottom: 1rem;
 }
+
+/* Modal */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+  padding: 1rem;
+}
+
+.modal {
+  background: var(--surface);
+  border-radius: var(--radius);
+  padding: 1.5rem;
+  width: 100%;
+  max-width: 420px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.modal-header h3 {
+  font-size: 1.1rem;
+}
+
+.modal-close {
+  background: transparent;
+  color: var(--muted);
+  border: none;
+  font-size: 1rem;
+  padding: 0.25rem 0.5rem;
+  cursor: pointer;
+}
+
+.modal-close:hover {
+  background: var(--border);
+  color: var(--text);
+}
+
+.feedback-success {
+  color: #2d6a2d;
+  font-size: 0.9rem;
+}
+
+.feedback-error {
+  color: #c0392b;
+  font-size: 0.9rem;
+}
+
+/* Wine table */
+.wine-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+
+.wine-table th {
+  text-align: left;
+  font-size: 0.75rem;
+  color: var(--muted);
+  font-weight: 600;
+  padding: 0.5rem 0.75rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.wine-table td {
+  padding: 0.75rem;
+  border-bottom: 1px solid var(--border);
+  vertical-align: middle;
+}
+
+.wine-table tbody tr:hover {
+  background: var(--bg);
+}

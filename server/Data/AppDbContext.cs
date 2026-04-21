@@ -7,5 +7,4 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
 {
     public DbSet<Wine> Wines => Set<Wine>();
     public DbSet<CellarEntry> CellarEntries => Set<CellarEntry>();
-    public DbSet<FoodPairing> FoodPairings => Set<FoodPairing>();
 }
