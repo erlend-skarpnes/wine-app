@@ -10,10 +10,6 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-// Prevent JSON serialization errors from EF navigation property cycles
-builder.Services.ConfigureHttpJsonOptions(options =>
-    options.SerializerOptions.ReferenceHandler = System.Text.Json.Serialization.ReferenceHandler.IgnoreCycles);
-
 var corsOrigins = builder.Configuration.GetSection("Cors:Origins").Get<string[]>()
     ?? ["http://localhost:3000", "http://localhost:5173"];
 
@@ -33,7 +29,6 @@ app.UseSwagger();
 app.UseSwaggerUI();
 app.UseCors();
 
-app.MapWineEndpoints();
 app.MapCellarEndpoints();
 
 app.Run();

@@ -12,28 +12,20 @@ public static class CellarEndpoints
 
         group.MapGet("/", async (AppDbContext db) =>
             await db.CellarEntries
-                .Include(e => e.Wine)
                 .Where(e => e.Quantity > 0)
-                .OrderBy(e => e.Wine.Name)
+                .OrderBy(e => e.Barcode)
                 .ToListAsync());
 
         group.MapPost("/adjust", async (AdjustRequest req, AppDbContext db) =>
         {
-            var wine = await db.Wines.FirstOrDefaultAsync(w => w.Barcode == req.Barcode);
-            if (wine is null)
-                return Results.NotFound(new { message = $"No wine found with barcode '{req.Barcode}'." });
-
-            var entry = await db.CellarEntries
-                .Where(e => e.WineId == wine.Id)
-                .OrderBy(e => e.CreatedAt)
-                .FirstOrDefaultAsync();
+            var entry = await db.CellarEntries.FindAsync(req.Barcode);
 
             if (entry is null)
             {
                 if (req.Delta <= 0)
-                    return Results.BadRequest(new { message = "Wine has no cellar entries to remove from." });
+                    return Results.BadRequest(new { message = "Nothing to remove." });
 
-                entry = new CellarEntry { WineId = wine.Id, Quantity = req.Delta, CreatedAt = DateTime.UtcNow };
+                entry = new CellarEntry { Barcode = req.Barcode, Quantity = req.Delta };
                 db.CellarEntries.Add(entry);
             }
             else
@@ -42,7 +34,7 @@ public static class CellarEndpoints
             }
 
             await db.SaveChangesAsync();
-            return Results.Ok(new { wine, cellarEntry = entry });
+            return Results.Ok(entry);
         });
     }
 }

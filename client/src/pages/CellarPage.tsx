@@ -40,20 +40,14 @@ export default function CellarPage() {
         <table className="wine-table">
           <thead>
             <tr>
-              <th>Wine</th>
-              <th>Winery</th>
-              <th>Vintage</th>
-              <th>Varietal</th>
+              <th>Barcode</th>
               <th style={{ textAlign: 'right' }}>Bottles</th>
             </tr>
           </thead>
           <tbody>
             {entries.map(entry => (
-              <tr key={entry.id}>
-                <td><strong>{entry.wine?.name}</strong></td>
-                <td className="muted">{entry.wine?.winery}</td>
-                <td className="muted">{entry.wine?.vintage ?? '—'}</td>
-                <td className="muted">{entry.wine?.varietal}</td>
+              <tr key={entry.barcode}>
+                <td>{entry.barcode}</td>
                 <td style={{ textAlign: 'right' }}><span className="badge">{entry.quantity}</span></td>
               </tr>
             ))}
