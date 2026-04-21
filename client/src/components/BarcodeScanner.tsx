@@ -1,4 +1,4 @@
-import { useEffect, useRef, useCallback } from 'react'
+import { useEffect, useRef } from 'react'
 import { BrowserMultiFormatReader } from '@zxing/browser'
 import type { IScannerControls } from '@zxing/browser'
 
@@ -11,37 +11,51 @@ const DEBOUNCE_MS = 2000
 
 export default function BarcodeScanner({ onScan, paused = false }: Props) {
   const videoRef = useRef<HTMLVideoElement>(null)
-  const controlsRef = useRef<IScannerControls | null>(null)
+  const onScanRef = useRef(onScan)
   const lastBarcodeRef = useRef<string | null>(null)
   const lastTimeRef = useRef<number>(0)
 
-  const handleResult = useCallback((barcode: string) => {
-    const now = Date.now()
-    if (barcode === lastBarcodeRef.current && now - lastTimeRef.current < DEBOUNCE_MS) return
-    lastBarcodeRef.current = barcode
-    lastTimeRef.current = now
-    onScan(barcode)
-  }, [onScan])
+  useEffect(() => { onScanRef.current = onScan }, [onScan])
 
   useEffect(() => {
     if (paused || !videoRef.current) return
 
-    const reader = new BrowserMultiFormatReader()
+    let cancelled = false
+    let controls: IScannerControls | null = null
 
-    reader
-      .decodeFromConstraints(
-        { video: { facingMode: 'environment' } },
-        videoRef.current,
-        (result) => { if (result) handleResult(result.getText()) }
-      )
-      .then(controls => { controlsRef.current = controls })
-      .catch(console.error)
+    // Defer with setTimeout so React Strict Mode's synchronous cleanup can cancel
+    // the timeout before it fires, preventing two readers from starting on the same
+    // video element and racing each other.
+    const timer = setTimeout(() => {
+      if (cancelled || !videoRef.current) return
+
+      new BrowserMultiFormatReader()
+        .decodeFromConstraints(
+          { video: { facingMode: 'environment' } },
+          videoRef.current,
+          (result) => {
+            if (!result || cancelled) return
+            const barcode = result.getText()
+            const now = Date.now()
+            if (barcode === lastBarcodeRef.current && now - lastTimeRef.current < DEBOUNCE_MS) return
+            lastBarcodeRef.current = barcode
+            lastTimeRef.current = now
+            onScanRef.current(barcode)
+          }
+        )
+        .then(c => {
+          if (cancelled) c.stop()
+          else controls = c
+        })
+        .catch(console.error)
+    }, 0)
 
     return () => {
-      controlsRef.current?.stop()
-      controlsRef.current = null
+      cancelled = true
+      clearTimeout(timer)
+      controls?.stop()
     }
-  }, [paused, handleResult])
+  }, [paused])
 
   return (
     <video

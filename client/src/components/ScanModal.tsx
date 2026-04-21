@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from 'react'
+import { useState, useCallback } from 'react'
 import BarcodeScanner from './BarcodeScanner'
 import { api } from '../api/client'
 import type { CellarEntry } from '../api/types'
@@ -19,13 +19,6 @@ interface Props {
 
 export default function ScanModal({ mode, onClose, onAdjusted }: Props) {
   const [state, setState] = useState<ScanState>({ status: 'scanning' })
-
-  useEffect(() => {
-    if (state.status === 'success' || state.status === 'error') {
-      const timer = setTimeout(() => setState({ status: 'scanning' }), 1800)
-      return () => clearTimeout(timer)
-    }
-  }, [state.status])
 
   const handleScan = useCallback(async (barcode: string) => {
     setState({ status: 'loading' })
@@ -60,12 +53,22 @@ export default function ScanModal({ mode, onClose, onAdjusted }: Props) {
             <p className="muted">Updating…</p>
           )}
           {state.status === 'success' && (
-            <p className="feedback-success">
-              {mode === 'add' ? 'Added' : 'Removed'} — <strong>{state.entry.barcode}</strong>, now {state.entry.quantity} in stock.
-            </p>
+            <div>
+              <p className="feedback-success" style={{ marginBottom: '0.75rem' }}>
+                {mode === 'add' ? 'Added' : 'Removed'} — <strong>{state.entry.barcode}</strong>, now {state.entry.quantity} in stock.
+              </p>
+              <button type="button" onClick={() => setState({ status: 'scanning' })}>
+                Scan another?
+              </button>
+            </div>
           )}
           {state.status === 'error' && (
-            <p className="feedback-error">{state.message}</p>
+            <div>
+              <p className="feedback-error" style={{ marginBottom: '0.75rem' }}>{state.message}</p>
+              <button type="button" onClick={() => setState({ status: 'scanning' })}>
+                Scan another?
+              </button>
+            </div>
           )}
         </div>
       </div>
