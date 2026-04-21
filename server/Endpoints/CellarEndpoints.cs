@@ -54,5 +54,37 @@ public static class CellarEndpoints
             await db.SaveChangesAsync();
             return Results.NoContent();
         });
+
+        // Increment or decrement stock by scanning a barcode.
+        // Creates a cellar entry automatically on the first +1.
+        group.MapPost("/adjust", async (AdjustRequest req, AppDbContext db) =>
+        {
+            var wine = await db.Wines.FirstOrDefaultAsync(w => w.Barcode == req.Barcode);
+            if (wine is null)
+                return Results.NotFound(new { message = $"No wine found with barcode '{req.Barcode}'." });
+
+            var entry = await db.CellarEntries
+                .Where(e => e.WineId == wine.Id)
+                .OrderBy(e => e.CreatedAt)
+                .FirstOrDefaultAsync();
+
+            if (entry is null)
+            {
+                if (req.Delta <= 0)
+                    return Results.BadRequest(new { message = "Wine has no cellar entries to remove from." });
+
+                entry = new CellarEntry { WineId = wine.Id, Quantity = req.Delta, CreatedAt = DateTime.UtcNow };
+                db.CellarEntries.Add(entry);
+            }
+            else
+            {
+                entry.Quantity = Math.Max(0, entry.Quantity + req.Delta);
+            }
+
+            await db.SaveChangesAsync();
+            return Results.Ok(new { wine, cellarEntry = entry });
+        });
     }
 }
+
+record AdjustRequest(string Barcode, int Delta);

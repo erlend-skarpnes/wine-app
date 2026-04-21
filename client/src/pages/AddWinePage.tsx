@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { api } from '../api/client'
 import type { CreateWine, Wine } from '../api/types'
 
@@ -16,10 +16,13 @@ type CellarFields = {
 export default function AddWinePage() {
   const queryClient = useQueryClient()
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
+  const prefillBarcode = searchParams.get('barcode')
 
   const [wine, setWine] = useState<CreateWine>({
     name: '', winery: '', varietal: '', region: '', country: '',
     vintage: null, description: null, labelImageUrl: null,
+    barcode: prefillBarcode,
   })
   const [cellar, setCellar] = useState<CellarFields>({
     quantity: 1, purchasePrice: '', drinkFrom: '', drinkUntil: '', location: '', notes: '',
@@ -93,6 +96,12 @@ export default function AddWinePage() {
             <label>Country</label>
             <input value={wine.country} onChange={e => setW('country', e.target.value)} />
           </div>
+        </div>
+
+        <div className="form-field">
+          <label>Barcode</label>
+          <input value={wine.barcode ?? ''} onChange={e => setW('barcode', e.target.value || null)}
+            placeholder="Scanned automatically" />
         </div>
 
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '1rem' }}>

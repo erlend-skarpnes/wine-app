@@ -12,7 +12,7 @@ export default function App() {
         <nav>
           <NavLink to="/" end>Cellar</NavLink>
           <NavLink to="/add">Add Wine</NavLink>
-          <NavLink to="/scan">Scan Label</NavLink>
+          <NavLink to="/scan">Scan Barcode</NavLink>
           <NavLink to="/recommendations">Recommendations</NavLink>
         </nav>
       </header>

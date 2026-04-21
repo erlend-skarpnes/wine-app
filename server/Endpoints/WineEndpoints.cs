@@ -20,6 +20,10 @@ public static class WineEndpoints
             await db.Wines.Include(w => w.CellarEntries).FirstOrDefaultAsync(w => w.Id == id)
                 is Wine wine ? Results.Ok(wine) : Results.NotFound());
 
+        group.MapGet("/barcode/{barcode}", async (string barcode, AppDbContext db) =>
+            await db.Wines.Include(w => w.CellarEntries).FirstOrDefaultAsync(w => w.Barcode == barcode)
+                is Wine wine ? Results.Ok(wine) : Results.NotFound());
+
         group.MapPost("/", async (Wine wine, AppDbContext db) =>
         {
             wine.CreatedAt = DateTime.UtcNow;

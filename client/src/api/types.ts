@@ -8,6 +8,7 @@ export interface Wine {
   country: string
   description: string | null
   labelImageUrl: string | null
+  barcode: string | null
   createdAt: string
   updatedAt: string
   cellarEntries?: CellarEntry[]
