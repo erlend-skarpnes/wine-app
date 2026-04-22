@@ -18,4 +18,5 @@ public class WineData
     public string? ImageUrl { get; set; }
     public string[] Grapes { get; set; } = [];
     public string[] Pairings { get; set; } = [];
+    public string? StoragePotential { get; set; }
 }

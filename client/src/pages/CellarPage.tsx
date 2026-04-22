@@ -11,7 +11,8 @@ export default function CellarPage() {
   const queryClient = useQueryClient()
   const [modal, setModal] = useState<ModalMode>(null)
   const [selected, setSelected] = useState<CellarEntry | null>(null)
-  const [activeFilters, setActiveFilters] = useState<Set<string>>(new Set())
+  const [activeFilter, setActiveFilter] = useState<string | null>(null)
+  const [storageFilter, setStorageFilter] = useState<'all' | 'drink-now' | 'store'>('all')
 
   const { data: entries, isLoading, error } = useQuery({
     queryKey: ['cellar'],
@@ -24,17 +25,17 @@ export default function CellarPage() {
 
   const allPairings = [...new Set(entries?.flatMap(e => e.pairings) ?? [])].sort()
 
-  const visibleEntries = activeFilters.size === 0
-    ? entries
-    : entries?.filter(e => e.pairings.some(p => activeFilters.has(p)))
-
-  function toggleFilter(pairing: string) {
-    setActiveFilters(prev => {
-      const next = new Set(prev)
-      next.has(pairing) ? next.delete(pairing) : next.add(pairing)
-      return next
-    })
+  function matchesStorageFilter(entry: CellarEntry) {
+    if (storageFilter === 'all') return true
+    const sp = entry.storagePotential
+    const isDrinkNow = !sp || !sp.toLowerCase().includes('kan også lagres')
+    return storageFilter === 'drink-now' ? isDrinkNow : !isDrinkNow
   }
+
+  const visibleEntries = entries?.filter(e =>
+    (!activeFilter || e.pairings.includes(activeFilter)) &&
+    matchesStorageFilter(e)
+  )
 
   return (
     <div>
@@ -49,20 +50,40 @@ export default function CellarPage() {
       {isLoading && <p className="muted">Loading…</p>}
       {error && <p className="error">Failed to load cellar.</p>}
 
+      <div style={{ display: 'flex', gap: '0.375rem', marginBottom: allPairings.length > 0 ? '0.5rem' : '1rem' }}>
+        {(['all', 'drink-now', 'store'] as const).map(opt => (
+          <button
+            key={opt}
+            type="button"
+            onClick={() => setStorageFilter(opt)}
+            style={{
+              padding: '0.25rem 0.75rem',
+              fontSize: '0.8rem',
+              background: storageFilter === opt ? 'var(--wine)' : 'var(--surface)',
+              color: storageFilter === opt ? 'white' : 'var(--muted)',
+              border: '1px solid',
+              borderColor: storageFilter === opt ? 'var(--wine)' : 'var(--border)',
+            }}
+          >
+            {opt === 'all' ? 'All' : opt === 'drink-now' ? 'Drink now' : 'Can store'}
+          </button>
+        ))}
+      </div>
+
       {allPairings.length > 0 && (
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.375rem', marginBottom: '1rem' }}>
           {allPairings.map(pairing => (
             <button
               key={pairing}
               type="button"
-              onClick={() => toggleFilter(pairing)}
+              onClick={() => setActiveFilter(prev => prev === pairing ? null : pairing)}
               style={{
                 padding: '0.25rem 0.75rem',
                 fontSize: '0.8rem',
-                background: activeFilters.has(pairing) ? 'var(--wine)' : 'var(--surface)',
-                color: activeFilters.has(pairing) ? 'white' : 'var(--muted)',
+                background: activeFilter === pairing ? 'var(--wine)' : 'var(--surface)',
+                color: activeFilter === pairing ? 'white' : 'var(--muted)',
                 border: '1px solid',
-                borderColor: activeFilters.has(pairing) ? 'var(--wine)' : 'var(--border)',
+                borderColor: activeFilter === pairing ? 'var(--wine)' : 'var(--border)',
               }}
             >
               {pairing}

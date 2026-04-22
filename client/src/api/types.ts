@@ -3,6 +3,7 @@ export interface CellarEntry {
   quantity: number
   name: string | null
   pairings: string[]
+  storagePotential: string | null
 }
 
 export interface WineData {
@@ -22,6 +23,7 @@ export interface WineData {
   imageUrl: string | null
   grapes: string[]
   pairings: string[]
+  storagePotential: string | null
 }
 
 export interface WineSuggestion {

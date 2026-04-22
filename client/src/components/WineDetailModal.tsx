@@ -45,6 +45,7 @@ export default function WineDetailModal({ barcode, name, onClose }: Props) {
               {wine.alcoholContent != null && <><dt className="muted">Alcohol</dt><dd>{wine.alcoholContent}%</dd></>}
               {wine.body     && <><dt className="muted">Body</dt>     <dd>{wine.body}</dd></>}
               {wine.acidity  && <><dt className="muted">Acidity</dt>  <dd>{wine.acidity}</dd></>}
+              {wine.storagePotential && <><dt className="muted">Storage</dt><dd>{wine.storagePotential}</dd></>}
             </dl>
 
             {wine.grapes.length > 0 && (

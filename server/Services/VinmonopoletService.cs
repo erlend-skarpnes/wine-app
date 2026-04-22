@@ -54,6 +54,13 @@ internal class VmpContent
     public VmpTrait[]? Traits { get; set; }
 
     public VmpCharacteristic[]? Characteristics { get; set; }
+
+    public VmpStoragePotential? StoragePotential { get; set; }
+}
+
+internal class VmpStoragePotential
+{
+    public string? FormattedValue { get; set; }
 }
 
 internal class VmpPairing
@@ -136,8 +143,9 @@ public class VinmonopoletService(HttpClient http)
             .Where(x => x.Name is not null)
             .Select(x => x.Name!)
             .ToArray() ?? [],
-        Body           = FindCharacteristic(p.Content?.Characteristics, "Fylde"),
-        Acidity        = FindCharacteristic(p.Content?.Characteristics, "Friskhet"),
+        Body             = FindCharacteristic(p.Content?.Characteristics, "Fylde"),
+        Acidity          = FindCharacteristic(p.Content?.Characteristics, "Friskhet"),
+        StoragePotential = p.Content?.StoragePotential?.FormattedValue,
     };
 
     // "14,3%" → 14.3  |  null → null
