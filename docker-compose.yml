@@ -24,6 +24,7 @@ services:
     environment:
       ASPNETCORE_ENVIRONMENT: ${ASPNETCORE_ENVIRONMENT:-Development}
       ConnectionStrings__DefaultConnection: "Host=db;Database=wineapp;Username=wineapp;Password=${POSTGRES_PASSWORD:-wineapp}"
+      WineApi__ApiKey: ${WINEAPI_KEY:-}
     depends_on:
       db:
         condition: service_healthy

@@ -1,11 +1,21 @@
 using Microsoft.EntityFrameworkCore;
 using WineApp.Api.Data;
 using WineApp.Api.Endpoints;
+using WineApp.Api.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
+
+builder.Services.AddHttpClient<WineApiService>((serviceProvider, client) =>
+{
+    var config = serviceProvider.GetRequiredService<IConfiguration>();
+    client.BaseAddress = new Uri(config["WineApi:BaseUrl"] ?? "http://api.wineapi.io/");
+    var apiKey = config["WineApi:ApiKey"];
+    if (!string.IsNullOrEmpty(apiKey))
+        client.DefaultRequestHeaders.Add("X-API-Key", apiKey);
+});
 
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
@@ -30,5 +40,6 @@ app.UseSwaggerUI();
 app.UseCors();
 
 app.MapCellarEndpoints();
+app.MapWineEndpoints();
 
 app.Run();

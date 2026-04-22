@@ -14,6 +14,13 @@ public static class CellarEndpoints
             await db.CellarEntries
                 .Where(e => e.Quantity > 0)
                 .OrderBy(e => e.Barcode)
+                .GroupJoin(db.WineData, e => e.Barcode, w => w.Barcode, (e, wines) => new { e, wines })
+                .SelectMany(x => x.wines.DefaultIfEmpty(), (x, wine) => new
+                {
+                    x.e.Barcode,
+                    x.e.Quantity,
+                    Name = wine != null ? wine.Name : null,
+                })
                 .ToListAsync());
 
         group.MapPost("/adjust", async (AdjustRequest req, AppDbContext db) =>

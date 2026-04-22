@@ -40,14 +40,14 @@ export default function CellarPage() {
         <table className="wine-table">
           <thead>
             <tr>
-              <th>Barcode</th>
+              <th>Wine</th>
               <th style={{ textAlign: 'right' }}>Bottles</th>
             </tr>
           </thead>
           <tbody>
             {entries.map(entry => (
               <tr key={entry.barcode}>
-                <td>{entry.barcode}</td>
+                <td>{entry.name ?? entry.barcode}</td>
                 <td style={{ textAlign: 'right' }}><span className="badge">{entry.quantity}</span></td>
               </tr>
             ))}
