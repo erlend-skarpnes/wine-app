@@ -10,12 +10,12 @@ type Mode = 'add' | 'remove'
 type ScanState =
   | { status: 'scanning' }
   | { status: 'loading' }
-  | { status: 'success'; entry: CellarEntry }
+  | { status: 'success'; entry: CellarEntry; wineName: string | null }
   | { status: 'error'; message: string }
   | { status: 'capture'; entry: CellarEntry }
   | { status: 'identifying'; entry: CellarEntry }
   | { status: 'suggestions'; entry: CellarEntry; barcode: string; suggestions: WineSuggestion[] }
-  | { status: 'linking'; entry: CellarEntry }
+  | { status: 'linking'; entry: CellarEntry; wineName: string | null }
 
 interface Props {
   mode: Mode
@@ -31,18 +31,18 @@ export default function ScanModal({ mode, onClose, onAdjusted }: Props) {
     try {
       const delta = mode === 'add' ? 1 : -1
       const entry = await api.post<CellarEntry>('/cellar/adjust', { barcode, delta })
-      onAdjusted()
 
-      if (mode === 'add') {
-        try {
-          await getWineData(barcode)
-          setState({ status: 'success', entry })
-        } catch {
-          // 404 — wine not yet identified
+      try {
+        const wineData = await getWineData(barcode)
+        onAdjusted()
+        setState({ status: 'success', entry, wineName: wineData.name })
+      } catch {
+        onAdjusted()
+        if (mode === 'add') {
           setState({ status: 'capture', entry })
+        } else {
+          setState({ status: 'success', entry, wineName: null })
         }
-      } else {
-        setState({ status: 'success', entry })
       }
     } catch (err: unknown) {
       const message = err instanceof Error && err.message.includes('400')
@@ -55,17 +55,15 @@ export default function ScanModal({ mode, onClose, onAdjusted }: Props) {
   const handleCapture = useCallback(async (blob: Blob) => {
     if (state.status !== 'capture') return
     const { entry } = state
-    const barcode = entry.barcode
     setState({ status: 'identifying', entry })
     try {
-      const result = await identifyWine(barcode, blob)
+      const result = await identifyWine(entry.barcode, blob)
       if (result.status === 'identified') {
-        setState({ status: 'success', entry })
+        setState({ status: 'success', entry, wineName: result.wineData.name })
       } else {
-        setState({ status: 'suggestions', entry, barcode, suggestions: result.suggestions })
+        setState({ status: 'suggestions', entry, barcode: entry.barcode, suggestions: result.suggestions })
       }
     } catch {
-      // identification failed — let user retry
       setState({ status: 'capture', entry })
     }
   }, [state])
@@ -73,17 +71,18 @@ export default function ScanModal({ mode, onClose, onAdjusted }: Props) {
   const handleSelectSuggestion = useCallback(async (suggestion: WineSuggestion) => {
     if (state.status !== 'suggestions') return
     const { entry, barcode } = state
-    setState({ status: 'linking', entry })
+    setState({ status: 'linking', entry, wineName: suggestion.name })
     try {
       await linkWine(barcode, suggestion.id)
     } catch {
-      // link failed — proceed to success anyway, quantity was already adjusted
+      // link failed — proceed to success anyway
     }
-    setState({ status: 'success', entry })
+    setState({ status: 'success', entry, wineName: suggestion.name })
   }, [state])
 
-  const cameraActive = state.status === 'scanning'
-  const labelCameraActive = state.status === 'capture' || state.status === 'identifying'
+  const showCamera = state.status === 'scanning'
+  const showLabelCamera = state.status === 'capture' || state.status === 'identifying'
+  const isSpinning = state.status === 'loading' || state.status === 'identifying' || state.status === 'linking'
 
   return (
     <div className="modal-overlay" onClick={e => { if (e.target === e.currentTarget) onClose() }}>
@@ -93,30 +92,23 @@ export default function ScanModal({ mode, onClose, onAdjusted }: Props) {
           <button type="button" className="modal-close" onClick={onClose}>✕</button>
         </div>
 
-        {labelCameraActive ? (
-          <LabelCamera onCapture={handleCapture} disabled={state.status === 'identifying'} />
-        ) : (
-          <BarcodeScanner onScan={handleScan} paused={!cameraActive} />
-        )}
+        {showCamera && <BarcodeScanner onScan={handleScan} paused={false} />}
+        {showLabelCamera && <LabelCamera onCapture={handleCapture} disabled={state.status === 'identifying'} />}
 
         <div style={{ marginTop: '1rem', minHeight: '2rem' }}>
           {state.status === 'scanning' && (
             <p className="muted">Scan the barcode on the bottle.</p>
           )}
-          {state.status === 'loading' && (
-            <p className="muted">Updating…</p>
-          )}
+
+          {isSpinning && <div className="spinner" />}
+
           {state.status === 'capture' && (
             <p className="muted">Point the camera at the wine label and capture a photo.</p>
           )}
-          {state.status === 'identifying' && (
-            <p className="muted">Identifying wine…</p>
-          )}
+
           {state.status === 'suggestions' && (
             <div>
-              <p style={{ marginBottom: '0.5rem' }}>
-                Select the correct wine:
-              </p>
+              <p style={{ marginBottom: '0.5rem' }}>Select the correct wine:</p>
               <ul style={{ listStyle: 'none', padding: 0, margin: '0 0 0.75rem' }}>
                 {state.suggestions.map(s => (
                   <li key={s.id} style={{ marginBottom: '0.25rem' }}>
@@ -136,25 +128,26 @@ export default function ScanModal({ mode, onClose, onAdjusted }: Props) {
               <button
                 type="button"
                 className="secondary"
-                onClick={() => setState({ status: 'success', entry: state.entry })}
+                onClick={() => setState({ status: 'success', entry: state.entry, wineName: null })}
               >
                 Skip
               </button>
             </div>
           )}
-          {state.status === 'linking' && (
-            <p className="muted">Saving wine data…</p>
-          )}
+
           {state.status === 'success' && (
             <div>
               <p className="feedback-success" style={{ marginBottom: '0.75rem' }}>
-                {mode === 'add' ? 'Added' : 'Removed'} — <strong>{state.entry.barcode}</strong>, now {state.entry.quantity} in stock.
+                {mode === 'add' ? 'Added' : 'Removed'} —{' '}
+                <strong>{state.wineName ?? state.entry.barcode}</strong>,{' '}
+                now {state.entry.quantity} in stock.
               </p>
               <button type="button" onClick={() => setState({ status: 'scanning' })}>
                 Scan another?
               </button>
             </div>
           )}
+
           {state.status === 'error' && (
             <div>
               <p className="feedback-error" style={{ marginBottom: '0.75rem' }}>{state.message}</p>

@@ -11,6 +11,7 @@ export default function CellarPage() {
   const queryClient = useQueryClient()
   const [modal, setModal] = useState<ModalMode>(null)
   const [selected, setSelected] = useState<CellarEntry | null>(null)
+  const [activeFilters, setActiveFilters] = useState<Set<string>>(new Set())
 
   const { data: entries, isLoading, error } = useQuery({
     queryKey: ['cellar'],
@@ -19,6 +20,20 @@ export default function CellarPage() {
 
   function handleAdjusted() {
     queryClient.invalidateQueries({ queryKey: ['cellar'] })
+  }
+
+  const allPairings = [...new Set(entries?.flatMap(e => e.pairings) ?? [])].sort()
+
+  const visibleEntries = activeFilters.size === 0
+    ? entries
+    : entries?.filter(e => e.pairings.some(p => activeFilters.has(p)))
+
+  function toggleFilter(pairing: string) {
+    setActiveFilters(prev => {
+      const next = new Set(prev)
+      next.has(pairing) ? next.delete(pairing) : next.add(pairing)
+      return next
+    })
   }
 
   return (
@@ -34,11 +49,33 @@ export default function CellarPage() {
       {isLoading && <p className="muted">Loading…</p>}
       {error && <p className="error">Failed to load cellar.</p>}
 
+      {allPairings.length > 0 && (
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.375rem', marginBottom: '1rem' }}>
+          {allPairings.map(pairing => (
+            <button
+              key={pairing}
+              type="button"
+              onClick={() => toggleFilter(pairing)}
+              style={{
+                padding: '0.25rem 0.75rem',
+                fontSize: '0.8rem',
+                background: activeFilters.has(pairing) ? 'var(--wine)' : 'var(--surface)',
+                color: activeFilters.has(pairing) ? 'white' : 'var(--muted)',
+                border: '1px solid',
+                borderColor: activeFilters.has(pairing) ? 'var(--wine)' : 'var(--border)',
+              }}
+            >
+              {pairing}
+            </button>
+          ))}
+        </div>
+      )}
+
       {!isLoading && !error && !entries?.length && (
         <p className="muted">Your cellar is empty. Scan a bottle to add it.</p>
       )}
 
-      {entries && entries.length > 0 && (
+      {visibleEntries && visibleEntries.length > 0 && (
         <table className="wine-table">
           <thead>
             <tr>
@@ -47,7 +84,7 @@ export default function CellarPage() {
             </tr>
           </thead>
           <tbody>
-            {entries.map(entry => (
+            {visibleEntries!.map(entry => (
               <tr key={entry.barcode} onClick={() => setSelected(entry)} style={{ cursor: 'pointer' }}>
                 <td>{entry.name ?? entry.barcode}</td>
                 <td style={{ textAlign: 'right' }}><span className="badge">{entry.quantity}</span></td>
