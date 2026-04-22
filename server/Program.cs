@@ -17,6 +17,12 @@ builder.Services.AddHttpClient<WineApiService>((serviceProvider, client) =>
         client.DefaultRequestHeaders.Add("X-API-Key", apiKey);
 });
 
+builder.Services.AddHttpClient<VinmonopoletService>((serviceProvider, client) =>
+{
+    var config = serviceProvider.GetRequiredService<IConfiguration>();
+    client.BaseAddress = new Uri(config["Vinmonopolet:BaseUrl"] ?? "https://app.vinmonopolet.no/vmpws/v2/vmp/");
+});
+
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 

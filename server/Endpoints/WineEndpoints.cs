@@ -11,10 +11,19 @@ public static class WineEndpoints
         var group = app.MapGroup("/api/wines").WithTags("Wines");
 
         // GET /api/wines/{barcode}
-        group.MapGet("/{barcode}", async (string barcode, AppDbContext db) =>
+        // Checks the local DB first; on a miss, tries Vinmonopolet automatically.
+        group.MapGet("/{barcode}", async (string barcode, AppDbContext db, VinmonopoletService vinmonopolet) =>
         {
             var data = await db.WineData.FindAsync(barcode);
-            return data is not null ? Results.Ok(data) : Results.NotFound();
+            if (data is not null)
+                return Results.Ok(data);
+
+            var fetched = await vinmonopolet.GetByBarcodeAsync(barcode);
+            if (fetched is null)
+                return Results.NotFound();
+
+            await Upsert(db, fetched);
+            return Results.Ok(fetched);
         });
 
         // POST /api/wines/identify  (multipart/form-data: barcode + image)
