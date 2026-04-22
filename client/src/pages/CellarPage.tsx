@@ -3,12 +3,14 @@ import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { api } from '../api/client'
 import type { CellarEntry } from '../api/types'
 import ScanModal from '../components/ScanModal'
+import WineDetailModal from '../components/WineDetailModal'
 
 type ModalMode = 'add' | 'remove' | null
 
 export default function CellarPage() {
   const queryClient = useQueryClient()
   const [modal, setModal] = useState<ModalMode>(null)
+  const [selected, setSelected] = useState<CellarEntry | null>(null)
 
   const { data: entries, isLoading, error } = useQuery({
     queryKey: ['cellar'],
@@ -46,7 +48,7 @@ export default function CellarPage() {
           </thead>
           <tbody>
             {entries.map(entry => (
-              <tr key={entry.barcode}>
+              <tr key={entry.barcode} onClick={() => setSelected(entry)} style={{ cursor: 'pointer' }}>
                 <td>{entry.name ?? entry.barcode}</td>
                 <td style={{ textAlign: 'right' }}><span className="badge">{entry.quantity}</span></td>
               </tr>
@@ -60,6 +62,14 @@ export default function CellarPage() {
           mode={modal}
           onClose={() => setModal(null)}
           onAdjusted={handleAdjusted}
+        />
+      )}
+
+      {selected && (
+        <WineDetailModal
+          barcode={selected.barcode}
+          name={selected.name}
+          onClose={() => setSelected(null)}
         />
       )}
     </div>
