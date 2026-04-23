@@ -39,13 +39,7 @@ export default function CellarPage() {
 
   return (
     <div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem' }}>
-        <h2 style={{ margin: 0 }}>My Cellar</h2>
-        <div style={{ display: 'flex', gap: '0.5rem' }}>
-          <button type="button" onClick={() => setModal('add')}>+ Add wine</button>
-          <button type="button" className="secondary" onClick={() => setModal('remove')}>− Remove wine</button>
-        </div>
-      </div>
+      <h2>My Cellar</h2>
 
       {isLoading && <p className="muted">Loading…</p>}
       {error && <p className="error">Failed to load cellar.</p>}
@@ -114,6 +108,11 @@ export default function CellarPage() {
           </tbody>
         </table>
       )}
+
+      <div className="bottom-bar">
+        <button type="button" onClick={() => setModal('add')}>+ Add wine</button>
+        <button type="button" onClick={() => setModal('remove')}>− Remove wine</button>
+      </div>
 
       {modal && (
         <ScanModal
