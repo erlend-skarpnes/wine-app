@@ -2,8 +2,10 @@ export interface CellarEntry {
   barcode: string
   quantity: number
   name: string | null
+  type: string | null
   pairings: string[]
   storagePotential: string | null
+  alcoholContent: number | null
 }
 
 export interface WineData {

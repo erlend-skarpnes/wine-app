@@ -20,8 +20,10 @@ public static class CellarEndpoints
                     x.e.Barcode,
                     x.e.Quantity,
                     Name             = wine != null ? wine.Name             : null,
+                    Type             = wine != null ? wine.Type             : null,
                     Pairings         = wine != null ? wine.Pairings         : new string[0],
                     StoragePotential = wine != null ? wine.StoragePotential : null,
+                    AlcoholContent   = wine != null ? wine.AlcoholContent   : (double?)null,
                 })
                 .ToListAsync());
 
