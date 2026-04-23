@@ -130,6 +130,16 @@ button:hover {
   background: var(--wine-light);
 }
 
+button.secondary {
+  background: var(--surface);
+  color: var(--text);
+  border: 1px solid var(--border);
+}
+
+button.secondary:hover {
+  background: var(--bg);
+}
+
 button:disabled {
   opacity: 0.6;
   cursor: default;
