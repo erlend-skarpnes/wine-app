@@ -14,60 +14,63 @@ export default function WineDetailModal({ barcode, name, onClose }: Props) {
   })
 
   return (
-    <div className="modal-overlay" onClick={e => { if (e.target === e.currentTarget) onClose() }}>
-      <div className="modal" style={{ maxWidth: 480 }}>
-        <div className="modal-header">
-          <h3 style={{ fontSize: '1rem' }}>{wine?.name ?? name ?? barcode}</h3>
+    <div
+      className="fixed inset-0 bg-black/50 flex items-center justify-center z-[100] p-4"
+      onClick={e => { if (e.target === e.currentTarget) onClose() }}
+    >
+      <div className="bg-surface rounded-lg p-6 w-full max-w-[480px] shadow-[0_8px_32px_rgba(0,0,0,0.2)]">
+        <div className="flex justify-between items-center mb-4">
+          <h3 className="text-base font-semibold">{wine?.name ?? name ?? barcode}</h3>
           <button type="button" className="modal-close" onClick={onClose}>✕</button>
         </div>
 
-        {isLoading && <p className="muted">Loading…</p>}
+        {isLoading && <p className="text-clay text-sm">Loading…</p>}
 
         {!isLoading && !wine && (
-          <p className="muted">No details available for this wine yet.</p>
+          <p className="text-clay text-sm">No details available for this wine yet.</p>
         )}
 
         {wine && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+          <div className="flex flex-col gap-4">
             {wine.imageUrl && (
               <img
                 src={wine.imageUrl}
                 alt={wine.name}
-                style={{ width: 100, height: 'auto', alignSelf: 'center', borderRadius: 4 }}
+                className="w-24 h-auto self-center rounded"
               />
             )}
 
-            <dl style={{ display: 'grid', gridTemplateColumns: 'auto 1fr', gap: '0.25rem 1rem', fontSize: '0.875rem' }}>
-              {wine.type     && <><dt className="muted">Type</dt>     <dd>{wine.type}</dd></>}
-              {wine.winery   && <><dt className="muted">Winery</dt>   <dd>{wine.winery}</dd></>}
-              {wine.region   && <><dt className="muted">Region</dt>   <dd>{[wine.region, wine.country].filter(Boolean).join(', ')}</dd></>}
-              {!wine.region && wine.country && <><dt className="muted">Country</dt><dd>{wine.country}</dd></>}
-              {wine.alcoholContent != null && <><dt className="muted">Alcohol</dt><dd>{wine.alcoholContent}%</dd></>}
-              {wine.body     && <><dt className="muted">Body</dt>     <dd>{wine.body}</dd></>}
-              {wine.acidity  && <><dt className="muted">Acidity</dt>  <dd>{wine.acidity}</dd></>}
-              {wine.storagePotential && <><dt className="muted">Storage</dt><dd>{wine.storagePotential}</dd></>}
+            <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-1 text-sm">
+              {wine.type     && <><dt className="text-clay">Type</dt>     <dd>{wine.type}</dd></>}
+              {wine.winery   && <><dt className="text-clay">Winery</dt>   <dd>{wine.winery}</dd></>}
+              {wine.region   && <><dt className="text-clay">Region</dt>   <dd>{[wine.region, wine.country].filter(Boolean).join(', ')}</dd></>}
+              {!wine.region && wine.country && <><dt className="text-clay">Country</dt><dd>{wine.country}</dd></>}
+              {wine.alcoholContent != null && <><dt className="text-clay">Alcohol</dt><dd>{wine.alcoholContent}%</dd></>}
+              {wine.body     && <><dt className="text-clay">Body</dt>     <dd>{wine.body}</dd></>}
+              {wine.acidity  && <><dt className="text-clay">Acidity</dt>  <dd>{wine.acidity}</dd></>}
+              {wine.storagePotential && <><dt className="text-clay">Storage</dt><dd>{wine.storagePotential}</dd></>}
             </dl>
 
             {wine.grapes.length > 0 && (
               <div>
-                <p className="muted" style={{ marginBottom: '0.25rem', fontSize: '0.75rem', fontWeight: 600 }}>GRAPES</p>
-                <p style={{ fontSize: '0.875rem' }}>{wine.grapes.join(', ')}</p>
+                <p className="text-clay text-xs font-semibold mb-1 uppercase tracking-wide">Grapes</p>
+                <p className="text-sm">{wine.grapes.join(', ')}</p>
               </div>
             )}
 
             {wine.pairings.length > 0 && (
               <div>
-                <p className="muted" style={{ marginBottom: '0.375rem', fontSize: '0.75rem', fontWeight: 600 }}>FOOD PAIRINGS</p>
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.375rem' }}>
+                <p className="text-clay text-xs font-semibold mb-1.5 uppercase tracking-wide">Food Pairings</p>
+                <div className="flex flex-wrap gap-1.5">
                   {wine.pairings.map(p => (
-                    <span key={p} className="badge" style={{ background: 'var(--border)', color: 'var(--text)', fontWeight: 400 }}>{p}</span>
+                    <span key={p} className="inline-block bg-stone text-bark rounded-full px-2.5 py-0.5 text-xs">{p}</span>
                   ))}
                 </div>
               </div>
             )}
 
             {wine.description && (
-              <p style={{ fontSize: '0.85rem', color: 'var(--muted)', lineHeight: 1.5 }}>{wine.description}</p>
+              <p className="text-[0.85rem] text-clay leading-relaxed">{wine.description}</p>
             )}
           </div>
         )}

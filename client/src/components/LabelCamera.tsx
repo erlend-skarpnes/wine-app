@@ -43,22 +43,15 @@ export default function LabelCamera({ onCapture, disabled = false }: Props) {
   }
 
   return (
-    <div style={{ position: 'relative' }}>
+    <div className="relative">
       <video
         ref={videoRef}
         autoPlay
         playsInline
         muted
-        style={{
-          width: '100%',
-          maxHeight: 280,
-          objectFit: 'cover',
-          borderRadius: 'var(--radius)',
-          background: '#000',
-          display: 'block',
-        }}
+        className="w-full max-h-[280px] object-cover rounded-lg bg-black block"
       />
-      <div style={{ marginTop: '0.75rem', textAlign: 'center' }}>
+      <div className="mt-3 text-center">
         <button type="button" onClick={capture} disabled={disabled}>
           Capture label
         </button>

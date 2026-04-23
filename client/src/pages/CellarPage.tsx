@@ -7,6 +7,14 @@ import WineDetailModal from '../components/WineDetailModal'
 
 type ModalMode = 'add' | 'remove' | null
 
+function filterBtn(active: boolean) {
+  return `px-3 py-1 text-[0.8rem] rounded-lg border transition-colors cursor-pointer ${
+    active
+      ? 'bg-wine text-white border-wine'
+      : 'bg-surface text-clay border-stone hover:bg-warm'
+  }`
+}
+
 export default function CellarPage() {
   const queryClient = useQueryClient()
   const [modal, setModal] = useState<ModalMode>(null)
@@ -42,50 +50,30 @@ export default function CellarPage() {
 
   return (
     <div>
-      <h2>My Cellar</h2>
+      <h2 className="text-2xl mb-5">My Cellar</h2>
 
-      {isLoading && <p className="muted">Loading…</p>}
-      {error && <p className="error">Failed to load cellar.</p>}
+      {isLoading && <p className="text-clay text-sm">Loading…</p>}
+      {error && <p className="text-red-600 text-sm mb-4">Failed to load cellar.</p>}
 
-      <div style={{
-        position: 'sticky',
-        top: 0,
-        zIndex: 10,
-        background: 'var(--bg)',
-        paddingBottom: '0.75rem',
-        marginBottom: '0.25rem',
-      }}>
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.375rem', marginBottom: allPairings.length > 0 ? '0.5rem' : 0 }}>
+      <div className="sticky top-0 z-10 bg-warm pb-3 mb-1">
+        <div className={`flex flex-wrap gap-1.5 ${allPairings.length > 0 || allTypes.length > 0 ? 'mb-2' : ''}`}>
           {(['drink-now', 'store'] as const).map(opt => (
             <button
               key={opt}
               type="button"
+              className={filterBtn(storageFilter === opt)}
               onClick={() => setStorageFilter(prev => prev === opt ? null : opt)}
-              style={{
-                padding: '0.25rem 0.75rem',
-                fontSize: '0.8rem',
-                background: storageFilter === opt ? 'var(--wine)' : 'var(--surface)',
-                color: storageFilter === opt ? 'white' : 'var(--muted)',
-                border: '1px solid',
-                borderColor: storageFilter === opt ? 'var(--wine)' : 'var(--border)',
-              }}
             >
               {opt === 'drink-now' ? 'Drink now' : 'Can store'}
             </button>
           ))}
+
           {allTypes.map(type => (
             <button
               key={type}
               type="button"
+              className={filterBtn(typeFilter === type)}
               onClick={() => setTypeFilter(prev => prev === type ? null : type)}
-              style={{
-                padding: '0.25rem 0.75rem',
-                fontSize: '0.8rem',
-                background: typeFilter === type ? 'var(--wine)' : 'var(--surface)',
-                color: typeFilter === type ? 'white' : 'var(--muted)',
-                border: '1px solid',
-                borderColor: typeFilter === type ? 'var(--wine)' : 'var(--border)',
-              }}
             >
               {type}
             </button>
@@ -93,20 +81,13 @@ export default function CellarPage() {
         </div>
 
         {allPairings.length > 0 && (
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.375rem' }}>
+          <div className="flex flex-wrap gap-1.5">
             {allPairings.map(pairing => (
               <button
                 key={pairing}
                 type="button"
+                className={filterBtn(activeFilter === pairing)}
                 onClick={() => setActiveFilter(prev => prev === pairing ? null : pairing)}
-                style={{
-                  padding: '0.25rem 0.75rem',
-                  fontSize: '0.8rem',
-                  background: activeFilter === pairing ? 'var(--wine)' : 'var(--surface)',
-                  color: activeFilter === pairing ? 'white' : 'var(--muted)',
-                  border: '1px solid',
-                  borderColor: activeFilter === pairing ? 'var(--wine)' : 'var(--border)',
-                }}
               >
                 {pairing}
               </button>
@@ -116,31 +97,33 @@ export default function CellarPage() {
       </div>
 
       {!isLoading && !error && !entries?.length && (
-        <p className="muted">Your cellar is empty. Scan a bottle to add it.</p>
+        <p className="text-clay text-sm">Your cellar is empty. Scan a bottle to add it.</p>
       )}
 
       {visibleEntries && visibleEntries.length > 0 && (
-        <table className="wine-table">
+        <table className="w-full border-collapse text-[0.9rem] wine-table">
           <thead>
             <tr>
-              <th>Wine</th>
-              <th style={{ textAlign: 'right' }}>Bottles</th>
+              <th className="text-left text-xs text-clay font-semibold px-3 py-2 border-b border-stone">Wine</th>
+              <th className="text-right text-xs text-clay font-semibold px-3 py-2 border-b border-stone">Bottles</th>
             </tr>
           </thead>
           <tbody>
-            {visibleEntries!.map(entry => (
-              <tr key={entry.barcode} onClick={() => setSelected(entry)} style={{ cursor: 'pointer' }}>
-                <td>{entry.name ?? entry.barcode}</td>
-                <td style={{ textAlign: 'right' }}><span className="badge">{entry.quantity}</span></td>
+            {visibleEntries.map(entry => (
+              <tr key={entry.barcode} onClick={() => setSelected(entry)} className="cursor-pointer">
+                <td className="px-3 py-3 border-b border-stone align-middle">{entry.name ?? entry.barcode}</td>
+                <td className="px-3 py-3 border-b border-stone align-middle text-right">
+                  <span className="inline-block bg-wine text-white rounded-full px-2.5 py-0.5 text-xs">{entry.quantity}</span>
+                </td>
               </tr>
             ))}
           </tbody>
         </table>
       )}
 
-      <div className="bottom-bar">
-        <button type="button" onClick={() => setModal('add')}>+ Add wine</button>
-        <button type="button" onClick={() => setModal('remove')}>− Remove wine</button>
+      <div className="fixed bottom-0 left-0 right-0 z-50 bg-surface border-t border-stone px-6 pt-3 flex gap-3 bottom-bar-safe">
+        <button type="button" className="flex-1 py-3 text-base" onClick={() => setModal('add')}>+ Add wine</button>
+        <button type="button" className="flex-1 py-3 text-base" onClick={() => setModal('remove')}>− Remove wine</button>
       </div>
 
       {modal && (

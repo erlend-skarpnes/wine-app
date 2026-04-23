@@ -99,36 +99,39 @@ export default function ScanModal({ mode, onClose, onAdjusted }: Props) {
   const isSpinning = state.status === 'loading' || state.status === 'identifying' || state.status === 'linking'
 
   return (
-    <div className="modal-overlay" onClick={e => { if (e.target === e.currentTarget) onClose() }}>
-      <div className="modal">
-        <div className="modal-header">
-          <h3>{mode === 'add' ? 'Add wine' : 'Remove wine'}</h3>
+    <div
+      className="fixed inset-0 bg-black/50 flex items-center justify-center z-[100] p-4"
+      onClick={e => { if (e.target === e.currentTarget) onClose() }}
+    >
+      <div className="bg-surface rounded-lg p-6 w-full max-w-[420px] shadow-[0_8px_32px_rgba(0,0,0,0.2)]">
+        <div className="flex justify-between items-center mb-4">
+          <h3 className="text-[1.1rem] font-semibold">{mode === 'add' ? 'Add wine' : 'Remove wine'}</h3>
           <button type="button" className="modal-close" onClick={onClose}>✕</button>
         </div>
 
         {showCamera && <BarcodeScanner onScan={handleScan} paused={false} />}
         {showLabelCamera && <LabelCamera onCapture={handleCapture} disabled={state.status === 'identifying'} />}
 
-        <div style={{ marginTop: '1rem', minHeight: '2rem' }}>
+        <div className="mt-4 min-h-8">
           {state.status === 'scanning' && (
-            <p className="muted">Scan the barcode on the bottle.</p>
+            <p className="text-clay text-sm">Scan the barcode on the bottle.</p>
           )}
 
           {isSpinning && <div className="spinner" />}
 
           {state.status === 'capture' && (
-            <p className="muted">Point the camera at the wine label and capture a photo.</p>
+            <p className="text-clay text-sm">Point the camera at the wine label and capture a photo.</p>
           )}
 
           {state.status === 'suggestions' && (
             <div>
-              <p style={{ marginBottom: '0.5rem' }}>Select the correct wine:</p>
-              <ul style={{ listStyle: 'none', padding: 0, margin: '0 0 0.75rem' }}>
+              <p className="mb-2">Select the correct wine:</p>
+              <ul className="list-none p-0 mb-3">
                 {state.suggestions.map(s => (
-                  <li key={s.id} style={{ marginBottom: '0.25rem' }}>
+                  <li key={s.id} className="mb-1">
                     <button
                       type="button"
-                      style={{ width: '100%', textAlign: 'left' }}
+                      className="w-full text-left"
                       onClick={() => handleSelectSuggestion(s)}
                     >
                       <strong>{s.name}</strong>
@@ -150,50 +153,48 @@ export default function ScanModal({ mode, onClose, onAdjusted }: Props) {
           )}
 
           {state.status === 'success' && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+            <div className="flex flex-col gap-4">
               {state.imageUrl && (
                 <img
                   src={state.imageUrl}
                   alt={state.wineName ?? undefined}
-                  style={{ width: 80, height: 'auto', alignSelf: 'center', borderRadius: 4 }}
+                  className="w-20 h-auto self-center rounded"
                 />
               )}
 
-              <div style={{ textAlign: 'center' }}>
-                <p style={{ fontWeight: 600, marginBottom: '0.25rem' }}>
-                  {state.wineName ?? state.entry.barcode}
-                </p>
-                <p className="muted" style={{ fontSize: '0.85rem' }}>
+              <div className="text-center">
+                <p className="font-semibold mb-1">{state.wineName ?? state.entry.barcode}</p>
+                <p className="text-clay text-[0.85rem]">
                   Stock: {state.prevQuantity} → {state.entry.quantity}
                 </p>
               </div>
 
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.75rem' }}>
+              <div className="flex items-center justify-center gap-3">
                 <button
                   type="button"
                   onClick={() => handleInlineAdjust(-1)}
                   disabled={state.entry.quantity === 0}
-                  style={{ width: '2.5rem', height: '2.5rem', padding: 0, fontSize: '1.25rem', flexShrink: 0 }}
+                  className="w-10 h-10 p-0 text-xl shrink-0"
                 >
                   −
                 </button>
-                <span style={{ fontSize: '1.5rem', fontWeight: 700, minWidth: '2rem', textAlign: 'center' }}>
+                <span className="text-2xl font-bold min-w-8 text-center">
                   {state.entry.quantity}
                 </span>
                 <button
                   type="button"
                   onClick={() => handleInlineAdjust(1)}
-                  style={{ width: '2.5rem', height: '2.5rem', padding: 0, fontSize: '1.25rem', flexShrink: 0 }}
+                  className="w-10 h-10 p-0 text-xl shrink-0"
                 >
                   +
                 </button>
               </div>
 
-              <div style={{ display: 'flex', gap: '0.5rem' }}>
-                <button type="button" onClick={() => setState({ status: 'scanning' })} style={{ flex: 1, padding: '0.75rem', fontSize: '1rem' }}>
+              <div className="flex gap-2">
+                <button type="button" className="flex-1 py-3 text-base" onClick={() => setState({ status: 'scanning' })}>
                   Scan another
                 </button>
-                <button type="button" className="secondary" onClick={onClose} style={{ flex: 1, padding: '0.75rem', fontSize: '1rem' }}>
+                <button type="button" className="secondary flex-1 py-3 text-base" onClick={onClose}>
                   Done
                 </button>
               </div>
@@ -202,7 +203,7 @@ export default function ScanModal({ mode, onClose, onAdjusted }: Props) {
 
           {state.status === 'error' && (
             <div>
-              <p className="feedback-error" style={{ marginBottom: '0.75rem' }}>{state.message}</p>
+              <p className="text-red-600 text-[0.9rem] mb-3">{state.message}</p>
               <button type="button" onClick={() => setState({ status: 'scanning' })}>
                 Try again
               </button>
