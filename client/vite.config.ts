@@ -12,8 +12,8 @@ export default defineConfig({
     VitePWA({
       registerType: 'autoUpdate',
       manifest: {
-        name: 'Wine Cellar',
-        short_name: 'WineCellar',
+        name: 'Vinkjelleren',
+        short_name: 'Vinkjelleren',
         description: 'Track your wine cellar, scan labels, and get food pairing recommendations.',
         theme_color: '#722F37',
         background_color: '#faf7f4',
@@ -40,6 +40,9 @@ export default defineConfig({
       }
     })
   ],
+  define: {
+    __BUILD_TIME__: JSON.stringify(new Date().toISOString()),
+  },
   server: {
     proxy: {
       '/api': {

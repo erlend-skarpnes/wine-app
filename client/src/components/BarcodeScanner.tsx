@@ -14,21 +14,6 @@ const HINTS = new Map([
 
 const DEBOUNCE_MS = 2000
 
-function getVideoTrack(video: HTMLVideoElement): MediaStreamTrack | null {
-  const stream = video.srcObject instanceof MediaStream ? video.srcObject : null
-  return stream?.getVideoTracks()[0] ?? null
-}
-
-async function applyTorch(video: HTMLVideoElement, on: boolean) {
-  const track = getVideoTrack(video)
-  if (!track) return
-  try {
-    await track.applyConstraints({ advanced: [{ torch: on } as MediaTrackConstraintSet] })
-  } catch {
-    // torch not supported on this device/browser — silently ignore
-  }
-}
-
 interface Props {
   onScan: (barcode: string) => void
   paused?: boolean
@@ -48,23 +33,41 @@ export default function BarcodeScanner({ onScan, paused = false }: Props) {
     if (paused || !videoRef.current) return
 
     let cancelled = false
+    let stream: MediaStream | null = null
     let controls: IScannerControls | null = null
 
-    const timer = setTimeout(() => {
+    const timer = setTimeout(async () => {
       if (cancelled || !videoRef.current) return
 
-      new BrowserMultiFormatReader(HINTS)
-        .decodeFromConstraints(
-          {
-            video: {
-              facingMode: 'environment',
-              width: { ideal: 1920 },
-              height: { ideal: 1080 },
-              advanced: [{ focusMode: 'continuous' } as MediaTrackConstraintSet],
-            },
-          },
-          videoRef.current,
-          (result) => {
+      try {
+        // Get the stream ourselves so we control setup order
+        stream = await navigator.mediaDevices.getUserMedia({
+          video: { facingMode: 'environment' },
+        })
+        if (cancelled) { stream.getTracks().forEach(t => t.stop()); return }
+
+        const video = videoRef.current!
+        video.srcObject = stream
+        await video.play()
+        if (cancelled) return
+
+        // Apply continuous focus after the stream is playing — this is the
+        // key difference vs passing constraints to getUserMedia upfront
+        const track = stream.getVideoTracks()[0]
+        const capabilities = track?.getCapabilities() as
+          (MediaTrackCapabilities & { torch?: boolean; focusMode?: string[] }) | undefined
+
+        if (capabilities?.torch) setTorchSupported(true)
+
+        if (capabilities?.focusMode?.includes('continuous')) {
+          await track.applyConstraints({
+            advanced: [{ focusMode: 'continuous' } as MediaTrackConstraintSet],
+          }).catch(() => {})
+        }
+
+        // Now hand the already-playing video element to ZXing
+        controls = await new BrowserMultiFormatReader(HINTS)
+          .decodeFromVideoElement(video, (result) => {
             if (!result || cancelled) return
             const barcode = result.getText()
             const now = Date.now()
@@ -72,41 +75,63 @@ export default function BarcodeScanner({ onScan, paused = false }: Props) {
             lastBarcodeRef.current = barcode
             lastTimeRef.current = now
             onScanRef.current(barcode)
-          }
-        )
-        .then(c => {
-          if (cancelled) { c.stop(); return }
-          controls = c
-          if (videoRef.current) {
-            const track = getVideoTrack(videoRef.current)
-            const capabilities = track?.getCapabilities() as (MediaTrackCapabilities & { torch?: boolean }) | undefined
-            if (capabilities?.torch) setTorchSupported(true)
-          }
-        })
-        .catch(console.error)
+          })
+
+        if (cancelled) controls.stop()
+      } catch (err) {
+        console.error(err)
+      }
     }, 0)
 
     return () => {
       cancelled = true
       clearTimeout(timer)
       controls?.stop()
+      stream?.getTracks().forEach(t => t.stop())
+      if (videoRef.current) videoRef.current.srcObject = null
       setTorch(false)
       setTorchSupported(false)
     }
   }, [paused])
 
+  async function tapToFocus() {
+    const video = videoRef.current
+    if (!video) return
+    const track = (video.srcObject instanceof MediaStream)
+      ? video.srcObject.getVideoTracks()[0]
+      : null
+    if (!track) return
+    try {
+      // 'auto' triggers a one-shot focus, then we switch back to continuous
+      await track.applyConstraints({ advanced: [{ focusMode: 'auto' } as MediaTrackConstraintSet] })
+      setTimeout(() => {
+        track.applyConstraints({ advanced: [{ focusMode: 'continuous' } as MediaTrackConstraintSet] }).catch(() => {})
+      }, 500)
+    } catch { /* not supported */ }
+  }
+
   async function toggleTorch() {
-    if (!videoRef.current) return
+    const video = videoRef.current
+    if (!video) return
+    const track = (video.srcObject instanceof MediaStream)
+      ? video.srcObject.getVideoTracks()[0]
+      : null
+    if (!track) return
     const next = !torch
     setTorch(next)
-    await applyTorch(videoRef.current, next)
+    try {
+      await track.applyConstraints({ advanced: [{ torch: next } as MediaTrackConstraintSet] })
+    } catch { /* not supported */ }
   }
 
   return (
     <div className="relative">
       <video
         ref={videoRef}
-        className="w-full max-h-[280px] object-cover rounded-lg bg-black block"
+        muted
+        playsInline
+        onClick={tapToFocus}
+        className="w-full max-h-[280px] object-cover rounded-lg bg-black block cursor-pointer"
       />
 
       {/* Viewfinder overlay */}
