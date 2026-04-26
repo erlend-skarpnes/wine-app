@@ -4,6 +4,7 @@ export interface CellarEntry {
   name: string | null
   type: string | null
   pairings: string[]
+  grapes: string[]
   storagePotential: string | null
   alcoholContent: number | null
 }

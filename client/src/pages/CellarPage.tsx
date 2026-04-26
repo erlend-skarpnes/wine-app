@@ -16,6 +16,7 @@ export default function CellarPage() {
   const [storageFilter, setStorageFilter] = useState<'drink-now' | 'store' | null>(null)
   const [typeFilter, setTypeFilter] = useState<string | null>(null)
   const [pairingFilter, setPairingFilter] = useState<string | null>(null)
+  const [grapeFilter, setGrapeFilter] = useState<string | null>(null)
 
   const { data: entries, isLoading, error } = useQuery({
     queryKey: ['cellar'],
@@ -28,6 +29,7 @@ export default function CellarPage() {
 
   const allPairings = [...new Set(entries?.flatMap(e => e.pairings) ?? [])].sort()
   const allTypes = [...new Set(entries?.map(e => e.type).filter(Boolean) ?? [])].sort() as string[]
+  const allGrapes = [...new Set(entries?.flatMap(e => e.grapes) ?? [])].sort()
 
   function matchesStorageFilter(entry: CellarEntry) {
     if (storageFilter === null) return true
@@ -38,6 +40,7 @@ export default function CellarPage() {
 
   const visibleEntries = entries?.filter(e =>
     (!pairingFilter || e.pairings.includes(pairingFilter)) &&
+    (!grapeFilter || e.grapes.includes(grapeFilter)) &&
     matchesStorageFilter(e) &&
     (!typeFilter || e.type === typeFilter)
   )
@@ -51,8 +54,11 @@ export default function CellarPage() {
         onTypeFilter={setTypeFilter}
         pairingFilter={pairingFilter}
         onPairingFilter={setPairingFilter}
+        grapeFilter={grapeFilter}
+        onGrapeFilter={setGrapeFilter}
         allTypes={allTypes}
         allPairings={allPairings}
+        allGrapes={allGrapes}
       />
 
       {error && <p className="text-red-600 text-sm mb-4">Kunne ikke laste kjelleren.</p>}

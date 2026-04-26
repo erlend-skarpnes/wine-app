@@ -7,8 +7,11 @@ interface Props {
   onTypeFilter: (v: string | null) => void
   pairingFilter: string | null
   onPairingFilter: (v: string | null) => void
+  grapeFilter: string | null
+  onGrapeFilter: (v: string | null) => void
   allTypes: string[]
   allPairings: string[]
+  allGrapes: string[]
 }
 
 function filterBtn(active: boolean) {
@@ -23,10 +26,11 @@ export default function FilterBar({
   storageFilter, onStorageFilter,
   typeFilter, onTypeFilter,
   pairingFilter, onPairingFilter,
-  allTypes, allPairings,
+  grapeFilter, onGrapeFilter,
+  allTypes, allPairings, allGrapes,
 }: Props) {
   const [filtersOpen, setFiltersOpen] = useState(false)
-  const activeFilterCount = [storageFilter, typeFilter, pairingFilter].filter(Boolean).length
+  const activeFilterCount = [storageFilter, typeFilter, pairingFilter, grapeFilter].filter(Boolean).length
 
   return (
     <div className="sticky top-0 z-10 bg-warm pb-3 mb-1">
@@ -71,6 +75,22 @@ export default function FilterBar({
                   onClick={() => onTypeFilter(typeFilter === type ? null : type)}
                 >
                   {type}
+                </button>
+              ))}
+            </div>
+          )}
+
+          {allGrapes.length > 0 && (
+            <div className="flex items-center gap-1.5 flex-wrap">
+              <span className="text-[0.7rem] font-semibold text-clay uppercase tracking-wide w-14 shrink-0">Drue</span>
+              {allGrapes.map(grape => (
+                <button
+                  key={grape}
+                  type="button"
+                  className={filterBtn(grapeFilter === grape)}
+                  onClick={() => onGrapeFilter(grapeFilter === grape ? null : grape)}
+                >
+                  {grape}
                 </button>
               ))}
             </div>

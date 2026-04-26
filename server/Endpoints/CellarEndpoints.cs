@@ -27,6 +27,7 @@ public static class CellarEndpoints
                     Name             = wine != null ? wine.Name             : null,
                     Type             = wine != null ? wine.Type             : null,
                     Pairings         = wine != null ? wine.Pairings         : new string[0],
+                    Grapes           = wine != null ? wine.Grapes           : new string[0],
                     StoragePotential = wine != null ? wine.StoragePotential : null,
                     AlcoholContent   = wine != null ? wine.AlcoholContent   : (double?)null,
                 })
