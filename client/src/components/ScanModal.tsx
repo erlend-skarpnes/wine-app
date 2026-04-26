@@ -1,6 +1,9 @@
 import { useState, useCallback } from 'react'
 import BarcodeScanner from './BarcodeScanner'
 import LabelCamera from './LabelCamera'
+import Modal from './Modal'
+import WineImage from './WineImage'
+import QuantityAdjuster from './QuantityAdjuster'
 import { api } from '../api/client'
 import { getWineData, identifyWine, linkWine } from '../api/wine'
 import type { CellarEntry, WineSuggestion } from '../api/types'
@@ -99,117 +102,87 @@ export default function ScanModal({ mode, onClose, onAdjusted }: Props) {
   const isSpinning = state.status === 'loading' || state.status === 'identifying' || state.status === 'linking'
 
   return (
-    <div
-      className="fixed inset-0 bg-black/50 flex items-center justify-center z-[100] p-4"
-      onClick={e => { if (e.target === e.currentTarget) onClose() }}
-    >
-      <div className="bg-surface rounded-lg p-6 w-full max-w-[420px] shadow-[0_8px_32px_rgba(0,0,0,0.2)]">
-        <div className="flex justify-between items-center mb-4">
-          <h3 className="text-[1.1rem] font-semibold">{mode === 'add' ? 'Legg til vin' : 'Fjern vin'}</h3>
-          <button type="button" className="modal-close" onClick={onClose}>✕</button>
-        </div>
+    <Modal title={mode === 'add' ? 'Legg til vin' : 'Fjern vin'} onClose={onClose}>
+      {showCamera && <BarcodeScanner onScan={handleScan} paused={false} />}
+      {showLabelCamera && <LabelCamera onCapture={handleCapture} disabled={state.status === 'identifying'} />}
 
-        {showCamera && <BarcodeScanner onScan={handleScan} paused={false} />}
-        {showLabelCamera && <LabelCamera onCapture={handleCapture} disabled={state.status === 'identifying'} />}
+      <div className="mt-4 min-h-8">
+        {state.status === 'scanning' && (
+          <p className="text-clay text-sm">Skann strekkoden på flasken.</p>
+        )}
 
-        <div className="mt-4 min-h-8">
-          {state.status === 'scanning' && (
-            <p className="text-clay text-sm">Skann strekkoden på flasken.</p>
-          )}
+        {isSpinning && <div className="spinner" />}
 
-          {isSpinning && <div className="spinner" />}
+        {state.status === 'capture' && (
+          <p className="text-clay text-sm">Pek kameraet mot etiketten og ta et bilde.</p>
+        )}
 
-          {state.status === 'capture' && (
-            <p className="text-clay text-sm">Pek kameraet mot etiketten og ta et bilde.</p>
-          )}
+        {state.status === 'suggestions' && (
+          <div>
+            <p className="mb-2">Velg riktig vin:</p>
+            <ul className="list-none p-0 mb-3">
+              {state.suggestions.map(s => (
+                <li key={s.id} className="mb-1">
+                  <button
+                    type="button"
+                    className="w-full text-left"
+                    onClick={() => handleSelectSuggestion(s)}
+                  >
+                    <strong>{s.name}</strong>
+                    {s.winery && ` — ${s.winery}`}
+                    {s.region && `, ${s.region}`}
+                  </button>
+                </li>
+              ))}
+            </ul>
+            <button
+              type="button"
+              className="secondary"
+              onClick={() => setState({ status: 'success', entry: state.entry, prevQuantity: state.entry.quantity - 1, wineName: null, imageUrl: null })}
+            >
+              Hopp over
+            </button>
+          </div>
+        )}
 
-          {state.status === 'suggestions' && (
-            <div>
-              <p className="mb-2">Velg riktig vin:</p>
-              <ul className="list-none p-0 mb-3">
-                {state.suggestions.map(s => (
-                  <li key={s.id} className="mb-1">
-                    <button
-                      type="button"
-                      className="w-full text-left"
-                      onClick={() => handleSelectSuggestion(s)}
-                    >
-                      <strong>{s.name}</strong>
-                      {s.winery && ` — ${s.winery}`}
-                      {s.region && `, ${s.region}`}
-                    </button>
-                  </li>
-                ))}
-              </ul>
-              <button
-                type="button"
-                className="secondary"
-                onClick={() => setState({ status: 'success', entry: state.entry, prevQuantity: state.entry.quantity - 1, wineName: null, imageUrl: null })}
-              >
-                Hopp over
+        {state.status === 'success' && (
+          <div className="flex flex-col gap-4">
+            {state.imageUrl && (
+              <WineImage src={state.imageUrl} alt={state.wineName ?? undefined} />
+            )}
+
+            <div className="text-center">
+              <p className="font-semibold mb-1">{state.wineName ?? state.entry.barcode}</p>
+              <p className="text-clay text-[0.85rem]">
+                Beholdning: {state.prevQuantity} → {state.entry.quantity}
+              </p>
+            </div>
+
+            <QuantityAdjuster
+              value={state.entry.quantity}
+              onChange={handleInlineAdjust}
+            />
+
+            <div className="flex gap-2">
+              <button type="button" className="flex-1 py-3 text-base" onClick={() => setState({ status: 'scanning' })}>
+                Skann en til
+              </button>
+              <button type="button" className="secondary flex-1 py-3 text-base" onClick={onClose}>
+                Ferdig
               </button>
             </div>
-          )}
+          </div>
+        )}
 
-          {state.status === 'success' && (
-            <div className="flex flex-col gap-4">
-              {state.imageUrl && (
-                <img
-                  src={state.imageUrl}
-                  alt={state.wineName ?? undefined}
-                  className="w-20 h-auto self-center rounded"
-                />
-              )}
-
-              <div className="text-center">
-                <p className="font-semibold mb-1">{state.wineName ?? state.entry.barcode}</p>
-                <p className="text-clay text-[0.85rem]">
-                  Beholdning: {state.prevQuantity} → {state.entry.quantity}
-                </p>
-              </div>
-
-              <div className="flex items-center justify-center gap-3">
-                <button
-                  type="button"
-                  onClick={() => handleInlineAdjust(-1)}
-                  disabled={state.entry.quantity === 0}
-                  className="w-10 h-10 p-0 text-xl shrink-0"
-                >
-                  −
-                </button>
-                <span className="text-2xl font-bold min-w-8 text-center">
-                  {state.entry.quantity}
-                </span>
-                <button
-                  type="button"
-                  onClick={() => handleInlineAdjust(1)}
-                  className="w-10 h-10 p-0 text-xl shrink-0"
-                >
-                  +
-                </button>
-              </div>
-
-              <div className="flex gap-2">
-                <button type="button" className="flex-1 py-3 text-base" onClick={() => setState({ status: 'scanning' })}>
-                  Skann en til
-                </button>
-                <button type="button" className="secondary flex-1 py-3 text-base" onClick={onClose}>
-                  Ferdig
-                </button>
-              </div>
-            </div>
-          )}
-
-          {state.status === 'error' && (
-            <div>
-              <p className="text-red-600 text-[0.9rem] mb-3">{state.message}</p>
-              <button type="button" onClick={() => setState({ status: 'scanning' })}>
-                Prøv igjen
-              </button>
-            </div>
-          )}
-        </div>
+        {state.status === 'error' && (
+          <div>
+            <p className="text-red-600 text-[0.9rem] mb-3">{state.message}</p>
+            <button type="button" onClick={() => setState({ status: 'scanning' })}>
+              Prøv igjen
+            </button>
+          </div>
+        )}
       </div>
-    </div>
+    </Modal>
   )
 }

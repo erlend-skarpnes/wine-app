@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import ViewfinderOverlay from './ViewfinderOverlay'
 import { BrowserMultiFormatReader } from '@zxing/browser'
 import type { IScannerControls } from '@zxing/browser'
 import { BarcodeFormat, DecodeHintType } from '@zxing/library'
@@ -193,15 +194,7 @@ export default function BarcodeScanner({ onScan, paused = false }: Props) {
           className="w-full max-h-[280px] object-cover rounded-lg bg-black block cursor-pointer"
         />
 
-        {/* Viewfinder overlay */}
-        <div className="absolute inset-0 pointer-events-none flex items-center justify-center">
-          <div className="relative w-[72%] h-20 rounded shadow-[0_0_0_9999px_rgba(0,0,0,0.45)]">
-            <div className="absolute top-0 left-0 w-[18px] h-[18px] border-t-[2.5px] border-l-[2.5px] border-white" />
-            <div className="absolute top-0 right-0 w-[18px] h-[18px] border-t-[2.5px] border-r-[2.5px] border-white" />
-            <div className="absolute bottom-0 left-0 w-[18px] h-[18px] border-b-[2.5px] border-l-[2.5px] border-white" />
-            <div className="absolute bottom-0 right-0 w-[18px] h-[18px] border-b-[2.5px] border-r-[2.5px] border-white" />
-          </div>
-        </div>
+        <ViewfinderOverlay />
 
         {debugInfo && debugInfo.backIds.length > 1 && (
           <button
