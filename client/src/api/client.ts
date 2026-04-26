@@ -1,7 +1,15 @@
+import { getUserId } from '../lib/userId'
+
 const BASE = '/api'
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
-  const res = await fetch(`${BASE}${path}`, init)
+  const res = await fetch(`${BASE}${path}`, {
+    ...init,
+    headers: {
+      'X-User-Id': getUserId(),
+      ...init?.headers,
+    },
+  })
   if (!res.ok) {
     const text = await res.text().catch(() => res.statusText)
     throw new Error(`${init?.method ?? 'GET'} ${path} → ${res.status}: ${text}`)

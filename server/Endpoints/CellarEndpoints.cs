@@ -10,9 +10,14 @@ public static class CellarEndpoints
     {
         var group = app.MapGroup("/api/cellar").WithTags("Cellar");
 
-        group.MapGet("/", async (AppDbContext db) =>
-            await db.CellarEntries
-                .Where(e => e.Quantity > 0)
+        group.MapGet("/", async (HttpRequest request, AppDbContext db) =>
+        {
+            var userId = request.Headers["X-User-Id"].FirstOrDefault();
+            if (string.IsNullOrEmpty(userId))
+                return Results.BadRequest(new { message = "Missing X-User-Id header." });
+
+            var entries = await db.CellarEntries
+                .Where(e => e.UserId == userId && e.Quantity > 0)
                 .OrderBy(e => e.Barcode)
                 .GroupJoin(db.WineData, e => e.Barcode, w => w.Barcode, (e, wines) => new { e, wines })
                 .SelectMany(x => x.wines.DefaultIfEmpty(), (x, wine) => new
@@ -25,18 +30,25 @@ public static class CellarEndpoints
                     StoragePotential = wine != null ? wine.StoragePotential : null,
                     AlcoholContent   = wine != null ? wine.AlcoholContent   : (double?)null,
                 })
-                .ToListAsync());
+                .ToListAsync();
 
-        group.MapPost("/adjust", async (AdjustRequest req, AppDbContext db) =>
+            return Results.Ok(entries);
+        });
+
+        group.MapPost("/adjust", async (AdjustRequest req, HttpRequest request, AppDbContext db) =>
         {
-            var entry = await db.CellarEntries.FindAsync(req.Barcode);
+            var userId = request.Headers["X-User-Id"].FirstOrDefault();
+            if (string.IsNullOrEmpty(userId))
+                return Results.BadRequest(new { message = "Missing X-User-Id header." });
+
+            var entry = await db.CellarEntries.FindAsync(userId, req.Barcode);
 
             if (entry is null)
             {
                 if (req.Delta <= 0)
                     return Results.BadRequest(new { message = "Nothing to remove." });
 
-                entry = new CellarEntry { Barcode = req.Barcode, Quantity = req.Delta };
+                entry = new CellarEntry { UserId = userId, Barcode = req.Barcode, Quantity = req.Delta };
                 db.CellarEntries.Add(entry);
             }
             else

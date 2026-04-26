@@ -10,7 +10,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
-        modelBuilder.Entity<CellarEntry>().HasKey(e => e.Barcode);
+        modelBuilder.Entity<CellarEntry>().HasKey(e => new { e.UserId, e.Barcode });
 
         modelBuilder.Entity<WineData>(entity =>
         {
