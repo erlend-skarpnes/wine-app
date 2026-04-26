@@ -1,22 +1,73 @@
+import { useState, useCallback } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { getWineData } from '../api/wine'
+import { api } from '../api/client'
+import type { CellarEntry } from '../api/types'
 import Modal from './Modal'
 import WineImage from './WineImage'
+import QuantityAdjuster from './QuantityAdjuster'
 
 interface Props {
   barcode: string
   name: string | null
+  quantity: number
+  onAdjusted: () => void
   onClose: () => void
 }
 
-export default function WineDetailModal({ barcode, name, onClose }: Props) {
+export default function WineDetailModal({ barcode, name, quantity: initialQuantity, onAdjusted, onClose }: Props) {
+  const [editingStock, setEditingStock] = useState(false)
+  const [quantity, setQuantity] = useState(initialQuantity)
+  const [prevQuantity, setPrevQuantity] = useState(initialQuantity)
+
   const { data: wine, isLoading } = useQuery({
     queryKey: ['wine', barcode],
     queryFn: () => getWineData(barcode),
   })
 
+  const handleAdjust = useCallback(async (delta: 1 | -1) => {
+    try {
+      const entry = await api.post<CellarEntry>('/cellar/adjust', { barcode, delta })
+      setQuantity(entry.quantity)
+      onAdjusted()
+    } catch {
+      // ignore
+    }
+  }, [barcode, onAdjusted])
+
+  const title = wine?.name ?? name ?? barcode
+
+  if (editingStock) {
+    return (
+      <Modal title={title} onClose={onClose} maxWidth="max-w-[480px]">
+        <div className="flex flex-col gap-4">
+          {wine?.imageUrl && (
+            <WineImage src={wine.imageUrl} alt={wine.name} className="w-24 h-auto self-center rounded" />
+          )}
+
+          <div className="text-center">
+            <p className="text-clay text-[0.85rem]">
+              Beholdning: {prevQuantity} → {quantity}
+            </p>
+          </div>
+
+          <QuantityAdjuster value={quantity} onChange={handleAdjust} />
+
+          <div className="flex gap-2">
+            <button type="button" className="flex-1 py-3 text-base" onClick={() => { setPrevQuantity(quantity); setEditingStock(false) }}>
+              Tilbake
+            </button>
+            <button type="button" className="secondary flex-1 py-3 text-base" onClick={onClose}>
+              Ferdig
+            </button>
+          </div>
+        </div>
+      </Modal>
+    )
+  }
+
   return (
-    <Modal title={wine?.name ?? name ?? barcode} onClose={onClose} maxWidth="max-w-[480px]">
+    <Modal title={title} onClose={onClose} maxWidth="max-w-[480px]">
       {isLoading && <p className="text-clay text-sm">Laster…</p>}
 
       {!isLoading && !wine && (
@@ -30,6 +81,7 @@ export default function WineDetailModal({ barcode, name, onClose }: Props) {
           )}
 
           <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-1 text-sm">
+            <dt className="text-clay">Beholdning</dt><dd>{quantity} {quantity === 1 ? 'flaske' : 'flasker'}</dd>
             {wine.type     && <><dt className="text-clay">Type</dt>          <dd>{wine.type}</dd></>}
             {wine.winery   && <><dt className="text-clay">Produsent</dt>     <dd>{wine.winery}</dd></>}
             {wine.region   && <><dt className="text-clay">Region</dt>        <dd>{[wine.region, wine.country].filter(Boolean).join(', ')}</dd></>}
@@ -63,6 +115,15 @@ export default function WineDetailModal({ barcode, name, onClose }: Props) {
           )}
         </div>
       )}
+
+      <div className="mt-4 pt-4 border-t border-stone flex gap-2">
+        <button type="button" className="flex-1 py-3 text-base" onClick={() => { setPrevQuantity(quantity); setEditingStock(true) }}>
+          Rediger beholdning
+        </button>
+        <button type="button" className="secondary flex-1 py-3 text-base" onClick={onClose}>
+          Lukk
+        </button>
+      </div>
     </Modal>
   )
 }

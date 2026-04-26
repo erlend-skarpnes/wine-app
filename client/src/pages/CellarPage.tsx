@@ -92,6 +92,8 @@ export default function CellarPage() {
         <WineDetailModal
           barcode={selected.barcode}
           name={selected.name}
+          quantity={selected.quantity}
+          onAdjusted={handleAdjusted}
           onClose={() => setSelected(null)}
         />
       )}
