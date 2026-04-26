@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import ViewfinderOverlay from './ViewfinderOverlay'
+import Modal from './Modal'
 import { BrowserMultiFormatReader } from '@zxing/browser'
 import type { IScannerControls } from '@zxing/browser'
 import { BarcodeFormat, DecodeHintType } from '@zxing/library'
@@ -26,11 +27,10 @@ export default function BarcodeScanner({ onScan, paused = false }: Props) {
   const onScanRef = useRef(onScan)
   const lastBarcodeRef = useRef<string | null>(null)
   const lastTimeRef = useRef<number>(0)
-  const devicesRef = useRef<MediaDeviceInfo[]>([])
   const [torch, setTorch] = useState(false)
   const [torchSupported, setTorchSupported] = useState(false)
-  const [debugInfo, setDebugInfo] = useState<{ active: string; all: string[]; backIds: string[] } | null>(null)
-  // Initialise from localStorage so the preferred camera is used on first open
+  const [devices, setDevices] = useState<MediaDeviceInfo[]>([])
+  const [showCameraPicker, setShowCameraPicker] = useState(false)
   const [preferredDeviceId, setPreferredDeviceId] = useState<string | null>(
     () => localStorage.getItem(CAMERA_KEY)
   )
@@ -49,7 +49,6 @@ export default function BarcodeScanner({ onScan, paused = false }: Props) {
       if (cancelled || !videoRef.current) return
 
       try {
-        // Use saved camera if available, fall back to environment-facing default
         const videoConstraint: MediaTrackConstraints = preferredDeviceId
           ? { deviceId: { exact: preferredDeviceId }, width: { ideal: 1280 }, height: { ideal: 720 } }
           : { facingMode: { ideal: 'environment' }, width: { ideal: 1280 }, height: { ideal: 720 } }
@@ -71,24 +70,7 @@ export default function BarcodeScanner({ onScan, paused = false }: Props) {
         // Enumerate devices after getUserMedia so labels are populated
         const allDevices = await navigator.mediaDevices.enumerateDevices()
         const videoInputs = allDevices.filter(d => d.kind === 'videoinput')
-        devicesRef.current = videoInputs
-
-        const settings = track.getSettings() as MediaTrackSettings & {
-          focusMode?: string; zoom?: number
-        }
-        setDebugInfo({
-          active: [
-            track.label || 'unknown',
-            `${settings.width}×${settings.height}`,
-            settings.facingMode ?? '?',
-            settings.focusMode ? `focus:${settings.focusMode}` : '',
-            settings.zoom ? `zoom:${settings.zoom}` : '',
-          ].filter(Boolean).join(' · '),
-          all: videoInputs.map(d => d.label || d.deviceId.slice(0, 8)),
-          backIds: videoInputs
-            .filter(d => /back|rear/i.test(d.label))
-            .map(d => d.deviceId),
-        })
+        if (!cancelled) setDevices(videoInputs)
 
         const applyFocus = (mode: string) =>
           track.applyConstraints({ advanced: [{ focusMode: mode } as MediaTrackConstraintSet] }).catch(() => {})
@@ -121,7 +103,6 @@ export default function BarcodeScanner({ onScan, paused = false }: Props) {
 
         if (cancelled) controls.stop()
       } catch (err) {
-        // Saved camera no longer available — clear the preference and retry with default
         if (preferredDeviceId) {
           localStorage.removeItem(CAMERA_KEY)
           setPreferredDeviceId(null)
@@ -140,7 +121,7 @@ export default function BarcodeScanner({ onScan, paused = false }: Props) {
       if (videoRef.current) videoRef.current.srcObject = null
       setTorch(false)
       setTorchSupported(false)
-      setDebugInfo(null)
+      setDevices([])
     }
   }, [paused, preferredDeviceId])
 
@@ -173,39 +154,24 @@ export default function BarcodeScanner({ onScan, paused = false }: Props) {
     } catch { /* not supported */ }
   }
 
-  function cycleCamera() {
-    const backIds = debugInfo?.backIds ?? []
-    if (backIds.length < 2) return
-    const currentIdx = backIds.indexOf(preferredDeviceId ?? '')
-    const nextIdx = (currentIdx + 1) % backIds.length
-    const nextId = backIds[nextIdx]
-    localStorage.setItem(CAMERA_KEY, nextId)
-    setPreferredDeviceId(nextId)
+  function selectCamera(deviceId: string) {
+    localStorage.setItem(CAMERA_KEY, deviceId)
+    setPreferredDeviceId(deviceId)
+    setShowCameraPicker(false)
   }
 
   return (
     <>
-      <div className="relative">
+      <div className="relative overflow-hidden rounded-lg">
         <video
           ref={videoRef}
           muted
           playsInline
           onClick={tapToFocus}
-          className="w-full max-h-[280px] object-cover rounded-lg bg-black block cursor-pointer"
+          className="w-full max-h-[280px] object-cover bg-black block cursor-pointer"
         />
 
         <ViewfinderOverlay />
-
-        {debugInfo && debugInfo.backIds.length > 1 && (
-          <button
-            type="button"
-            onClick={cycleCamera}
-            title="Bytt kamera"
-            className="absolute bottom-2 left-2 pointer-events-auto w-9 h-9 p-0 rounded-full flex items-center justify-center text-[1.1rem] border-0 bg-black/50 text-white"
-          >
-            🔄
-          </button>
-        )}
 
         {torchSupported && (
           <button
@@ -221,11 +187,39 @@ export default function BarcodeScanner({ onScan, paused = false }: Props) {
         )}
       </div>
 
-      {debugInfo && (
-        <div className="mt-1 text-[10px] leading-tight text-clay opacity-70 space-y-0.5">
-          <div><span className="font-semibold">Aktiv:</span> {debugInfo.active}</div>
-          <div><span className="font-semibold">Alle kameraer:</span> {debugInfo.all.join(' / ')}</div>
-        </div>
+      {devices.length > 1 && (
+        <button
+          type="button"
+          className="secondary w-full mt-2"
+          onClick={() => setShowCameraPicker(true)}
+        >
+          Bytt kamera
+        </button>
+      )}
+
+      {showCameraPicker && (
+        <Modal title="Velg kamera" onClose={() => setShowCameraPicker(false)}>
+          <ul className="flex flex-col gap-1">
+            {devices.map((device, i) => {
+              const isActive = device.deviceId === preferredDeviceId
+              return (
+                <li key={device.deviceId}>
+                  <button
+                    type="button"
+                    className={`w-full text-left px-4 py-3 rounded-lg text-sm ${
+                      isActive
+                        ? 'bg-wine text-white'
+                        : 'secondary'
+                    }`}
+                    onClick={() => selectCamera(device.deviceId)}
+                  >
+                    {device.label || `Kamera ${i + 1}`}
+                  </button>
+                </li>
+              )
+            })}
+          </ul>
+        </Modal>
       )}
     </>
   )
