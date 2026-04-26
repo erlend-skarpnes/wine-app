@@ -3,4 +3,4 @@ set -e
 
 docker compose build server client
 docker compose stop server client
-docker compose up -d --no-deps server client
+docker compose up -d server client

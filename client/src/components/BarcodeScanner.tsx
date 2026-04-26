@@ -13,6 +13,7 @@ const HINTS = new Map([
 ])
 
 const DEBOUNCE_MS = 2000
+const CAMERA_KEY = 'preferredCameraId'
 
 interface Props {
   onScan: (barcode: string) => void
@@ -24,8 +25,14 @@ export default function BarcodeScanner({ onScan, paused = false }: Props) {
   const onScanRef = useRef(onScan)
   const lastBarcodeRef = useRef<string | null>(null)
   const lastTimeRef = useRef<number>(0)
+  const devicesRef = useRef<MediaDeviceInfo[]>([])
   const [torch, setTorch] = useState(false)
   const [torchSupported, setTorchSupported] = useState(false)
+  const [debugInfo, setDebugInfo] = useState<{ active: string; all: string[]; backIds: string[] } | null>(null)
+  // Initialise from localStorage so the preferred camera is used on first open
+  const [preferredDeviceId, setPreferredDeviceId] = useState<string | null>(
+    () => localStorage.getItem(CAMERA_KEY)
+  )
 
   useEffect(() => { onScanRef.current = onScan }, [onScan])
 
@@ -35,15 +42,18 @@ export default function BarcodeScanner({ onScan, paused = false }: Props) {
     let cancelled = false
     let stream: MediaStream | null = null
     let controls: IScannerControls | null = null
+    let refocusInterval: ReturnType<typeof setInterval> | null = null
 
     const timer = setTimeout(async () => {
       if (cancelled || !videoRef.current) return
 
       try {
-        // Get the stream ourselves so we control setup order
-        stream = await navigator.mediaDevices.getUserMedia({
-          video: { facingMode: 'environment' },
-        })
+        // Use saved camera if available, fall back to environment-facing default
+        const videoConstraint: MediaTrackConstraints = preferredDeviceId
+          ? { deviceId: { exact: preferredDeviceId }, width: { ideal: 1280 }, height: { ideal: 720 } }
+          : { facingMode: { ideal: 'environment' }, width: { ideal: 1280 }, height: { ideal: 720 } }
+
+        stream = await navigator.mediaDevices.getUserMedia({ video: videoConstraint })
         if (cancelled) { stream.getTracks().forEach(t => t.stop()); return }
 
         const video = videoRef.current!
@@ -51,21 +61,52 @@ export default function BarcodeScanner({ onScan, paused = false }: Props) {
         await video.play()
         if (cancelled) return
 
-        // Apply continuous focus after the stream is playing — this is the
-        // key difference vs passing constraints to getUserMedia upfront
         const track = stream.getVideoTracks()[0]
         const capabilities = track?.getCapabilities() as
           (MediaTrackCapabilities & { torch?: boolean; focusMode?: string[] }) | undefined
 
         if (capabilities?.torch) setTorchSupported(true)
 
-        if (capabilities?.focusMode?.includes('continuous')) {
-          await track.applyConstraints({
-            advanced: [{ focusMode: 'continuous' } as MediaTrackConstraintSet],
-          }).catch(() => {})
-        }
+        // Enumerate devices after getUserMedia so labels are populated
+        const allDevices = await navigator.mediaDevices.enumerateDevices()
+        const videoInputs = allDevices.filter(d => d.kind === 'videoinput')
+        devicesRef.current = videoInputs
 
-        // Now hand the already-playing video element to ZXing
+        const settings = track.getSettings() as MediaTrackSettings & {
+          focusMode?: string; zoom?: number
+        }
+        setDebugInfo({
+          active: [
+            track.label || 'unknown',
+            `${settings.width}×${settings.height}`,
+            settings.facingMode ?? '?',
+            settings.focusMode ? `focus:${settings.focusMode}` : '',
+            settings.zoom ? `zoom:${settings.zoom}` : '',
+          ].filter(Boolean).join(' · '),
+          all: videoInputs.map(d => d.label || d.deviceId.slice(0, 8)),
+          backIds: videoInputs
+            .filter(d => /back|rear/i.test(d.label))
+            .map(d => d.deviceId),
+        })
+
+        const applyFocus = (mode: string) =>
+          track.applyConstraints({ advanced: [{ focusMode: mode } as MediaTrackConstraintSet] }).catch(() => {})
+
+        await applyFocus('continuous')
+        setTimeout(() => {
+          if (cancelled) return
+          applyFocus('auto').then(() => {
+            setTimeout(() => { if (!cancelled) applyFocus('continuous') }, 800)
+          })
+        }, 300)
+
+        refocusInterval = setInterval(() => {
+          if (cancelled) { clearInterval(refocusInterval!); return }
+          applyFocus('auto').then(() => {
+            setTimeout(() => { if (!cancelled) applyFocus('continuous') }, 800)
+          })
+        }, 5000)
+
         controls = await new BrowserMultiFormatReader(HINTS)
           .decodeFromVideoElement(video, (result) => {
             if (!result || cancelled) return
@@ -79,20 +120,28 @@ export default function BarcodeScanner({ onScan, paused = false }: Props) {
 
         if (cancelled) controls.stop()
       } catch (err) {
-        console.error(err)
+        // Saved camera no longer available — clear the preference and retry with default
+        if (preferredDeviceId) {
+          localStorage.removeItem(CAMERA_KEY)
+          setPreferredDeviceId(null)
+        } else {
+          console.error(err)
+        }
       }
     }, 0)
 
     return () => {
       cancelled = true
       clearTimeout(timer)
+      if (refocusInterval) clearInterval(refocusInterval)
       controls?.stop()
       stream?.getTracks().forEach(t => t.stop())
       if (videoRef.current) videoRef.current.srcObject = null
       setTorch(false)
       setTorchSupported(false)
+      setDebugInfo(null)
     }
-  }, [paused])
+  }, [paused, preferredDeviceId])
 
   async function tapToFocus() {
     const video = videoRef.current
@@ -102,7 +151,6 @@ export default function BarcodeScanner({ onScan, paused = false }: Props) {
       : null
     if (!track) return
     try {
-      // 'auto' triggers a one-shot focus, then we switch back to continuous
       await track.applyConstraints({ advanced: [{ focusMode: 'auto' } as MediaTrackConstraintSet] })
       setTimeout(() => {
         track.applyConstraints({ advanced: [{ focusMode: 'continuous' } as MediaTrackConstraintSet] }).catch(() => {})
@@ -124,38 +172,68 @@ export default function BarcodeScanner({ onScan, paused = false }: Props) {
     } catch { /* not supported */ }
   }
 
-  return (
-    <div className="relative">
-      <video
-        ref={videoRef}
-        muted
-        playsInline
-        onClick={tapToFocus}
-        className="w-full max-h-[280px] object-cover rounded-lg bg-black block cursor-pointer"
-      />
+  function cycleCamera() {
+    const backIds = debugInfo?.backIds ?? []
+    if (backIds.length < 2) return
+    const currentIdx = backIds.indexOf(preferredDeviceId ?? '')
+    const nextIdx = (currentIdx + 1) % backIds.length
+    const nextId = backIds[nextIdx]
+    localStorage.setItem(CAMERA_KEY, nextId)
+    setPreferredDeviceId(nextId)
+  }
 
-      {/* Viewfinder overlay */}
-      <div className="absolute inset-0 pointer-events-none flex items-center justify-center">
-        <div className="relative w-[72%] h-20 rounded shadow-[0_0_0_9999px_rgba(0,0,0,0.45)]">
-          <div className="absolute top-0 left-0 w-[18px] h-[18px] border-t-[2.5px] border-l-[2.5px] border-white" />
-          <div className="absolute top-0 right-0 w-[18px] h-[18px] border-t-[2.5px] border-r-[2.5px] border-white" />
-          <div className="absolute bottom-0 left-0 w-[18px] h-[18px] border-b-[2.5px] border-l-[2.5px] border-white" />
-          <div className="absolute bottom-0 right-0 w-[18px] h-[18px] border-b-[2.5px] border-r-[2.5px] border-white" />
+  return (
+    <>
+      <div className="relative">
+        <video
+          ref={videoRef}
+          muted
+          playsInline
+          onClick={tapToFocus}
+          className="w-full max-h-[280px] object-cover rounded-lg bg-black block cursor-pointer"
+        />
+
+        {/* Viewfinder overlay */}
+        <div className="absolute inset-0 pointer-events-none flex items-center justify-center">
+          <div className="relative w-[72%] h-20 rounded shadow-[0_0_0_9999px_rgba(0,0,0,0.45)]">
+            <div className="absolute top-0 left-0 w-[18px] h-[18px] border-t-[2.5px] border-l-[2.5px] border-white" />
+            <div className="absolute top-0 right-0 w-[18px] h-[18px] border-t-[2.5px] border-r-[2.5px] border-white" />
+            <div className="absolute bottom-0 left-0 w-[18px] h-[18px] border-b-[2.5px] border-l-[2.5px] border-white" />
+            <div className="absolute bottom-0 right-0 w-[18px] h-[18px] border-b-[2.5px] border-r-[2.5px] border-white" />
+          </div>
         </div>
+
+        {debugInfo && debugInfo.backIds.length > 1 && (
+          <button
+            type="button"
+            onClick={cycleCamera}
+            title="Switch camera"
+            className="absolute bottom-2 left-2 pointer-events-auto w-9 h-9 p-0 rounded-full flex items-center justify-center text-[1.1rem] border-0 bg-black/50 text-white"
+          >
+            🔄
+          </button>
+        )}
+
+        {torchSupported && (
+          <button
+            type="button"
+            onClick={toggleTorch}
+            title={torch ? 'Turn off torch' : 'Turn on torch'}
+            className={`absolute bottom-2 right-2 pointer-events-auto w-9 h-9 p-0 rounded-full flex items-center justify-center text-[1.1rem] border-0 ${
+              torch ? 'bg-white/90 text-black' : 'bg-black/50 text-white'
+            }`}
+          >
+            🔦
+          </button>
+        )}
       </div>
 
-      {torchSupported && (
-        <button
-          type="button"
-          onClick={toggleTorch}
-          title={torch ? 'Turn off torch' : 'Turn on torch'}
-          className={`absolute bottom-2 right-2 pointer-events-auto w-9 h-9 p-0 rounded-full flex items-center justify-center text-[1.1rem] border-0 ${
-            torch ? 'bg-white/90 text-black' : 'bg-black/50 text-white'
-          }`}
-        >
-          🔦
-        </button>
+      {debugInfo && (
+        <div className="mt-1 text-[10px] leading-tight text-clay opacity-70 space-y-0.5">
+          <div><span className="font-semibold">Active:</span> {debugInfo.active}</div>
+          <div><span className="font-semibold">All cameras:</span> {debugInfo.all.join(' / ')}</div>
+        </div>
       )}
-    </div>
+    </>
   )
 }
