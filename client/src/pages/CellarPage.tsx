@@ -50,10 +50,10 @@ export default function CellarPage() {
 
   return (
     <div>
-      <h2 className="text-2xl mb-5">My Cellar</h2>
+      <h2 className="text-2xl mb-5">Kjelleren min</h2>
 
-      {isLoading && <p className="text-clay text-sm">Loading…</p>}
-      {error && <p className="text-red-600 text-sm mb-4">Failed to load cellar.</p>}
+      {isLoading && <p className="text-clay text-sm">Laster…</p>}
+      {error && <p className="text-red-600 text-sm mb-4">Kunne ikke laste kjelleren.</p>}
 
       <div className="sticky top-0 z-10 bg-warm pb-3 mb-1">
         <div className={`flex flex-wrap gap-1.5 ${allPairings.length > 0 || allTypes.length > 0 ? 'mb-2' : ''}`}>
@@ -64,7 +64,7 @@ export default function CellarPage() {
               className={filterBtn(storageFilter === opt)}
               onClick={() => setStorageFilter(prev => prev === opt ? null : opt)}
             >
-              {opt === 'drink-now' ? 'Drink now' : 'Can store'}
+              {opt === 'drink-now' ? 'Drikk nå' : 'Kan lagres'}
             </button>
           ))}
 
@@ -97,15 +97,15 @@ export default function CellarPage() {
       </div>
 
       {!isLoading && !error && !entries?.length && (
-        <p className="text-clay text-sm">Your cellar is empty. Scan a bottle to add it.</p>
+        <p className="text-clay text-sm">Kjelleren er tom. Skann en flaske for å legge den til.</p>
       )}
 
       {visibleEntries && visibleEntries.length > 0 && (
         <table className="w-full border-collapse text-[0.9rem] wine-table">
           <thead>
             <tr>
-              <th className="text-left text-xs text-clay font-semibold px-3 py-2 border-b border-stone">Wine</th>
-              <th className="text-right text-xs text-clay font-semibold px-3 py-2 border-b border-stone">Bottles</th>
+              <th className="text-left text-xs text-clay font-semibold px-3 py-2 border-b border-stone">Vin</th>
+              <th className="text-right text-xs text-clay font-semibold px-3 py-2 border-b border-stone">Flasker</th>
             </tr>
           </thead>
           <tbody>
@@ -122,8 +122,8 @@ export default function CellarPage() {
       )}
 
       <div className="fixed bottom-0 left-0 right-0 z-50 bg-surface border-t border-stone px-6 pt-3 flex gap-3 bottom-bar-safe">
-        <button type="button" className="flex-1 py-3 text-base" onClick={() => setModal('add')}>+ Add wine</button>
-        <button type="button" className="flex-1 py-3 text-base" onClick={() => setModal('remove')}>− Remove wine</button>
+        <button type="button" className="flex-1 py-3 text-base" onClick={() => setModal('add')}>+ Legg til vin</button>
+        <button type="button" className="flex-1 py-3 text-base" onClick={() => setModal('remove')}>− Fjern vin</button>
       </div>
 
       {modal && (

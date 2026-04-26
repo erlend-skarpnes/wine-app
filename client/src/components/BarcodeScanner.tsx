@@ -207,7 +207,7 @@ export default function BarcodeScanner({ onScan, paused = false }: Props) {
           <button
             type="button"
             onClick={cycleCamera}
-            title="Switch camera"
+            title="Bytt kamera"
             className="absolute bottom-2 left-2 pointer-events-auto w-9 h-9 p-0 rounded-full flex items-center justify-center text-[1.1rem] border-0 bg-black/50 text-white"
           >
             🔄
@@ -218,7 +218,7 @@ export default function BarcodeScanner({ onScan, paused = false }: Props) {
           <button
             type="button"
             onClick={toggleTorch}
-            title={torch ? 'Turn off torch' : 'Turn on torch'}
+            title={torch ? 'Slå av lommelykten' : 'Slå på lommelykten'}
             className={`absolute bottom-2 right-2 pointer-events-auto w-9 h-9 p-0 rounded-full flex items-center justify-center text-[1.1rem] border-0 ${
               torch ? 'bg-white/90 text-black' : 'bg-black/50 text-white'
             }`}
@@ -230,8 +230,8 @@ export default function BarcodeScanner({ onScan, paused = false }: Props) {
 
       {debugInfo && (
         <div className="mt-1 text-[10px] leading-tight text-clay opacity-70 space-y-0.5">
-          <div><span className="font-semibold">Active:</span> {debugInfo.active}</div>
-          <div><span className="font-semibold">All cameras:</span> {debugInfo.all.join(' / ')}</div>
+          <div><span className="font-semibold">Aktiv:</span> {debugInfo.active}</div>
+          <div><span className="font-semibold">Alle kameraer:</span> {debugInfo.all.join(' / ')}</div>
         </div>
       )}
     </>

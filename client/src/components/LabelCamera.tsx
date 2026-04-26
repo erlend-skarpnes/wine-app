@@ -53,7 +53,7 @@ export default function LabelCamera({ onCapture, disabled = false }: Props) {
       />
       <div className="mt-3 text-center">
         <button type="button" onClick={capture} disabled={disabled}>
-          Capture label
+          Ta bilde av etikett
         </button>
       </div>
     </div>

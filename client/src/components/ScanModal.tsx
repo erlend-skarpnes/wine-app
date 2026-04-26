@@ -47,8 +47,8 @@ export default function ScanModal({ mode, onClose, onAdjusted }: Props) {
       }
     } catch (err: unknown) {
       const message = err instanceof Error && err.message.includes('400')
-        ? 'Nothing to remove.'
-        : 'Something went wrong.'
+        ? 'Ingenting å fjerne.'
+        : 'Noe gikk galt.'
       setState({ status: 'error', message })
     }
   }, [mode, onAdjusted])
@@ -105,7 +105,7 @@ export default function ScanModal({ mode, onClose, onAdjusted }: Props) {
     >
       <div className="bg-surface rounded-lg p-6 w-full max-w-[420px] shadow-[0_8px_32px_rgba(0,0,0,0.2)]">
         <div className="flex justify-between items-center mb-4">
-          <h3 className="text-[1.1rem] font-semibold">{mode === 'add' ? 'Add wine' : 'Remove wine'}</h3>
+          <h3 className="text-[1.1rem] font-semibold">{mode === 'add' ? 'Legg til vin' : 'Fjern vin'}</h3>
           <button type="button" className="modal-close" onClick={onClose}>✕</button>
         </div>
 
@@ -114,18 +114,18 @@ export default function ScanModal({ mode, onClose, onAdjusted }: Props) {
 
         <div className="mt-4 min-h-8">
           {state.status === 'scanning' && (
-            <p className="text-clay text-sm">Scan the barcode on the bottle.</p>
+            <p className="text-clay text-sm">Skann strekkoden på flasken.</p>
           )}
 
           {isSpinning && <div className="spinner" />}
 
           {state.status === 'capture' && (
-            <p className="text-clay text-sm">Point the camera at the wine label and capture a photo.</p>
+            <p className="text-clay text-sm">Pek kameraet mot etiketten og ta et bilde.</p>
           )}
 
           {state.status === 'suggestions' && (
             <div>
-              <p className="mb-2">Select the correct wine:</p>
+              <p className="mb-2">Velg riktig vin:</p>
               <ul className="list-none p-0 mb-3">
                 {state.suggestions.map(s => (
                   <li key={s.id} className="mb-1">
@@ -146,7 +146,7 @@ export default function ScanModal({ mode, onClose, onAdjusted }: Props) {
                 className="secondary"
                 onClick={() => setState({ status: 'success', entry: state.entry, prevQuantity: state.entry.quantity - 1, wineName: null, imageUrl: null })}
               >
-                Skip
+                Hopp over
               </button>
             </div>
           )}
@@ -164,7 +164,7 @@ export default function ScanModal({ mode, onClose, onAdjusted }: Props) {
               <div className="text-center">
                 <p className="font-semibold mb-1">{state.wineName ?? state.entry.barcode}</p>
                 <p className="text-clay text-[0.85rem]">
-                  Stock: {state.prevQuantity} → {state.entry.quantity}
+                  Beholdning: {state.prevQuantity} → {state.entry.quantity}
                 </p>
               </div>
 
@@ -191,10 +191,10 @@ export default function ScanModal({ mode, onClose, onAdjusted }: Props) {
 
               <div className="flex gap-2">
                 <button type="button" className="flex-1 py-3 text-base" onClick={() => setState({ status: 'scanning' })}>
-                  Scan another
+                  Skann en til
                 </button>
                 <button type="button" className="secondary flex-1 py-3 text-base" onClick={onClose}>
-                  Done
+                  Ferdig
                 </button>
               </div>
             </div>
@@ -204,7 +204,7 @@ export default function ScanModal({ mode, onClose, onAdjusted }: Props) {
             <div>
               <p className="text-red-600 text-[0.9rem] mb-3">{state.message}</p>
               <button type="button" onClick={() => setState({ status: 'scanning' })}>
-                Try again
+                Prøv igjen
               </button>
             </div>
           )}

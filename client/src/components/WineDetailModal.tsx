@@ -24,10 +24,10 @@ export default function WineDetailModal({ barcode, name, onClose }: Props) {
           <button type="button" className="modal-close" onClick={onClose}>✕</button>
         </div>
 
-        {isLoading && <p className="text-clay text-sm">Loading…</p>}
+        {isLoading && <p className="text-clay text-sm">Laster…</p>}
 
         {!isLoading && !wine && (
-          <p className="text-clay text-sm">No details available for this wine yet.</p>
+          <p className="text-clay text-sm">Ingen detaljer tilgjengelig for denne vinen ennå.</p>
         )}
 
         {wine && (
@@ -41,26 +41,26 @@ export default function WineDetailModal({ barcode, name, onClose }: Props) {
             )}
 
             <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-1 text-sm">
-              {wine.type     && <><dt className="text-clay">Type</dt>     <dd>{wine.type}</dd></>}
-              {wine.winery   && <><dt className="text-clay">Winery</dt>   <dd>{wine.winery}</dd></>}
-              {wine.region   && <><dt className="text-clay">Region</dt>   <dd>{[wine.region, wine.country].filter(Boolean).join(', ')}</dd></>}
-              {!wine.region && wine.country && <><dt className="text-clay">Country</dt><dd>{wine.country}</dd></>}
-              {wine.alcoholContent != null && <><dt className="text-clay">Alcohol</dt><dd>{wine.alcoholContent}%</dd></>}
-              {wine.body     && <><dt className="text-clay">Body</dt>     <dd>{wine.body}</dd></>}
-              {wine.acidity  && <><dt className="text-clay">Acidity</dt>  <dd>{wine.acidity}</dd></>}
-              {wine.storagePotential && <><dt className="text-clay">Storage</dt><dd>{wine.storagePotential}</dd></>}
+              {wine.type     && <><dt className="text-clay">Type</dt>          <dd>{wine.type}</dd></>}
+              {wine.winery   && <><dt className="text-clay">Produsent</dt>     <dd>{wine.winery}</dd></>}
+              {wine.region   && <><dt className="text-clay">Region</dt>        <dd>{[wine.region, wine.country].filter(Boolean).join(', ')}</dd></>}
+              {!wine.region && wine.country && <><dt className="text-clay">Land</dt><dd>{wine.country}</dd></>}
+              {wine.alcoholContent != null && <><dt className="text-clay">Alkohol</dt>   <dd>{wine.alcoholContent}%</dd></>}
+              {wine.body     && <><dt className="text-clay">Fylde</dt>         <dd>{wine.body}</dd></>}
+              {wine.acidity  && <><dt className="text-clay">Friskhet</dt>      <dd>{wine.acidity}</dd></>}
+              {wine.storagePotential && <><dt className="text-clay">Lagringsevne</dt><dd>{wine.storagePotential}</dd></>}
             </dl>
 
             {wine.grapes.length > 0 && (
               <div>
-                <p className="text-clay text-xs font-semibold mb-1 uppercase tracking-wide">Grapes</p>
+                <p className="text-clay text-xs font-semibold mb-1 uppercase tracking-wide">Druer</p>
                 <p className="text-sm">{wine.grapes.join(', ')}</p>
               </div>
             )}
 
             {wine.pairings.length > 0 && (
               <div>
-                <p className="text-clay text-xs font-semibold mb-1.5 uppercase tracking-wide">Food Pairings</p>
+                <p className="text-clay text-xs font-semibold mb-1.5 uppercase tracking-wide">Passer til</p>
                 <div className="flex flex-wrap gap-1.5">
                   {wine.pairings.map(p => (
                     <span key={p} className="inline-block bg-stone text-bark rounded-full px-2.5 py-0.5 text-xs">{p}</span>
