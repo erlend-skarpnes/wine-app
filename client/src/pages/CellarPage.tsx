@@ -50,8 +50,9 @@ export default function CellarPage() {
 
   return (
     <div>
-      <div className="sticky top-0 z-10 bg-warm pb-3 mb-1">
-        <div className={`flex flex-wrap gap-1.5 ${allPairings.length > 0 || allTypes.length > 0 ? 'mb-2' : ''}`}>
+      <div className="sticky top-0 z-10 bg-warm pb-3 mb-1 flex flex-col gap-2">
+        <div className="flex items-center gap-1.5 flex-wrap">
+          <span className="text-[0.7rem] font-semibold text-clay uppercase tracking-wide w-14 shrink-0">Lagring</span>
           {(['drink-now', 'store'] as const).map(opt => (
             <button
               key={opt}
@@ -62,21 +63,27 @@ export default function CellarPage() {
               {opt === 'drink-now' ? 'Drikk nå' : 'Kan lagres'}
             </button>
           ))}
-
-          {allTypes.map(type => (
-            <button
-              key={type}
-              type="button"
-              className={filterBtn(typeFilter === type)}
-              onClick={() => setTypeFilter(prev => prev === type ? null : type)}
-            >
-              {type}
-            </button>
-          ))}
         </div>
 
+        {allTypes.length > 0 && (
+          <div className="flex items-center gap-1.5 flex-wrap">
+            <span className="text-[0.7rem] font-semibold text-clay uppercase tracking-wide w-14 shrink-0">Type</span>
+            {allTypes.map(type => (
+              <button
+                key={type}
+                type="button"
+                className={filterBtn(typeFilter === type)}
+                onClick={() => setTypeFilter(prev => prev === type ? null : type)}
+              >
+                {type}
+              </button>
+            ))}
+          </div>
+        )}
+
         {allPairings.length > 0 && (
-          <div className="flex flex-wrap gap-1.5">
+          <div className="flex items-center gap-1.5 flex-wrap">
+            <span className="text-[0.7rem] font-semibold text-clay uppercase tracking-wide w-14 shrink-0">Passer til</span>
             {allPairings.map(pairing => (
               <button
                 key={pairing}
