@@ -50,8 +50,6 @@ export default function CellarPage() {
 
   return (
     <div>
-      {error && <p className="text-red-600 text-sm mb-4">Kunne ikke laste kjelleren.</p>}
-
       <div className="sticky top-0 z-10 bg-warm pb-3 mb-1">
         <div className={`flex flex-wrap gap-1.5 ${allPairings.length > 0 || allTypes.length > 0 ? 'mb-2' : ''}`}>
           {(['drink-now', 'store'] as const).map(opt => (
@@ -92,7 +90,8 @@ export default function CellarPage() {
           </div>
         )}
       </div>
-
+      
+      {error && <p className="text-red-600 text-sm mb-4">Kunne ikke laste kjelleren.</p>}
       {isLoading && <p className="text-clay text-sm">Laster…</p>}
       {!isLoading && !error && !entries?.length && (
         <p className="text-clay text-sm">Kjelleren er tom. Skann en flaske for å legge den til.</p>
