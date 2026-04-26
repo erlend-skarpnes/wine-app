@@ -61,6 +61,10 @@ export default function CellarPage() {
         <p className="text-clay text-sm">Kjelleren er tom. Skann en flaske for å legge den til.</p>
       )}
 
+      {visibleEntries && visibleEntries.length === 0 && entries && entries.length > 0 && (
+        <p className="text-clay text-sm">Ingen viner matcher filteret.</p>
+      )}
+
       {visibleEntries && visibleEntries.length > 0 && (
         <WineTable entries={visibleEntries} onSelect={setSelected} />
       )}
