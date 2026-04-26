@@ -50,9 +50,6 @@ export default function CellarPage() {
 
   return (
     <div>
-      <h2 className="text-2xl mb-5">Kjelleren min</h2>
-
-      {isLoading && <p className="text-clay text-sm">Laster…</p>}
       {error && <p className="text-red-600 text-sm mb-4">Kunne ikke laste kjelleren.</p>}
 
       <div className="sticky top-0 z-10 bg-warm pb-3 mb-1">
@@ -96,6 +93,7 @@ export default function CellarPage() {
         )}
       </div>
 
+      {isLoading && <p className="text-clay text-sm">Laster…</p>}
       {!isLoading && !error && !entries?.length && (
         <p className="text-clay text-sm">Kjelleren er tom. Skann en flaske for å legge den til.</p>
       )}
