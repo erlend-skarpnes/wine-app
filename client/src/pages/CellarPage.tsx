@@ -22,6 +22,7 @@ export default function CellarPage() {
   const [activeFilter, setActiveFilter] = useState<string | null>(null)
   const [storageFilter, setStorageFilter] = useState<'drink-now' | 'store' | null>(null)
   const [typeFilter, setTypeFilter] = useState<string | null>(null)
+  const [filtersOpen, setFiltersOpen] = useState(false)
 
   const { data: entries, isLoading, error } = useQuery({
     queryKey: ['cellar'],
@@ -48,52 +49,72 @@ export default function CellarPage() {
     (!typeFilter || e.type === typeFilter)
   )
 
+  const activeFilterCount = [storageFilter, typeFilter, activeFilter].filter(Boolean).length
+
   return (
     <div>
-      <div className="sticky top-0 z-10 bg-warm pb-3 mb-1 flex flex-col gap-2">
-        <div className="flex items-center gap-1.5 flex-wrap">
-          <span className="text-[0.7rem] font-semibold text-clay uppercase tracking-wide w-14 shrink-0">Lagring</span>
-          {(['drink-now', 'store'] as const).map(opt => (
-            <button
-              key={opt}
-              type="button"
-              className={filterBtn(storageFilter === opt)}
-              onClick={() => setStorageFilter(prev => prev === opt ? null : opt)}
-            >
-              {opt === 'drink-now' ? 'Drikk nå' : 'Kan lagres'}
-            </button>
-          ))}
-        </div>
+      <div className="sticky top-0 z-10 bg-warm pb-3 mb-1">
+        <button
+          type="button"
+          onClick={() => setFiltersOpen(o => !o)}
+          className="flex items-center gap-2 text-base text-clay cursor-pointer mb-2 border-0 bg-transparent p-0"
+        >
+          <span className={`transition-transform duration-200 text-[0.6rem] ${filtersOpen ? 'rotate-90' : ''}`}>▶</span>
+          <span>Filter</span>
+          {activeFilterCount > 0 && (
+            <span className="inline-flex items-center justify-center w-4 h-4 rounded-full bg-wine text-white text-[0.6rem] font-bold">
+              {activeFilterCount}
+            </span>
+          )}
+        </button>
 
-        {allTypes.length > 0 && (
-          <div className="flex items-center gap-1.5 flex-wrap">
-            <span className="text-[0.7rem] font-semibold text-clay uppercase tracking-wide w-14 shrink-0">Type</span>
-            {allTypes.map(type => (
-              <button
-                key={type}
-                type="button"
-                className={filterBtn(typeFilter === type)}
-                onClick={() => setTypeFilter(prev => prev === type ? null : type)}
-              >
-                {type}
-              </button>
-            ))}
-          </div>
-        )}
+        {filtersOpen && (
+          <div className="flex flex-col gap-2">
+            <div className="flex items-center gap-1.5 flex-wrap">
+              <span className="text-[0.7rem] font-semibold text-clay uppercase tracking-wide w-14 shrink-0">Lagring</span>
+              {(['drink-now', 'store'] as const).map(opt => (
+                <button
+                  key={opt}
+                  type="button"
+                  className={filterBtn(storageFilter === opt)}
+                  onClick={() => setStorageFilter(prev => prev === opt ? null : opt)}
+                >
+                  {opt === 'drink-now' ? 'Drikk nå' : 'Kan lagres'}
+                </button>
+              ))}
+            </div>
 
-        {allPairings.length > 0 && (
-          <div className="flex items-center gap-1.5 flex-wrap">
-            <span className="text-[0.7rem] font-semibold text-clay uppercase tracking-wide w-14 shrink-0">Passer til</span>
-            {allPairings.map(pairing => (
-              <button
-                key={pairing}
-                type="button"
-                className={filterBtn(activeFilter === pairing)}
-                onClick={() => setActiveFilter(prev => prev === pairing ? null : pairing)}
-              >
-                {pairing}
-              </button>
-            ))}
+            {allTypes.length > 0 && (
+              <div className="flex items-center gap-1.5 flex-wrap">
+                <span className="text-[0.7rem] font-semibold text-clay uppercase tracking-wide w-14 shrink-0">Type</span>
+                {allTypes.map(type => (
+                  <button
+                    key={type}
+                    type="button"
+                    className={filterBtn(typeFilter === type)}
+                    onClick={() => setTypeFilter(prev => prev === type ? null : type)}
+                  >
+                    {type}
+                  </button>
+                ))}
+              </div>
+            )}
+
+            {allPairings.length > 0 && (
+              <div className="flex items-center gap-1.5 flex-wrap">
+                <span className="text-[0.7rem] font-semibold text-clay uppercase tracking-wide w-14 shrink-0">Passer til</span>
+                {allPairings.map(pairing => (
+                  <button
+                    key={pairing}
+                    type="button"
+                    className={filterBtn(activeFilter === pairing)}
+                    onClick={() => setActiveFilter(prev => prev === pairing ? null : pairing)}
+                  >
+                    {pairing}
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
         )}
       </div>
