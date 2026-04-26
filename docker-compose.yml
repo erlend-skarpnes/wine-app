@@ -33,7 +33,7 @@ services:
     build: ./client
     restart: unless-stopped
     ports:
-      - "3000:80"
+      - "3333:80"
     depends_on:
       - server
 

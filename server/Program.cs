@@ -27,7 +27,7 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
 var corsOrigins = builder.Configuration.GetSection("Cors:Origins").Get<string[]>()
-    ?? ["http://localhost:3000", "http://localhost:5173"];
+    ?? ["http://localhost:3333", "http://localhost:5173"];
 
 builder.Services.AddCors(options =>
     options.AddDefaultPolicy(policy =>
