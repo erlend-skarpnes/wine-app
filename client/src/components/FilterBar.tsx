@@ -49,8 +49,8 @@ export default function FilterBar({
       </button>
 
       {filtersOpen && (
-        <div className="flex flex-col gap-2">
-          <div className="flex items-center gap-1.5 flex-wrap">
+        <div className="flex flex-col divide-y divide-stone bg-stone rounded-lg px-3">
+          <div className="flex items-center gap-1.5 flex-wrap py-2">
             <span className="text-[0.7rem] font-semibold text-clay uppercase tracking-wide w-14 shrink-0">Lagring</span>
             {(['drink-now', 'store'] as const).map(opt => (
               <button
@@ -65,7 +65,7 @@ export default function FilterBar({
           </div>
 
           {allTypes.length > 0 && (
-            <div className="flex items-center gap-1.5 flex-wrap">
+            <div className="flex items-center gap-1.5 flex-wrap py-2">
               <span className="text-[0.7rem] font-semibold text-clay uppercase tracking-wide w-14 shrink-0">Type</span>
               {allTypes.map(type => (
                 <button
@@ -81,7 +81,7 @@ export default function FilterBar({
           )}
 
           {allGrapes.length > 0 && (
-            <div className="flex items-center gap-1.5 flex-wrap">
+            <div className="flex items-center gap-1.5 flex-wrap py-2">
               <span className="text-[0.7rem] font-semibold text-clay uppercase tracking-wide w-14 shrink-0">Drue</span>
               {allGrapes.map(grape => (
                 <button
@@ -97,7 +97,7 @@ export default function FilterBar({
           )}
 
           {allPairings.length > 0 && (
-            <div className="flex items-center gap-1.5 flex-wrap">
+            <div className="flex items-center gap-1.5 flex-wrap py-2">
               <span className="text-[0.7rem] font-semibold text-clay uppercase tracking-wide w-14 shrink-0">Passer til</span>
               {allPairings.map(pairing => (
                 <button
