@@ -70,7 +70,15 @@ export default function BarcodeScanner({ onScan, paused = false }: Props) {
         // Enumerate devices after getUserMedia so labels are populated
         const allDevices = await navigator.mediaDevices.enumerateDevices()
         const videoInputs = allDevices.filter(d => d.kind === 'videoinput')
-        if (!cancelled) setDevices(videoInputs)
+        if (!cancelled) {
+          setDevices(videoInputs)
+          // On first use with multiple cameras, prompt the user to pick rather than
+          // silently keeping the OS default (important on iOS where auto-switching
+          // between lenses can't be overridden any other way)
+          if (videoInputs.length > 1 && !preferredDeviceId) {
+            setShowCameraPicker(true)
+          }
+        }
 
         const applyFocus = (mode: string) =>
           track.applyConstraints({ advanced: [{ focusMode: mode } as MediaTrackConstraintSet] }).catch(() => {})
