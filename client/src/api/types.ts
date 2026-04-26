@@ -10,14 +10,13 @@ export interface CellarEntry {
 
 export interface WineData {
   barcode: string
-  wineApiId: string
+  productCode: string
   name: string
+  vintage: string | null
   type: string | null
   winery: string | null
   region: string | null
   country: string | null
-  averageRating: number | null
-  ratingsCount: number | null
   body: string | null
   acidity: string | null
   alcoholContent: number | null
@@ -35,7 +34,6 @@ export interface WineSuggestion {
   winery: string | null
   region: string | null
   country: string | null
-  averageRating: number | null
 }
 
 export type IdentifyResponse =

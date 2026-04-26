@@ -20,7 +20,6 @@ public class WineSuggestion
     public string? Winery { get; init; }
     public string? Region { get; init; }
     public string? Country { get; init; }
-    public double? AverageRating { get; init; }
 }
 
 // --- Private raw API response DTOs ---
@@ -112,7 +111,6 @@ public class WineApiService(HttpClient http)
                 Winery = s.Winery,
                 Region = s.Region,
                 Country = s.Country,
-                AverageRating = s.AverageRating,
             })
             .ToArray() ?? [];
 
@@ -132,14 +130,12 @@ public class WineApiService(HttpClient http)
         return new WineData
         {
             Barcode = barcode,
-            WineApiId = detail.Id,
+            ProductCode = detail.Id,
             Name = detail.Name,
             Type = detail.Type,
             Winery = detail.Winery?.Name,
             Region = detail.Region?.Name,
             Country = detail.Region?.Country,
-            AverageRating = detail.AverageRating,
-            RatingsCount = detail.RatingsCount,
             Body = detail.Body,
             Acidity = detail.Acidity,
             AlcoholContent = detail.AlcoholContent,

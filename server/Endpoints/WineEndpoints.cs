@@ -53,10 +53,10 @@ public static class WineEndpoints
             return Results.Ok(new { status = "suggestions", suggestions = identified.Suggestions });
         });
 
-        // POST /api/wines/link  { barcode, wineApiId }
+        // POST /api/wines/link  { barcode, productCode }
         group.MapPost("/link", async (LinkRequest req, AppDbContext db, WineApiService wineApi) =>
         {
-            var wineData = await wineApi.GetDetailAsync(req.WineApiId, req.Barcode);
+            var wineData = await wineApi.GetDetailAsync(req.ProductCode, req.Barcode);
             await Upsert(db, wineData);
             return Results.Ok(wineData);
         });
@@ -74,4 +74,4 @@ public static class WineEndpoints
     }
 }
 
-record LinkRequest(string Barcode, string WineApiId);
+record LinkRequest(string Barcode, string ProductCode);

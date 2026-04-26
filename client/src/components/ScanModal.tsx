@@ -137,7 +137,6 @@ export default function ScanModal({ mode, onClose, onAdjusted }: Props) {
                       <strong>{s.name}</strong>
                       {s.winery && ` — ${s.winery}`}
                       {s.region && `, ${s.region}`}
-                      {s.averageRating != null && ` (${s.averageRating.toFixed(1)})`}
                     </button>
                   </li>
                 ))}

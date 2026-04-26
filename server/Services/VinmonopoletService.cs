@@ -123,8 +123,9 @@ public class VinmonopoletService(HttpClient http)
     private static WineData Map(VmpProductDetail p, string barcode) => new()
     {
         Barcode        = barcode,
-        WineApiId      = p.Code ?? barcode,
+        ProductCode    = p.Code ?? barcode,
         Name           = p.Name ?? barcode,
+        Vintage        = string.IsNullOrWhiteSpace(p.Year) ? null : p.Year,
         Type           = p.MainCategory?.Name,
         Winery         = p.MainProducer?.Name,
         Region         = p.District?.Name,

@@ -18,6 +18,6 @@ export async function identifyWine(barcode: string, image: Blob): Promise<Identi
   return res.json() as Promise<IdentifyResponse>
 }
 
-export function linkWine(barcode: string, wineApiId: string): Promise<WineData> {
-  return api.post<WineData>('/wines/link', { barcode, wineApiId })
+export function linkWine(barcode: string, productCode: string): Promise<WineData> {
+  return api.post<WineData>('/wines/link', { barcode, productCode })
 }
