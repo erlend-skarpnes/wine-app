@@ -10,6 +10,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@auth0/auth0-react": "2.x",
     "@tanstack/react-query": "^5.62.0",
     "@zxing/browser": "^0.1.4",
     "@zxing/library": "^0.21.3",

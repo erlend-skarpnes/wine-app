@@ -28,6 +28,7 @@ const RAW_RUNTIME_STATE =
       [null, {\
         "packageLocation": "./",\
         "packageDependencies": [\
+          ["@auth0/auth0-react", "virtual:d6fb3eb4991459731c0a7032aaa27d56940cc7297eac046706b18620c0981d02efe353f3e1d54ea8761172c0b9cdb92101400f7406e52c3c3003bf603a1ef237#npm:2.16.2"],\
           ["@tailwindcss/vite", "virtual:d6fb3eb4991459731c0a7032aaa27d56940cc7297eac046706b18620c0981d02efe353f3e1d54ea8761172c0b9cdb92101400f7406e52c3c3003bf603a1ef237#npm:4.2.4"],\
           ["@tanstack/react-query", "virtual:d6fb3eb4991459731c0a7032aaa27d56940cc7297eac046706b18620c0981d02efe353f3e1d54ea8761172c0b9cdb92101400f7406e52c3c3003bf603a1ef237#npm:5.99.2"],\
           ["@types/react", "npm:18.3.28"],\
@@ -67,6 +68,57 @@ const RAW_RUNTIME_STATE =
         "packagePeers": [\
           "@types/ajv",\
           "ajv"\
+        ],\
+        "linkType": "HARD"\
+      }]\
+    ]],\
+    ["@auth0/auth0-auth-js", [\
+      ["npm:1.6.0", {\
+        "packageLocation": "../../../.yarn/berry/cache/@auth0-auth0-auth-js-npm-1.6.0-c0c65b009c-10c0.zip/node_modules/@auth0/auth0-auth-js/",\
+        "packageDependencies": [\
+          ["@auth0/auth0-auth-js", "npm:1.6.0"],\
+          ["jose", "npm:6.2.3"],\
+          ["openid-client", "npm:6.8.4"]\
+        ],\
+        "linkType": "HARD"\
+      }]\
+    ]],\
+    ["@auth0/auth0-react", [\
+      ["npm:2.16.2", {\
+        "packageLocation": "../../../.yarn/berry/cache/@auth0-auth0-react-npm-2.16.2-be2d0a80fd-10c0.zip/node_modules/@auth0/auth0-react/",\
+        "packageDependencies": [\
+          ["@auth0/auth0-react", "npm:2.16.2"]\
+        ],\
+        "linkType": "SOFT"\
+      }],\
+      ["virtual:d6fb3eb4991459731c0a7032aaa27d56940cc7297eac046706b18620c0981d02efe353f3e1d54ea8761172c0b9cdb92101400f7406e52c3c3003bf603a1ef237#npm:2.16.2", {\
+        "packageLocation": "./.yarn/__virtual__/@auth0-auth0-react-virtual-58d1e6176c/4/.yarn/berry/cache/@auth0-auth0-react-npm-2.16.2-be2d0a80fd-10c0.zip/node_modules/@auth0/auth0-react/",\
+        "packageDependencies": [\
+          ["@auth0/auth0-react", "virtual:d6fb3eb4991459731c0a7032aaa27d56940cc7297eac046706b18620c0981d02efe353f3e1d54ea8761172c0b9cdb92101400f7406e52c3c3003bf603a1ef237#npm:2.16.2"],\
+          ["@auth0/auth0-spa-js", "npm:2.19.2"],\
+          ["@types/react", "npm:18.3.28"],\
+          ["@types/react-dom", "virtual:d6fb3eb4991459731c0a7032aaa27d56940cc7297eac046706b18620c0981d02efe353f3e1d54ea8761172c0b9cdb92101400f7406e52c3c3003bf603a1ef237#npm:18.3.7"],\
+          ["react", "npm:18.3.1"],\
+          ["react-dom", "virtual:d6fb3eb4991459731c0a7032aaa27d56940cc7297eac046706b18620c0981d02efe353f3e1d54ea8761172c0b9cdb92101400f7406e52c3c3003bf603a1ef237#npm:18.3.1"]\
+        ],\
+        "packagePeers": [\
+          "@types/react-dom",\
+          "@types/react",\
+          "react-dom",\
+          "react"\
+        ],\
+        "linkType": "HARD"\
+      }]\
+    ]],\
+    ["@auth0/auth0-spa-js", [\
+      ["npm:2.19.2", {\
+        "packageLocation": "../../../.yarn/berry/cache/@auth0-auth0-spa-js-npm-2.19.2-c093b0598b-10c0.zip/node_modules/@auth0/auth0-spa-js/",\
+        "packageDependencies": [\
+          ["@auth0/auth0-auth-js", "npm:1.6.0"],\
+          ["@auth0/auth0-spa-js", "npm:2.19.2"],\
+          ["browser-tabs-lock", "npm:1.3.0"],\
+          ["dpop", "npm:2.1.1"],\
+          ["es-cookie", "npm:1.3.2"]\
         ],\
         "linkType": "HARD"\
       }]\
@@ -3487,6 +3539,16 @@ const RAW_RUNTIME_STATE =
         "linkType": "HARD"\
       }]\
     ]],\
+    ["browser-tabs-lock", [\
+      ["npm:1.3.0", {\
+        "packageLocation": "./.yarn/unplugged/browser-tabs-lock-npm-1.3.0-72a36ae032/node_modules/browser-tabs-lock/",\
+        "packageDependencies": [\
+          ["browser-tabs-lock", "npm:1.3.0"],\
+          ["lodash", "npm:4.18.1"]\
+        ],\
+        "linkType": "HARD"\
+      }]\
+    ]],\
     ["browserslist", [\
       ["npm:4.28.2", {\
         "packageLocation": "../../../.yarn/berry/cache/browserslist-npm-4.28.2-8923c4854e-10c0.zip/node_modules/browserslist/",\
@@ -3731,6 +3793,15 @@ const RAW_RUNTIME_STATE =
         "linkType": "HARD"\
       }]\
     ]],\
+    ["dpop", [\
+      ["npm:2.1.1", {\
+        "packageLocation": "../../../.yarn/berry/cache/dpop-npm-2.1.1-d2dcb41e4d-10c0.zip/node_modules/dpop/",\
+        "packageDependencies": [\
+          ["dpop", "npm:2.1.1"]\
+        ],\
+        "linkType": "HARD"\
+      }]\
+    ]],\
     ["dunder-proto", [\
       ["npm:1.0.1", {\
         "packageLocation": "../../../.yarn/berry/cache/dunder-proto-npm-1.0.1-90eb6829db-10c0.zip/node_modules/dunder-proto/",\
@@ -3841,6 +3912,15 @@ const RAW_RUNTIME_STATE =
           ["typed-array-length", "npm:1.0.7"],\
           ["unbox-primitive", "npm:1.1.0"],\
           ["which-typed-array", "npm:1.1.20"]\
+        ],\
+        "linkType": "HARD"\
+      }]\
+    ]],\
+    ["es-cookie", [\
+      ["npm:1.3.2", {\
+        "packageLocation": "../../../.yarn/berry/cache/es-cookie-npm-1.3.2-626e96a30a-10c0.zip/node_modules/es-cookie/",\
+        "packageDependencies": [\
+          ["es-cookie", "npm:1.3.2"]\
         ],\
         "linkType": "HARD"\
       }]\
@@ -4636,6 +4716,15 @@ const RAW_RUNTIME_STATE =
         "linkType": "HARD"\
       }]\
     ]],\
+    ["jose", [\
+      ["npm:6.2.3", {\
+        "packageLocation": "../../../.yarn/berry/cache/jose-npm-6.2.3-e99322e00c-10c0.zip/node_modules/jose/",\
+        "packageDependencies": [\
+          ["jose", "npm:6.2.3"]\
+        ],\
+        "linkType": "HARD"\
+      }]\
+    ]],\
     ["js-tokens", [\
       ["npm:4.0.0", {\
         "packageLocation": "../../../.yarn/berry/cache/js-tokens-npm-4.0.0-0ac852e9e2-10c0.zip/node_modules/js-tokens/",\
@@ -4995,6 +5084,15 @@ const RAW_RUNTIME_STATE =
         "linkType": "HARD"\
       }]\
     ]],\
+    ["oauth4webapi", [\
+      ["npm:3.8.6", {\
+        "packageLocation": "../../../.yarn/berry/cache/oauth4webapi-npm-3.8.6-d99b72248c-10c0.zip/node_modules/oauth4webapi/",\
+        "packageDependencies": [\
+          ["oauth4webapi", "npm:3.8.6"]\
+        ],\
+        "linkType": "HARD"\
+      }]\
+    ]],\
     ["object-inspect", [\
       ["npm:1.13.4", {\
         "packageLocation": "../../../.yarn/berry/cache/object-inspect-npm-1.13.4-4e741f9806-10c0.zip/node_modules/object-inspect/",\
@@ -5024,6 +5122,17 @@ const RAW_RUNTIME_STATE =
           ["has-symbols", "npm:1.1.0"],\
           ["object-keys", "npm:1.1.1"],\
           ["object.assign", "npm:4.1.7"]\
+        ],\
+        "linkType": "HARD"\
+      }]\
+    ]],\
+    ["openid-client", [\
+      ["npm:6.8.4", {\
+        "packageLocation": "../../../.yarn/berry/cache/openid-client-npm-6.8.4-f2e8a1b024-10c0.zip/node_modules/openid-client/",\
+        "packageDependencies": [\
+          ["jose", "npm:6.2.3"],\
+          ["oauth4webapi", "npm:3.8.6"],\
+          ["openid-client", "npm:6.8.4"]\
         ],\
         "linkType": "HARD"\
       }]\
@@ -6226,6 +6335,7 @@ const RAW_RUNTIME_STATE =
       ["workspace:.", {\
         "packageLocation": "./",\
         "packageDependencies": [\
+          ["@auth0/auth0-react", "virtual:d6fb3eb4991459731c0a7032aaa27d56940cc7297eac046706b18620c0981d02efe353f3e1d54ea8761172c0b9cdb92101400f7406e52c3c3003bf603a1ef237#npm:2.16.2"],\
           ["@tailwindcss/vite", "virtual:d6fb3eb4991459731c0a7032aaa27d56940cc7297eac046706b18620c0981d02efe353f3e1d54ea8761172c0b9cdb92101400f7406e52c3c3003bf603a1ef237#npm:4.2.4"],\
           ["@tanstack/react-query", "virtual:d6fb3eb4991459731c0a7032aaa27d56940cc7297eac046706b18620c0981d02efe353f3e1d54ea8761172c0b9cdb92101400f7406e52c3c3003bf603a1ef237#npm:5.99.2"],\
           ["@types/react", "npm:18.3.28"],\

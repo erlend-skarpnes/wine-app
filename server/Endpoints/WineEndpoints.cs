@@ -8,7 +8,7 @@ public static class WineEndpoints
 {
     public static void MapWineEndpoints(this WebApplication app)
     {
-        var group = app.MapGroup("/api/wines").WithTags("Wines");
+        var group = app.MapGroup("/api/wines").WithTags("Wines").RequireAuthorization();
 
         // GET /api/wines/{barcode}
         // Checks the local DB first; on a miss, tries Vinmonopolet automatically.

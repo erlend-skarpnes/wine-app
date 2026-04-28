@@ -1,3 +1,4 @@
+using System.Security.Claims;
 using Microsoft.EntityFrameworkCore;
 using WineApp.Api.Data;
 using WineApp.Api.Models;
@@ -8,13 +9,13 @@ public static class CellarEndpoints
 {
     public static void MapCellarEndpoints(this WebApplication app)
     {
-        var group = app.MapGroup("/api/cellar").WithTags("Cellar");
+        var group = app.MapGroup("/api/cellar").WithTags("Cellar").RequireAuthorization();
 
-        group.MapGet("/", async (HttpRequest request, AppDbContext db) =>
+        group.MapGet("/", async (ClaimsPrincipal user, AppDbContext db) =>
         {
-            var userId = request.Headers["X-User-Id"].FirstOrDefault();
+            var userId = user.FindFirstValue("sub");
             if (string.IsNullOrEmpty(userId))
-                return Results.BadRequest(new { message = "Missing X-User-Id header." });
+                return Results.Unauthorized();
 
             var entries = await db.CellarEntries
                 .Where(e => e.UserId == userId && e.Quantity > 0)
@@ -36,11 +37,11 @@ public static class CellarEndpoints
             return Results.Ok(entries);
         });
 
-        group.MapPost("/adjust", async (AdjustRequest req, HttpRequest request, AppDbContext db) =>
+        group.MapPost("/adjust", async (AdjustRequest req, ClaimsPrincipal user, AppDbContext db) =>
         {
-            var userId = request.Headers["X-User-Id"].FirstOrDefault();
+            var userId = user.FindFirstValue("sub");
             if (string.IsNullOrEmpty(userId))
-                return Results.BadRequest(new { message = "Missing X-User-Id header." });
+                return Results.Unauthorized();
 
             var entry = await db.CellarEntries.FindAsync(userId, req.Barcode);
 
