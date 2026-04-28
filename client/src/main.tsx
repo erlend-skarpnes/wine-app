@@ -16,6 +16,8 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
         redirect_uri: window.location.origin,
         audience: 'https://vin.skarpn.es/api',
       }}
+      useRefreshTokens={true}
+      cacheLocation="localstorage"
     >
       <QueryClientProvider client={queryClient}>
         <App />
