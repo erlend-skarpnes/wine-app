@@ -82,11 +82,11 @@ public static class AuthEndpoints
                 : Results.Ok(new { username });
         }).RequireAuthorization();
 
-        // POST /api/auth/invites — admin only, generates a single-use invite link
-        group.MapPost("/invites", async (AppDbContext db, IConfiguration config, HttpRequest request) =>
+        // GET /api/auth/invites?key=<adminKey> — admin only, generates a single-use invite link
+        group.MapGet("/invites", async (AppDbContext db, IConfiguration config, HttpRequest request) =>
         {
             var adminKey = config["AdminKey"];
-            if (string.IsNullOrEmpty(adminKey) || request.Headers["X-Admin-Key"].FirstOrDefault() != adminKey)
+            if (string.IsNullOrEmpty(adminKey) || request.Query["key"].FirstOrDefault() != adminKey)
                 return Results.Forbid();
 
             var token = Convert.ToHexString(RandomNumberGenerator.GetBytes(32));
