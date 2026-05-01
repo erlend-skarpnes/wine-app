@@ -1,8 +1,14 @@
 import { useEffect, useState } from 'react'
 import CellarPage from './pages/CellarPage'
 import LoginForm from './components/LoginForm'
+import RegisterForm from './components/RegisterForm'
 import { me, logout } from './api/auth'
 import { setUnauthenticatedHandler } from './api/client'
+
+function getInviteToken(): string | null {
+  const match = window.location.pathname.match(/^\/invite\/([a-fA-F0-9]+)$/)
+  return match ? match[1] : null
+}
 
 export default function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false)
@@ -52,7 +58,12 @@ export default function App() {
       <main className="flex-1 overflow-y-auto p-6 pb-[calc(1.5rem+72px)] max-w-[960px] mx-auto w-full">
         {isAuthenticated
           ? <CellarPage />
-          : <LoginForm onLogin={name => { setIsAuthenticated(true); setUsername(name) }} />
+          : getInviteToken()
+            ? <RegisterForm
+                inviteToken={getInviteToken()!}
+                onRegister={name => { setIsAuthenticated(true); setUsername(name) }}
+              />
+            : <LoginForm onLogin={name => { setIsAuthenticated(true); setUsername(name) }} />
         }
       </main>
     </div>

@@ -9,6 +9,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
     public DbSet<WineData> WineData => Set<WineData>();
     public DbSet<AppUser> Users => Set<AppUser>();
     public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
+    public DbSet<Invitation> Invitations => Set<Invitation>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -26,6 +27,9 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
 
         modelBuilder.Entity<RefreshToken>()
             .HasIndex(r => r.Token).IsUnique();
+
+        modelBuilder.Entity<Invitation>()
+            .HasIndex(i => i.Token).IsUnique();
 
         modelBuilder.Entity<RefreshToken>()
             .HasOne(r => r.User)

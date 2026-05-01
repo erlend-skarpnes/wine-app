@@ -82,6 +82,48 @@ public static class AuthEndpoints
                 : Results.Ok(new { username });
         }).RequireAuthorization();
 
+        // POST /api/auth/invites — admin only, generates a single-use invite link
+        group.MapPost("/invites", async (AppDbContext db, IConfiguration config, HttpRequest request) =>
+        {
+            var adminKey = config["AdminKey"];
+            if (string.IsNullOrEmpty(adminKey) || request.Headers["X-Admin-Key"].FirstOrDefault() != adminKey)
+                return Results.Forbid();
+
+            var token = Convert.ToHexString(RandomNumberGenerator.GetBytes(32));
+            db.Invitations.Add(new Invitation
+            {
+                Token = token,
+                ExpiresAt = DateTime.UtcNow.AddDays(7),
+            });
+            await db.SaveChangesAsync();
+
+            var origin = $"{request.Scheme}://{request.Host}";
+            return Results.Ok(new { url = $"{origin}/invite/{token}" });
+        });
+
+        // POST /api/auth/register — consume invite token, create user, log in
+        group.MapPost("/register", async (RegisterRequest req, AppDbContext db, IConfiguration config, HttpResponse response) =>
+        {
+            var invite = await db.Invitations.FirstOrDefaultAsync(i => i.Token == req.InviteToken);
+            if (invite is null || invite.IsUsed || invite.ExpiresAt < DateTime.UtcNow)
+                return Results.BadRequest(new { message = "Invitasjonen er ugyldig eller utløpt." });
+
+            if (await db.Users.AnyAsync(u => u.Username == req.Username))
+                return Results.Conflict(new { message = "Brukernavnet er allerede i bruk." });
+
+            var user = new AppUser
+            {
+                Username = req.Username,
+                PasswordHash = BCrypt.Net.BCrypt.HashPassword(req.Password),
+            };
+            db.Users.Add(user);
+            invite.IsUsed = true;
+            await db.SaveChangesAsync();
+
+            await IssueTokenPair(user, db, config, response);
+            return Results.Ok(new { username = user.Username });
+        });
+
         // POST /api/auth/users — admin only, protected by X-Admin-Key header
         group.MapPost("/users", async (CreateUserRequest req, AppDbContext db, IConfiguration config, HttpRequest request) =>
         {
@@ -168,4 +210,5 @@ public static class AuthEndpoints
 }
 
 record LoginRequest(string Username, string Password);
+record RegisterRequest(string InviteToken, string Username, string Password);
 record CreateUserRequest(string Username, string Password);

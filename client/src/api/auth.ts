@@ -19,6 +19,10 @@ export async function logout(): Promise<void> {
   await post('/logout')
 }
 
+export async function register(inviteToken: string, username: string, password: string): Promise<{ username: string }> {
+  return post('/register', { inviteToken, username, password })
+}
+
 export async function me(): Promise<{ username: string }> {
   const res = await fetch(`${BASE}/me`, { credentials: 'include' })
   if (!res.ok) throw new Error('Not authenticated')
