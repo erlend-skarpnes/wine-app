@@ -1,22 +1,30 @@
 const BASE = '/api'
 
-let getToken: (() => Promise<string>) | null = null
-
-export function setTokenGetter(fn: () => Promise<string>) {
-  getToken = fn
+// Called by App when a 401 can't be recovered via refresh (session expired)
+let onUnauthenticated: (() => void) | null = null
+export function setUnauthenticatedHandler(fn: () => void) {
+  onUnauthenticated = fn
 }
 
-async function request<T>(path: string, init?: RequestInit): Promise<T> {
-  const headers: Record<string, string> = {
-    ...(init?.headers as Record<string, string>),
+async function request<T>(path: string, init?: RequestInit, isRetry = false): Promise<T> {
+  const res = await fetch(`${BASE}${path}`, {
+    ...init,
+    credentials: 'include', // send cookies automatically
+  })
+
+  if (res.status === 401 && !isRetry) {
+    // Try to refresh the session
+    const refreshed = await fetch(`${BASE}/auth/refresh`, {
+      method: 'POST',
+      credentials: 'include',
+    })
+    if (refreshed.ok) {
+      return request<T>(path, init, true) // retry once with fresh cookie
+    }
+    onUnauthenticated?.()
+    throw new Error('Session expired')
   }
 
-  if (getToken) {
-    const token = await getToken()
-    headers['Authorization'] = `Bearer ${token}`
-  }
-
-  const res = await fetch(`${BASE}${path}`, { ...init, headers })
   if (!res.ok) {
     const text = await res.text().catch(() => res.statusText)
     throw new Error(`${init?.method ?? 'GET'} ${path} → ${res.status}: ${text}`)

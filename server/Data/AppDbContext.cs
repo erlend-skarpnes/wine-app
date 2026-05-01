@@ -7,6 +7,8 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
 {
     public DbSet<CellarEntry> CellarEntries => Set<CellarEntry>();
     public DbSet<WineData> WineData => Set<WineData>();
+    public DbSet<AppUser> Users => Set<AppUser>();
+    public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -18,5 +20,16 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
             entity.Property(e => e.Grapes).HasColumnType("text[]");
             entity.Property(e => e.Pairings).HasColumnType("text[]");
         });
+
+        modelBuilder.Entity<AppUser>()
+            .HasIndex(u => u.Username).IsUnique();
+
+        modelBuilder.Entity<RefreshToken>()
+            .HasIndex(r => r.Token).IsUnique();
+
+        modelBuilder.Entity<RefreshToken>()
+            .HasOne(r => r.User)
+            .WithMany(u => u.RefreshTokens)
+            .HasForeignKey(r => r.UserId);
     }
 }

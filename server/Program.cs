@@ -1,5 +1,7 @@
+using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
 using WineApp.Api.Data;
 using WineApp.Api.Endpoints;
 using WineApp.Api.Services;
@@ -27,9 +29,28 @@ builder.Services.AddHttpClient<VinmonopoletService>((serviceProvider, client) =>
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
     {
-        options.Authority = $"https://{builder.Configuration["Auth0:Domain"]}/";
-        options.Audience = builder.Configuration["Auth0:Audience"];
-        options.MapInboundClaims = false; // keep "sub" as-is, no remapping
+        var secret = builder.Configuration["JwtSecret"]
+            ?? throw new InvalidOperationException("JwtSecret not configured");
+
+        options.MapInboundClaims = false;
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuer = true,
+            ValidIssuer = builder.Configuration["Jwt:Issuer"] ?? "vinkjelleren",
+            ValidateAudience = false,
+            ValidateLifetime = true,
+            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secret)),
+        };
+
+        // Read JWT from HttpOnly cookie instead of Authorization header
+        options.Events = new JwtBearerEvents
+        {
+            OnMessageReceived = ctx =>
+            {
+                ctx.Token = ctx.Request.Cookies["access_token"];
+                return Task.CompletedTask;
+            }
+        };
     });
 
 builder.Services.AddAuthorization();
@@ -42,7 +63,7 @@ var corsOrigins = builder.Configuration.GetSection("Cors:Origins").Get<string[]>
 
 builder.Services.AddCors(options =>
     options.AddDefaultPolicy(policy =>
-        policy.WithOrigins(corsOrigins).AllowAnyHeader().AllowAnyMethod()));
+        policy.WithOrigins(corsOrigins).AllowAnyHeader().AllowAnyMethod().AllowCredentials()));
 
 var app = builder.Build();
 
@@ -58,6 +79,7 @@ app.UseCors();
 app.UseAuthentication();
 app.UseAuthorization();
 
+app.MapAuthEndpoints();
 app.MapCellarEndpoints();
 app.MapWineEndpoints();
 
