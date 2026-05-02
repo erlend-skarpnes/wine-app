@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { login } from '../api/auth'
 
 interface Props {
-  onLogin: (username: string) => void
+  onLogin: (username: string, isAdmin: boolean) => void
 }
 
 export default function LoginForm({ onLogin }: Props) {
@@ -16,8 +16,8 @@ export default function LoginForm({ onLogin }: Props) {
     setError(null)
     setLoading(true)
     try {
-      const { username: name } = await login(username, password)
-      onLogin(name)
+      const { username: name, isAdmin } = await login(username, password)
+      onLogin(name, isAdmin)
     } catch {
       setError('Feil brukernavn eller passord.')
     } finally {

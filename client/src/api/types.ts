@@ -1,3 +1,9 @@
+export interface AdminUser {
+  id: number
+  username: string
+  isAdmin: boolean
+}
+
 export interface CellarEntry {
   barcode: string
   quantity: number

@@ -43,7 +43,7 @@ public static class AuthEndpoints
             user.FailedAttempts = 0;
             user.LockedUntil = null;
             await IssueTokenPair(user, db, config, response);
-            return Results.Ok(new { username = user.Username });
+            return Results.Ok(new { username = user.Username, isAdmin = user.IsAdmin });
         });
 
         // POST /api/auth/refresh
@@ -92,9 +92,10 @@ public static class AuthEndpoints
         group.MapGet("/me", (ClaimsPrincipal user) =>
         {
             var username = user.FindFirstValue("username");
+            var isAdmin = user.FindFirstValue("isAdmin") == "true";
             return string.IsNullOrEmpty(username)
                 ? Results.Unauthorized()
-                : Results.Ok(new { username });
+                : Results.Ok(new { username, isAdmin });
         }).RequireAuthorization();
 
         // GET /api/auth/invites?key=<adminKey> — admin only, generates a single-use invite link
@@ -211,6 +212,7 @@ public static class AuthEndpoints
             claims: [
                 new Claim("sub", user.Id.ToString()),
                 new Claim("username", user.Username),
+                new Claim("isAdmin", user.IsAdmin ? "true" : "false"),
             ],
             expires: DateTime.UtcNow.Add(AccessTokenLifetime),
             signingCredentials: creds

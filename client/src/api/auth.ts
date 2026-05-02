@@ -11,7 +11,7 @@ async function post(path: string, body?: unknown) {
   return res.json()
 }
 
-export async function login(username: string, password: string): Promise<{ username: string }> {
+export async function login(username: string, password: string): Promise<{ username: string; isAdmin: boolean }> {
   return post('/login', { username, password })
 }
 
@@ -23,7 +23,7 @@ export async function register(inviteToken: string, username: string, password: 
   return post('/register', { inviteToken, username, password })
 }
 
-export async function me(): Promise<{ username: string }> {
+export async function me(): Promise<{ username: string; isAdmin: boolean }> {
   const res = await fetch(`${BASE}/me`, { credentials: 'include' })
   if (!res.ok) throw new Error('Not authenticated')
   return res.json()
