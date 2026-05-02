@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useQuery, useQueryClient } from '@tanstack/react-query'
+import { useQueries, useQueryClient } from '@tanstack/react-query'
 import { Link } from 'react-router-dom'
 import { getCellarEntries } from '../api/cellars'
 import { useCellar } from '../context/CellarContext'
@@ -8,34 +8,71 @@ import ScanModal from '../components/ScanModal'
 import WineDetailModal from '../components/WineDetailModal'
 import FilterBar from '../components/FilterBar'
 import WineTable from '../components/WineTable'
-import CellarSelector from '../components/CellarSelector'
 
 type ModalMode = 'add' | 'remove' | null
 
+function combineEntries(groups: CellarEntry[][]): CellarEntry[] {
+  const map = new Map<string, CellarEntry>()
+  for (const entries of groups) {
+    for (const entry of entries) {
+      const existing = map.get(entry.barcode)
+      if (existing) {
+        map.set(entry.barcode, { ...existing, quantity: existing.quantity + entry.quantity })
+      } else {
+        map.set(entry.barcode, { ...entry })
+      }
+    }
+  }
+  return [...map.values()].sort((a, b) => a.barcode.localeCompare(b.barcode))
+}
+
 export default function CellarPage() {
   const queryClient = useQueryClient()
-  const { activeCellar, isLoading: cellarLoading } = useCellar()
+  const { cellars, activeCellar, isLoading: cellarLoading } = useCellar()
 
   const [modal, setModal] = useState<ModalMode>(null)
   const [selected, setSelected] = useState<CellarEntry | null>(null)
+  const [cellarFilter, setCellarFilter] = useState<number[]>(() => {
+    try {
+      const stored = localStorage.getItem('cellarFilter')
+      return stored ? JSON.parse(stored) : []
+    } catch { return [] }
+  })
+
+  function handleCellarFilter(ids: number[]) {
+    setCellarFilter(ids)
+    localStorage.setItem('cellarFilter', JSON.stringify(ids))
+  }
   const [storageFilter, setStorageFilter] = useState<'drink-now' | 'store' | null>(null)
   const [typeFilter, setTypeFilter] = useState<string | null>(null)
   const [pairingFilter, setPairingFilter] = useState<string | null>(null)
   const [grapeFilter, setGrapeFilter] = useState<string | null>(null)
 
-  const { data: entries, isLoading, error } = useQuery({
-    queryKey: ['cellar', activeCellar?.id],
-    queryFn: () => getCellarEntries(activeCellar!.id),
-    enabled: activeCellar !== null,
+  const entryQueries = useQueries({
+    queries: cellars.map(c => ({
+      queryKey: ['cellar', c.id] as const,
+      queryFn: () => getCellarEntries(c.id),
+    })),
   })
 
   function handleAdjusted() {
-    queryClient.invalidateQueries({ queryKey: ['cellar', activeCellar?.id] })
+    cellars.forEach(c => queryClient.invalidateQueries({ queryKey: ['cellar', c.id] }))
   }
 
-  const allPairings = [...new Set(entries?.flatMap(e => e.pairings) ?? [])].sort()
-  const allTypes = [...new Set(entries?.map(e => e.type).filter(Boolean) ?? [])].sort() as string[]
-  const allGrapes = [...new Set(entries?.flatMap(e => e.grapes) ?? [])].sort()
+  const isLoading = cellarLoading || entryQueries.some(q => q.isLoading)
+  const hasError = entryQueries.some(q => q.isError)
+
+  // Which cellar IDs are currently selected (empty = all)
+  const visibleIds = cellarFilter.length > 0 ? cellarFilter : cellars.map(c => c.id)
+  const visibleGroups = entryQueries
+    .filter((_, i) => visibleIds.includes(cellars[i]?.id))
+    .map(q => q.data ?? [])
+
+  const entries = combineEntries(visibleGroups)
+
+  const allPairings = [...new Set(entries.flatMap(e => e.pairings))].sort()
+  const allTypes = [...new Set(entries.map(e => e.type).filter(Boolean))].sort() as string[]
+  const allGrapes = [...new Set(entries.flatMap(e => e.grapes))].sort()
 
   function matchesStorageFilter(entry: CellarEntry) {
     if (storageFilter === null) return true
@@ -44,7 +81,7 @@ export default function CellarPage() {
     return storageFilter === 'drink-now' ? isDrinkNow : !isDrinkNow
   }
 
-  const visibleEntries = entries?.filter(e =>
+  const visibleEntries = entries.filter(e =>
     (!pairingFilter || e.pairings.includes(pairingFilter)) &&
     (!grapeFilter || e.grapes.includes(grapeFilter)) &&
     matchesStorageFilter(e) &&
@@ -59,18 +96,17 @@ export default function CellarPage() {
     return (
       <div className="flex flex-col items-center justify-center gap-4 py-16 text-center">
         <p className="text-clay">Du har ingen kjellere ennå.</p>
-        <Link to="/profile">
-          <button>Opprett din første kjeller</button>
-        </Link>
+        <Link to="/profile"><button>Opprett din første kjeller</button></Link>
       </div>
     )
   }
 
   return (
     <div>
-      <CellarSelector />
-
       <FilterBar
+        allCellars={cellars}
+        cellarFilter={cellarFilter}
+        onCellarFilter={handleCellarFilter}
         storageFilter={storageFilter}
         onStorageFilter={setStorageFilter}
         typeFilter={typeFilter}
@@ -84,15 +120,15 @@ export default function CellarPage() {
         allGrapes={allGrapes}
       />
 
-      {error && <p className="text-red-600 text-sm mb-4">Kunne ikke laste kjelleren.</p>}
+      {hasError && <p className="text-red-600 text-sm mb-4">Kunne ikke laste kjelleren.</p>}
       {isLoading && <p className="text-clay text-sm">Laster…</p>}
-      {!isLoading && !error && !entries?.length && (
+      {!isLoading && !hasError && entries.length === 0 && (
         <p className="text-clay text-sm">Kjelleren er tom. Skann en flaske for å legge den til.</p>
       )}
-      {visibleEntries && visibleEntries.length === 0 && entries && entries.length > 0 && (
+      {!isLoading && visibleEntries.length === 0 && entries.length > 0 && (
         <p className="text-clay text-sm">Ingen viner matcher filteret.</p>
       )}
-      {visibleEntries && visibleEntries.length > 0 && (
+      {visibleEntries.length > 0 && (
         <WineTable entries={visibleEntries} onSelect={setSelected} />
       )}
 

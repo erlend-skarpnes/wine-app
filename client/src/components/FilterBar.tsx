@@ -1,5 +1,10 @@
 import { useState } from 'react'
 
+interface CellarOption {
+  id: number
+  name: string
+}
+
 interface Props {
   storageFilter: 'drink-now' | 'store' | null
   onStorageFilter: (v: 'drink-now' | 'store' | null) => void
@@ -12,6 +17,9 @@ interface Props {
   allTypes: string[]
   allPairings: string[]
   allGrapes: string[]
+  allCellars: CellarOption[]
+  cellarFilter: number[]
+  onCellarFilter: (ids: number[]) => void
 }
 
 function filterBtn(active: boolean) {
@@ -28,9 +36,17 @@ export default function FilterBar({
   pairingFilter, onPairingFilter,
   grapeFilter, onGrapeFilter,
   allTypes, allPairings, allGrapes,
+  allCellars, cellarFilter, onCellarFilter,
 }: Props) {
   const [filtersOpen, setFiltersOpen] = useState(false)
   const activeFilterCount = [storageFilter, typeFilter, pairingFilter, grapeFilter].filter(Boolean).length
+    + (cellarFilter.length > 0 ? 1 : 0)
+
+  function toggleCellar(id: number) {
+    onCellarFilter(
+      cellarFilter.includes(id) ? cellarFilter.filter(c => c !== id) : [...cellarFilter, id]
+    )
+  }
 
   return (
     <div className="sticky top-0 z-10 bg-warm pb-3 mb-1">
@@ -50,6 +66,21 @@ export default function FilterBar({
 
       {filtersOpen && (
         <div className="flex flex-col divide-y divide-stone bg-stone rounded-lg px-3">
+          {allCellars.length > 1 && (
+            <div className="flex items-center gap-1.5 flex-wrap py-2">
+              <span className="text-[0.7rem] font-semibold text-clay uppercase tracking-wide w-14 shrink-0">Kjeller</span>
+              {allCellars.map(c => (
+                <button
+                  key={c.id}
+                  type="button"
+                  className={filterBtn(cellarFilter.includes(c.id))}
+                  onClick={() => toggleCellar(c.id)}
+                >
+                  {c.name}
+                </button>
+              ))}
+            </div>
+          )}
           <div className="flex items-center gap-1.5 flex-wrap py-2">
             <span className="text-[0.7rem] font-semibold text-clay uppercase tracking-wide w-14 shrink-0">Lagring</span>
             {(['drink-now', 'store'] as const).map(opt => (
