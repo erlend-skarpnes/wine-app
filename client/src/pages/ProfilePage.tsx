@@ -319,8 +319,22 @@ export default function ProfilePage() {
   }
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 gap-8 items-start max-w-2xl mx-auto">
-      {/* Left column: profile info + password + app info */}
+    <div className="max-w-2xl mx-auto space-y-6">
+      <div className="flex items-center justify-between gap-4">
+        <p className="text-xs text-clay">
+          Bygd {new Date(__BUILD_TIME__).toLocaleString('no-NO', { dateStyle: 'short', timeStyle: 'short' })}
+        </p>
+        <button
+          onClick={handleForceRefresh}
+          disabled={refreshing}
+          className="secondary text-xs px-3 py-1.5 flex items-center gap-1.5 shrink-0"
+        >
+          <RefreshCw size={14} /> {refreshing ? 'Oppdaterer…' : 'Se etter ny versjon'}
+        </button>
+      </div>
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-8 items-start">
+      {/* Left column: profile info */}
       <div className="space-y-8">
         <section>
           <h2 className="text-lg font-semibold text-bark mb-4">Profil</h2>
@@ -354,25 +368,13 @@ export default function ProfilePage() {
         </section>
 
         {changingPassword && <PasswordModal onClose={() => setChangingPassword(false)} />}
-
-        <section className="flex flex-col items-start gap-2">
-          <button
-            onClick={handleForceRefresh}
-            disabled={refreshing}
-            className="secondary text-xs px-3 py-1.5 flex items-center gap-1.5"
-          >
-            <RefreshCw size={14} /> {refreshing ? 'Oppdaterer…' : 'Se etter ny versjon'}
-          </button>
-          <p className="text-xs text-clay">
-            Bygd {new Date(__BUILD_TIME__).toLocaleString('no-NO', { dateStyle: 'short', timeStyle: 'short' })}
-          </p>
-        </section>
       </div>
 
       {/* Right column: cellars */}
       <div>
         <CellarSection />
       </div>
+    </div>
     </div>
   )
 }
