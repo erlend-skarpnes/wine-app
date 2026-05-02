@@ -1,8 +1,7 @@
 import { useState, useCallback } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { getWineData } from '../api/wine'
-import { api } from '../api/client'
-import type { CellarEntry } from '../api/types'
+import { adjustEntry } from '../api/cellars'
 import Modal from './Modal'
 import WineImage from './WineImage'
 import QuantityAdjuster from './QuantityAdjuster'
@@ -11,11 +10,12 @@ interface Props {
   barcode: string
   name: string | null
   quantity: number
+  cellarId: number
   onAdjusted: () => void
   onClose: () => void
 }
 
-export default function WineDetailModal({ barcode, name, quantity: initialQuantity, onAdjusted, onClose }: Props) {
+export default function WineDetailModal({ barcode, name, quantity: initialQuantity, cellarId, onAdjusted, onClose }: Props) {
   const [editingStock, setEditingStock] = useState(false)
   const [quantity, setQuantity] = useState(initialQuantity)
   const [prevQuantity, setPrevQuantity] = useState(initialQuantity)
@@ -27,13 +27,13 @@ export default function WineDetailModal({ barcode, name, quantity: initialQuanti
 
   const handleAdjust = useCallback(async (delta: 1 | -1) => {
     try {
-      const entry = await api.post<CellarEntry>('/cellar/adjust', { barcode, delta })
+      const entry = await adjustEntry(cellarId, barcode, delta)
       setQuantity(entry.quantity)
       onAdjusted()
     } catch {
       // ignore
     }
-  }, [barcode, onAdjusted])
+  }, [cellarId, barcode, onAdjusted])
 
   const title = wine?.name ?? name ?? barcode
 

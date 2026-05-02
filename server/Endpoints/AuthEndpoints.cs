@@ -156,6 +156,11 @@ public static class AuthEndpoints
             invite.IsUsed = true;
             await db.SaveChangesAsync();
 
+            var defaultCellar = new Cellar { Name = "Min kjeller", OwnerId = user.Id };
+            db.Cellars.Add(defaultCellar);
+            db.CellarMembers.Add(new CellarMember { Cellar = defaultCellar, UserId = user.Id, Role = "owner" });
+            await db.SaveChangesAsync();
+
             await IssueTokenPair(user, db, config, response);
             return Results.Ok(new { username = user.Username });
         });

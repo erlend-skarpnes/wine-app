@@ -4,8 +4,9 @@ import LabelCamera from './LabelCamera'
 import Modal from './Modal'
 import WineImage from './WineImage'
 import QuantityAdjuster from './QuantityAdjuster'
-import { api } from '../api/client'
+import { adjustEntry } from '../api/cellars'
 import { getWineData, identifyWine, linkWine } from '../api/wine'
+import { useCellar } from '../context/CellarContext'
 import type { CellarEntry, WineSuggestion } from '../api/types'
 
 type Mode = 'add' | 'remove'
@@ -22,18 +23,21 @@ type ScanState =
 
 interface Props {
   mode: Mode
+  cellarId: number
   onClose: () => void
   onAdjusted: () => void
 }
 
-export default function ScanModal({ mode, onClose, onAdjusted }: Props) {
+export default function ScanModal({ mode, cellarId, onClose, onAdjusted }: Props) {
+  const { cellars } = useCellar()
+  const [selectedCellarId, setSelectedCellarId] = useState(cellarId)
   const [state, setState] = useState<ScanState>({ status: 'scanning' })
 
   const handleScan = useCallback(async (barcode: string) => {
     setState({ status: 'loading' })
     try {
       const delta = mode === 'add' ? 1 : -1
-      const entry = await api.post<CellarEntry>('/cellar/adjust', { barcode, delta })
+      const entry = await adjustEntry(selectedCellarId, barcode, delta)
       const prevQuantity = entry.quantity - delta
 
       try {
@@ -54,7 +58,7 @@ export default function ScanModal({ mode, onClose, onAdjusted }: Props) {
         : 'Noe gikk galt.'
       setState({ status: 'error', message })
     }
-  }, [mode, onAdjusted])
+  }, [mode, selectedCellarId, onAdjusted])
 
   const handleCapture = useCallback(async (blob: Blob) => {
     if (state.status !== 'capture') return
@@ -89,13 +93,13 @@ export default function ScanModal({ mode, onClose, onAdjusted }: Props) {
   const handleInlineAdjust = useCallback(async (delta: 1 | -1) => {
     if (state.status !== 'success') return
     try {
-      const entry = await api.post<CellarEntry>('/cellar/adjust', { barcode: state.entry.barcode, delta })
+      const entry = await adjustEntry(selectedCellarId, state.entry.barcode, delta)
       onAdjusted()
       setState(prev => prev.status === 'success' ? { ...prev, entry } : prev)
     } catch {
       // ignore — quantity display stays as-is
     }
-  }, [state, onAdjusted])
+  }, [state, selectedCellarId, onAdjusted])
 
   const showCamera = state.status === 'scanning'
   const showLabelCamera = state.status === 'capture' || state.status === 'identifying'
@@ -103,6 +107,20 @@ export default function ScanModal({ mode, onClose, onAdjusted }: Props) {
 
   return (
     <Modal title={mode === 'add' ? 'Legg til vin' : 'Fjern vin'} onClose={onClose}>
+      {cellars.length > 1 && (state.status === 'scanning' || state.status === 'error') && (
+        <div className="mb-3">
+          <select
+            value={selectedCellarId}
+            onChange={e => setSelectedCellarId(parseInt(e.target.value, 10))}
+            className="w-full border border-stone rounded-lg px-3 py-2 text-sm bg-surface text-bark focus:outline-none focus:border-wine"
+          >
+            {cellars.map(c => (
+              <option key={c.id} value={c.id}>{c.name}</option>
+            ))}
+          </select>
+        </div>
+      )}
+
       {showCamera && <BarcodeScanner onScan={handleScan} paused={false} />}
       {showLabelCamera && <LabelCamera onCapture={handleCapture} disabled={state.status === 'identifying'} />}
 

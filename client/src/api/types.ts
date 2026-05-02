@@ -1,3 +1,17 @@
+export interface CellarSummary {
+  id: number
+  name: string
+  role: 'owner' | 'member'
+  memberCount: number
+}
+
+export interface CellarMember {
+  userId: number
+  username: string
+  role: 'owner' | 'member'
+  joinedAt: string
+}
+
 export interface AdminUser {
   id: number
   username: string

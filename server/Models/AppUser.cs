@@ -9,4 +9,5 @@ public class AppUser
     public int FailedAttempts { get; set; }
     public DateTime? LockedUntil { get; set; }
     public ICollection<RefreshToken> RefreshTokens { get; set; } = [];
+    public ICollection<CellarMember> CellarMemberships { get; set; } = [];
 }

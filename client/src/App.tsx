@@ -1,8 +1,10 @@
 import { createBrowserRouter, RouterProvider, Outlet, Navigate, useParams, useNavigate, Link } from 'react-router-dom'
 import { AuthProvider, useAuth } from './context/AuthContext'
+import { CellarProvider } from './context/CellarContext'
 import CellarPage from './pages/CellarPage'
 import AdminPage from './pages/AdminPage'
 import ProfilePage from './pages/ProfilePage'
+import JoinCellarPage from './pages/JoinCellarPage'
 import LoginForm from './components/LoginForm'
 import RegisterForm from './components/RegisterForm'
 
@@ -92,6 +94,7 @@ const router = createBrowserRouter([
       { index: true, element: <RequireAuth><CellarPage /></RequireAuth> },
       { path: 'admin', element: <RequireAdmin><AdminPage /></RequireAdmin> },
       { path: 'profile', element: <RequireAuth><ProfilePage /></RequireAuth> },
+      { path: 'cellars/join/:token', element: <RequireAuth><JoinCellarPage /></RequireAuth> },
       { path: 'invite/:token', element: <InvitePage /> },
       { path: 'login', element: <LoginPage /> },
     ],
@@ -101,7 +104,9 @@ const router = createBrowserRouter([
 export default function App() {
   return (
     <AuthProvider>
-      <RouterProvider router={router} />
+      <CellarProvider>
+        <RouterProvider router={router} />
+      </CellarProvider>
     </AuthProvider>
   )
 }

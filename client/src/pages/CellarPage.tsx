@@ -1,16 +1,21 @@
 import { useState } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
-import { api } from '../api/client'
+import { Link } from 'react-router-dom'
+import { getCellarEntries } from '../api/cellars'
+import { useCellar } from '../context/CellarContext'
 import type { CellarEntry } from '../api/types'
 import ScanModal from '../components/ScanModal'
 import WineDetailModal from '../components/WineDetailModal'
 import FilterBar from '../components/FilterBar'
 import WineTable from '../components/WineTable'
+import CellarSelector from '../components/CellarSelector'
 
 type ModalMode = 'add' | 'remove' | null
 
 export default function CellarPage() {
   const queryClient = useQueryClient()
+  const { activeCellar, isLoading: cellarLoading } = useCellar()
+
   const [modal, setModal] = useState<ModalMode>(null)
   const [selected, setSelected] = useState<CellarEntry | null>(null)
   const [storageFilter, setStorageFilter] = useState<'drink-now' | 'store' | null>(null)
@@ -19,12 +24,13 @@ export default function CellarPage() {
   const [grapeFilter, setGrapeFilter] = useState<string | null>(null)
 
   const { data: entries, isLoading, error } = useQuery({
-    queryKey: ['cellar'],
-    queryFn: () => api.get<CellarEntry[]>('/cellar'),
+    queryKey: ['cellar', activeCellar?.id],
+    queryFn: () => getCellarEntries(activeCellar!.id),
+    enabled: activeCellar !== null,
   })
 
   function handleAdjusted() {
-    queryClient.invalidateQueries({ queryKey: ['cellar'] })
+    queryClient.invalidateQueries({ queryKey: ['cellar', activeCellar?.id] })
   }
 
   const allPairings = [...new Set(entries?.flatMap(e => e.pairings) ?? [])].sort()
@@ -45,8 +51,25 @@ export default function CellarPage() {
     (!typeFilter || e.type === typeFilter)
   )
 
+  if (cellarLoading) {
+    return <p className="text-clay text-sm">Laster…</p>
+  }
+
+  if (!activeCellar) {
+    return (
+      <div className="flex flex-col items-center justify-center gap-4 py-16 text-center">
+        <p className="text-clay">Du har ingen kjellere ennå.</p>
+        <Link to="/profile">
+          <button>Opprett din første kjeller</button>
+        </Link>
+      </div>
+    )
+  }
+
   return (
     <div>
+      <CellarSelector />
+
       <FilterBar
         storageFilter={storageFilter}
         onStorageFilter={setStorageFilter}
@@ -66,11 +89,9 @@ export default function CellarPage() {
       {!isLoading && !error && !entries?.length && (
         <p className="text-clay text-sm">Kjelleren er tom. Skann en flaske for å legge den til.</p>
       )}
-
       {visibleEntries && visibleEntries.length === 0 && entries && entries.length > 0 && (
         <p className="text-clay text-sm">Ingen viner matcher filteret.</p>
       )}
-
       {visibleEntries && visibleEntries.length > 0 && (
         <WineTable entries={visibleEntries} onSelect={setSelected} />
       )}
@@ -83,6 +104,7 @@ export default function CellarPage() {
       {modal && (
         <ScanModal
           mode={modal}
+          cellarId={activeCellar.id}
           onClose={() => setModal(null)}
           onAdjusted={handleAdjusted}
         />
@@ -93,6 +115,7 @@ export default function CellarPage() {
           barcode={selected.barcode}
           name={selected.name}
           quantity={selected.quantity}
+          cellarId={activeCellar.id}
           onAdjusted={handleAdjusted}
           onClose={() => setSelected(null)}
         />
