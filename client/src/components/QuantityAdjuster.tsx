@@ -13,7 +13,7 @@ export default function QuantityAdjuster({ value, onChange, min = 0 }: Props) {
         type="button"
         onClick={() => onChange(-1)}
         disabled={value <= min}
-        className="w-10 h-10 p-0 shrink-0"
+        className="w-10 h-10 p-0 shrink-0 flex items-center justify-center"
       >
         <Minus size={18} />
       </button>
@@ -21,7 +21,7 @@ export default function QuantityAdjuster({ value, onChange, min = 0 }: Props) {
       <button
         type="button"
         onClick={() => onChange(1)}
-        className="w-10 h-10 p-0 shrink-0"
+        className="w-10 h-10 p-0 shrink-0 flex items-center justify-center"
       >
         <Plus size={18} />
       </button>
