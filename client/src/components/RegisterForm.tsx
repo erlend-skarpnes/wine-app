@@ -25,8 +25,6 @@ export default function RegisterForm({ inviteToken, onRegister }: Props) {
     setLoading(true)
     try {
       const { username: name } = await register(inviteToken, username, password)
-      // Remove invite token from URL without reloading
-      window.history.replaceState(null, '', '/')
       onRegister(name)
     } catch (err) {
       const msg = err instanceof Error ? err.message : ''
