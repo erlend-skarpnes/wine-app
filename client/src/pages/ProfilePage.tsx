@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useAuth } from '../context/AuthContext'
 import { useCellar } from '../context/CellarContext'
@@ -298,7 +298,13 @@ function CellarSection() {
 // --- Main page ---
 
 export default function ProfilePage() {
-  const { username, isAdmin } = useAuth()
+  const { username, isAdmin, logout } = useAuth()
+  const navigate = useNavigate()
+
+  async function handleLogout() {
+    await logout()
+    navigate('/login', { replace: true })
+  }
 
   return (
     <div className="max-w-sm space-y-8">
@@ -315,6 +321,14 @@ export default function ProfilePage() {
               ? <Link to="/admin" className="text-xs bg-wine/10 text-wine px-2 py-0.5 rounded-full font-medium no-underline">Admin</Link>
               : <span className="text-clay text-xs">Bruker</span>
             }
+          </div>
+          <div className="pt-1">
+            <button
+              onClick={handleLogout}
+              className="secondary text-xs px-3 py-1.5 text-red-600 border-red-200 hover:bg-red-50"
+            >
+              Logg ut
+            </button>
           </div>
         </div>
       </section>
