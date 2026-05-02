@@ -1,3 +1,5 @@
+import { api } from './client'
+
 const BASE = '/api/auth'
 
 async function post(path: string, body?: unknown) {
@@ -24,7 +26,5 @@ export async function register(inviteToken: string, username: string, password: 
 }
 
 export async function me(): Promise<{ username: string; isAdmin: boolean }> {
-  const res = await fetch(`${BASE}/me`, { credentials: 'include' })
-  if (!res.ok) throw new Error('Not authenticated')
-  return res.json()
+  return api.get('/auth/me')
 }
