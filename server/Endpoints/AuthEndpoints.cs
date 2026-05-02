@@ -24,9 +24,24 @@ public static class AuthEndpoints
         group.MapPost("/login", async (LoginRequest req, AppDbContext db, IConfiguration config, HttpResponse response) =>
         {
             var user = await db.Users.FirstOrDefaultAsync(u => u.Username == req.Username.ToLower());
-            if (user is null || !BCrypt.Net.BCrypt.Verify(req.Password, user.PasswordHash))
-                return Results.Unauthorized();
 
+            if (user is not null && user.LockedUntil > DateTime.UtcNow)
+                return Results.Json(new { message = "Kontoen er midlertidig låst. Prøv igjen senere." }, statusCode: 429);
+
+            if (user is null || !BCrypt.Net.BCrypt.Verify(req.Password, user.PasswordHash))
+            {
+                if (user is not null)
+                {
+                    user.FailedAttempts++;
+                    if (user.FailedAttempts >= 5)
+                        user.LockedUntil = DateTime.UtcNow.AddMinutes(15);
+                    await db.SaveChangesAsync();
+                }
+                return Results.Unauthorized();
+            }
+
+            user.FailedAttempts = 0;
+            user.LockedUntil = null;
             await IssueTokenPair(user, db, config, response);
             return Results.Ok(new { username = user.Username });
         });
