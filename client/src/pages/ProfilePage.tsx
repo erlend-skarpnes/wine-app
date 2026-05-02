@@ -300,10 +300,20 @@ function CellarSection() {
 export default function ProfilePage() {
   const { username, isAdmin, logout } = useAuth()
   const navigate = useNavigate()
+  const [refreshing, setRefreshing] = useState(false)
 
   async function handleLogout() {
     await logout()
     navigate('/login', { replace: true })
+  }
+
+  async function handleForceRefresh() {
+    setRefreshing(true)
+    if ('serviceWorker' in navigator) {
+      const reg = await navigator.serviceWorker.getRegistration()
+      if (reg) await reg.update()
+    }
+    window.location.reload()
   }
 
   return (
@@ -335,6 +345,19 @@ export default function ProfilePage() {
 
       <CellarSection />
       <PasswordSection />
+
+      <section className="flex flex-col items-start gap-2">
+        <button
+          onClick={handleForceRefresh}
+          disabled={refreshing}
+          className="secondary text-xs px-3 py-1.5"
+        >
+          {refreshing ? 'Oppdaterer…' : 'Se etter ny versjon'}
+        </button>
+        <p className="text-xs text-clay">
+          Bygd {new Date(__BUILD_TIME__).toLocaleString('no-NO', { dateStyle: 'short', timeStyle: 'short' })}
+        </p>
+      </section>
     </div>
   )
 }
