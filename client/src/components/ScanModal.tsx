@@ -1,4 +1,5 @@
 import { useState, useCallback } from 'react'
+import { ScanBarcode, RotateCcw, ChevronsRight } from 'lucide-react'
 import BarcodeScanner from './BarcodeScanner'
 import LabelCamera from './LabelCamera'
 import Modal from './Modal'
@@ -181,10 +182,10 @@ export default function ScanModal({ mode, cellarId, onClose, onAdjusted }: Props
             </ul>
             <button
               type="button"
-              className="secondary"
+              className="secondary flex items-center gap-1.5"
               onClick={() => setState({ status: 'success', entry: state.entry, prevQuantity: state.entry.quantity - 1, wineName: null, imageUrl: null })}
             >
-              Hopp over
+              <ChevronsRight size={16} /> Hopp over
             </button>
           </div>
         )}
@@ -208,8 +209,8 @@ export default function ScanModal({ mode, cellarId, onClose, onAdjusted }: Props
             />
 
             <div className="flex gap-2">
-              <button type="button" className="flex-1 py-3 text-base" onClick={() => setState({ status: 'scanning' })}>
-                Skann en til
+              <button type="button" className="flex-1 py-3 text-base flex items-center justify-center gap-2" onClick={() => setState({ status: 'scanning' })}>
+                <ScanBarcode size={18} /> Skann en til
               </button>
               <button type="button" className="secondary flex-1 py-3 text-base" onClick={onClose}>
                 Ferdig
@@ -221,8 +222,8 @@ export default function ScanModal({ mode, cellarId, onClose, onAdjusted }: Props
         {state.status === 'error' && (
           <div>
             <p className="text-red-600 text-[0.9rem] mb-3">{state.message}</p>
-            <button type="button" onClick={() => setState({ status: 'scanning' })}>
-              Prøv igjen
+            <button type="button" className="flex items-center gap-2" onClick={() => setState({ status: 'scanning' })}>
+              <RotateCcw size={18} /> Prøv igjen
             </button>
           </div>
         )}

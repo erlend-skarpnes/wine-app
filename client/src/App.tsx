@@ -1,4 +1,5 @@
 import { createBrowserRouter, RouterProvider, Outlet, Navigate, useParams, useNavigate, Link } from 'react-router-dom'
+import { User } from 'lucide-react'
 import { AuthProvider, useAuth } from './context/AuthContext'
 import { CellarProvider } from './context/CellarContext'
 import CellarPage from './pages/CellarPage'
@@ -27,7 +28,8 @@ function Layout() {
         </div>
         <div className="flex items-center gap-4">
           {isAuthenticated && (
-            <Link to="/profile" className="text-xs text-white/70 hover:text-white no-underline">
+            <Link to="/profile" className="text-xs text-white/70 hover:text-white no-underline flex items-center gap-1.5">
+              <User size={14} />
               Min profil
             </Link>
           )}

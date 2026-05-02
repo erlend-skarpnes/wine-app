@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
+import { LogOut, Copy, Share2, Trash2, Pencil, RefreshCw } from 'lucide-react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useAuth } from '../context/AuthContext'
 import { useCellar } from '../context/CellarContext'
@@ -190,22 +191,22 @@ function CellarRow({ cellar }: { cellar: CellarSummary }) {
       <div className="flex flex-wrap gap-2">
         {cellar.role === 'owner' && !renaming && (
           <>
-            <button className="secondary text-xs px-3 py-1.5" onClick={() => { setRenaming(true); setError(null) }}>
-              Endre navn
+            <button className="secondary text-xs px-3 py-1.5 flex items-center gap-1.5" onClick={() => { setRenaming(true); setError(null) }}>
+              <Pencil size={13} /> Endre navn
             </button>
             <button
-              className="secondary text-xs px-3 py-1.5"
+              className="secondary text-xs px-3 py-1.5 flex items-center gap-1.5"
               onClick={() => { setShareUrl(null); setError(null); shareMutation.mutate() }}
               disabled={shareMutation.isPending}
             >
-              {shareMutation.isPending ? 'Genererer…' : 'Del kjeller'}
+              <Share2 size={13} /> {shareMutation.isPending ? 'Genererer…' : 'Del kjeller'}
             </button>
             <button
-              className="secondary text-xs px-3 py-1.5 text-red-600 border-red-200 hover:bg-red-50"
+              className="secondary text-xs px-3 py-1.5 text-red-600 border-red-200 hover:bg-red-50 flex items-center gap-1.5"
               onClick={() => { setError(null); deleteMutation.mutate() }}
               disabled={deleteMutation.isPending}
             >
-              Slett
+              <Trash2 size={13} /> Slett
             </button>
           </>
         )}
@@ -223,7 +224,7 @@ function CellarRow({ cellar }: { cellar: CellarSummary }) {
 
         {cellar.role === 'member' && (
           <button
-            className="secondary text-xs px-3 py-1.5"
+            className="secondary text-xs px-3 py-1.5 flex items-center gap-1.5"
             onClick={() => { setError(null); leaveMutation.mutate() }}
             disabled={leaveMutation.isPending}
           >
@@ -241,8 +242,8 @@ function CellarRow({ cellar }: { cellar: CellarSummary }) {
           <p className="text-xs text-clay">Delingslenke (gyldig i 7 dager):</p>
           <div className="flex items-center gap-2">
             <code className="flex-1 text-xs break-all">{shareUrl}</code>
-            <button className="secondary text-xs px-3 py-1.5 shrink-0" onClick={() => navigator.clipboard.writeText(shareUrl)}>
-              Kopier
+            <button className="secondary text-xs px-3 py-1.5 shrink-0 flex items-center gap-1.5" onClick={() => navigator.clipboard.writeText(shareUrl)}>
+              <Copy size={13} /> Kopier
             </button>
           </div>
         </div>
@@ -335,9 +336,9 @@ export default function ProfilePage() {
           <div className="pt-1">
             <button
               onClick={handleLogout}
-              className="secondary text-xs px-3 py-1.5 text-red-600 border-red-200 hover:bg-red-50"
+              className="secondary text-xs px-3 py-1.5 text-red-600 border-red-200 hover:bg-red-50 flex items-center gap-1.5"
             >
-              Logg ut
+              <LogOut size={14} /> Logg ut
             </button>
           </div>
         </div>
@@ -350,9 +351,9 @@ export default function ProfilePage() {
         <button
           onClick={handleForceRefresh}
           disabled={refreshing}
-          className="secondary text-xs px-3 py-1.5"
+          className="secondary text-xs px-3 py-1.5 flex items-center gap-1.5"
         >
-          {refreshing ? 'Oppdaterer…' : 'Se etter ny versjon'}
+          <RefreshCw size={14} /> {refreshing ? 'Oppdaterer…' : 'Se etter ny versjon'}
         </button>
         <p className="text-xs text-clay">
           Bygd {new Date(__BUILD_TIME__).toLocaleString('no-NO', { dateStyle: 'short', timeStyle: 'short' })}

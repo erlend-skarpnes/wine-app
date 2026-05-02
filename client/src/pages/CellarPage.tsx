@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useQueries, useQueryClient } from '@tanstack/react-query'
 import { Link } from 'react-router-dom'
+import { Plus, Minus } from 'lucide-react'
 import { getCellarEntries } from '../api/cellars'
 import { useCellar } from '../context/CellarContext'
 import type { CellarEntry } from '../api/types'
@@ -133,8 +134,8 @@ export default function CellarPage() {
       )}
 
       <div className="fixed bottom-0 left-0 right-0 z-50 bg-surface border-t border-stone px-6 pt-3 flex gap-3 bottom-bar-safe">
-        <button type="button" className="flex-1 py-3 text-base" onClick={() => setModal('add')}>+ Legg til vin</button>
-        <button type="button" className="flex-1 py-3 text-base" onClick={() => setModal('remove')}>− Fjern vin</button>
+        <button type="button" className="flex-1 py-3 text-base flex items-center justify-center gap-2" onClick={() => setModal('add')}><Plus size={18} className="shrink-0" /> Legg til vin</button>
+        <button type="button" className="flex-1 py-3 text-base flex items-center justify-center gap-2" onClick={() => setModal('remove')}><Minus size={18} className="shrink-0" /> Fjern vin</button>
       </div>
 
       {modal && (

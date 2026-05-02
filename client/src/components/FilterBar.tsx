@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { ChevronRight } from 'lucide-react'
 
 interface CellarOption {
   id: number
@@ -55,7 +56,7 @@ export default function FilterBar({
         onClick={() => setFiltersOpen(o => !o)}
         className="flex items-center gap-2 text-base text-clay cursor-pointer mb-2 border-0 bg-transparent p-0"
       >
-        <span className={`transition-transform duration-200 text-[0.6rem] ${filtersOpen ? 'rotate-90' : ''}`}>▶</span>
+        <ChevronRight size={14} className={`transition-transform duration-200 ${filtersOpen ? 'rotate-90' : ''}`} />
         <span>Filter</span>
         {activeFilterCount > 0 && (
           <span className="inline-flex items-center justify-center w-4 h-4 rounded-full bg-wine text-white text-[0.6rem] font-bold">
