@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { Link } from 'react-router-dom'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useAuth } from '../context/AuthContext'
 import { useCellar } from '../context/CellarContext'
@@ -311,7 +312,7 @@ export default function ProfilePage() {
           <div className="flex justify-between items-center text-sm">
             <span className="text-clay">Rolle</span>
             {isAdmin
-              ? <span className="text-xs bg-wine/10 text-wine px-2 py-0.5 rounded-full font-medium">Admin</span>
+              ? <Link to="/admin" className="text-xs bg-wine/10 text-wine px-2 py-0.5 rounded-full font-medium no-underline">Admin</Link>
               : <span className="text-clay text-xs">Bruker</span>
             }
           </div>

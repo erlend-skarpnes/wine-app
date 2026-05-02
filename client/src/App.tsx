@@ -9,7 +9,7 @@ import LoginForm from './components/LoginForm'
 import RegisterForm from './components/RegisterForm'
 
 function Layout() {
-  const { isAuthenticated, isAdmin, username, loading, logout } = useAuth()
+  const { isAuthenticated, loading, logout } = useAuth()
   const navigate = useNavigate()
 
   async function handleLogout() {
@@ -30,16 +30,13 @@ function Layout() {
       <header className="bg-wine text-white px-6 py-3.5 flex items-center justify-between gap-8 flex-wrap shrink-0">
         <div className="flex items-center gap-4">
           <Link to="/" className="text-[1.1rem] font-bold tracking-[0.02em] text-white no-underline">{__APP_NAME__}</Link>
-          {isAuthenticated && isAdmin && (
-            <Link to="/admin" className="text-xs text-white/70 hover:text-white no-underline">Admin</Link>
-          )}
+          <span className="text-xs opacity-50">{new Date(__BUILD_TIME__).toLocaleString('no-NO', { dateStyle: 'short', timeStyle: 'short' })}</span>
         </div>
         <div className="flex items-center gap-4">
-          <span className="text-xs opacity-50">{new Date(__BUILD_TIME__).toLocaleString('no-NO', { dateStyle: 'short', timeStyle: 'short' })}</span>
           {isAuthenticated && (
             <div className="flex items-center gap-2">
               <Link to="/profile" className="text-xs text-white/70 hover:text-white no-underline">
-                {username}
+                Min profil
               </Link>
               <button
                 onClick={handleLogout}
