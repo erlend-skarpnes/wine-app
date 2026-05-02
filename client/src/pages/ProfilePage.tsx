@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { LogOut, Copy, Share2, Trash2, Pencil, RefreshCw } from 'lucide-react'
+import { LogOut, Copy, Share2, Trash2, Pencil, RefreshCw, KeyRound } from 'lucide-react'
+import Modal from '../components/Modal'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useAuth } from '../context/AuthContext'
 import { useCellar } from '../context/CellarContext'
@@ -11,9 +12,9 @@ import {
 } from '../api/cellars'
 import type { CellarMember, CellarSummary } from '../api/types'
 
-// --- Password section ---
+// --- Password modal ---
 
-function PasswordSection() {
+function PasswordModal({ onClose }: { onClose: () => void }) {
   const [currentPassword, setCurrentPassword] = useState('')
   const [newPassword, setNewPassword] = useState('')
   const [confirm, setConfirm] = useState('')
@@ -27,7 +28,7 @@ function PasswordSection() {
       setNewPassword('')
       setConfirm('')
       setSuccess(true)
-      setTimeout(() => setSuccess(false), 3000)
+      setTimeout(() => { setSuccess(false); onClose() }, 1500)
     },
   })
 
@@ -45,8 +46,7 @@ function PasswordSection() {
   const error = validationError ?? (mutation.isError ? extractPasswordError(mutation.error) : null)
 
   return (
-    <section>
-      <h2 className="text-lg font-semibold text-bark mb-4">Bytt passord</h2>
+    <Modal title="Bytt passord" onClose={onClose}>
       <form onSubmit={handleSubmit} className="space-y-3">
         <input type="password" placeholder="Nåværende passord" autoComplete="current-password"
           value={currentPassword} onChange={e => setCurrentPassword(e.target.value)}
@@ -63,7 +63,7 @@ function PasswordSection() {
           {mutation.isPending ? 'Lagrer…' : 'Lagre'}
         </button>
       </form>
-    </section>
+    </Modal>
   )
 }
 
@@ -302,6 +302,7 @@ export default function ProfilePage() {
   const { username, isAdmin, logout } = useAuth()
   const navigate = useNavigate()
   const [refreshing, setRefreshing] = useState(false)
+  const [changingPassword, setChangingPassword] = useState(false)
 
   async function handleLogout() {
     await logout()
@@ -335,7 +336,13 @@ export default function ProfilePage() {
                 : <span className="text-clay text-xs">Bruker</span>
               }
             </div>
-            <div className="pt-1">
+            <div className="pt-1 flex gap-2 flex-wrap">
+              <button
+                onClick={() => setChangingPassword(true)}
+                className="secondary text-xs px-3 py-1.5 flex items-center gap-1.5"
+              >
+                <KeyRound size={14} /> Bytt passord
+              </button>
               <button
                 onClick={handleLogout}
                 className="secondary text-xs px-3 py-1.5 text-red-600 border-red-200 hover:bg-red-50 flex items-center gap-1.5"
@@ -346,7 +353,7 @@ export default function ProfilePage() {
           </div>
         </section>
 
-        <PasswordSection />
+        {changingPassword && <PasswordModal onClose={() => setChangingPassword(false)} />}
 
         <section className="flex flex-col items-start gap-2">
           <button
