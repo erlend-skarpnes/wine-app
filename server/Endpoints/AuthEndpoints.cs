@@ -23,7 +23,7 @@ public static class AuthEndpoints
         // POST /api/auth/login
         group.MapPost("/login", async (LoginRequest req, AppDbContext db, IConfiguration config, HttpResponse response) =>
         {
-            var user = await db.Users.FirstOrDefaultAsync(u => u.Username == req.Username);
+            var user = await db.Users.FirstOrDefaultAsync(u => u.Username == req.Username.ToLower());
             if (user is null || !BCrypt.Net.BCrypt.Verify(req.Password, user.PasswordHash))
                 return Results.Unauthorized();
 
@@ -108,12 +108,13 @@ public static class AuthEndpoints
             if (invite is null || invite.IsUsed || invite.ExpiresAt < DateTime.UtcNow)
                 return Results.BadRequest(new { message = "Invitasjonen er ugyldig eller utløpt." });
 
-            if (await db.Users.AnyAsync(u => u.Username == req.Username))
+            var normalizedUsername = req.Username.ToLower();
+            if (await db.Users.AnyAsync(u => u.Username == normalizedUsername))
                 return Results.Conflict(new { message = "Brukernavnet er allerede i bruk." });
 
             var user = new AppUser
             {
-                Username = req.Username,
+                Username = normalizedUsername,
                 PasswordHash = BCrypt.Net.BCrypt.HashPassword(req.Password),
             };
             db.Users.Add(user);
@@ -131,12 +132,13 @@ public static class AuthEndpoints
             if (string.IsNullOrEmpty(adminKey) || request.Headers["X-Admin-Key"].FirstOrDefault() != adminKey)
                 return Results.Forbid();
 
-            if (await db.Users.AnyAsync(u => u.Username == req.Username))
+            var normalizedUsername = req.Username.ToLower();
+            if (await db.Users.AnyAsync(u => u.Username == normalizedUsername))
                 return Results.Conflict(new { message = "Username already exists." });
 
             var user = new AppUser
             {
-                Username = req.Username,
+                Username = normalizedUsername,
                 PasswordHash = BCrypt.Net.BCrypt.HashPassword(req.Password),
             };
             db.Users.Add(user);
