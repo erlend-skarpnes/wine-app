@@ -2,6 +2,7 @@ import { useState, useCallback } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { getWineData } from '../api/wine'
 import { adjustEntry } from '../api/cellars'
+import { useCellar } from '../context/CellarContext'
 import Modal from './Modal'
 import WineImage from './WineImage'
 import QuantityAdjuster from './QuantityAdjuster'
@@ -16,7 +17,9 @@ interface Props {
 }
 
 export default function WineDetailModal({ barcode, name, quantity: initialQuantity, cellarId, onAdjusted, onClose }: Props) {
+  const { cellars } = useCellar()
   const [editingStock, setEditingStock] = useState(false)
+  const [selectedCellarId, setSelectedCellarId] = useState(cellarId)
   const [quantity, setQuantity] = useState(initialQuantity)
   const [prevQuantity, setPrevQuantity] = useState(initialQuantity)
 
@@ -27,13 +30,13 @@ export default function WineDetailModal({ barcode, name, quantity: initialQuanti
 
   const handleAdjust = useCallback(async (delta: 1 | -1) => {
     try {
-      const entry = await adjustEntry(cellarId, barcode, delta)
+      const entry = await adjustEntry(selectedCellarId, barcode, delta)
       setQuantity(entry.quantity)
       onAdjusted()
     } catch {
       // ignore
     }
-  }, [cellarId, barcode, onAdjusted])
+  }, [selectedCellarId, barcode, onAdjusted])
 
   const title = wine?.name ?? name ?? barcode
 
@@ -43,6 +46,28 @@ export default function WineDetailModal({ barcode, name, quantity: initialQuanti
         <div className="flex flex-col gap-4">
           {wine?.imageUrl && (
             <WineImage src={wine.imageUrl} alt={wine.name} className="w-24 h-auto self-center rounded" />
+          )}
+
+          {cellars.length > 1 && (
+            <div>
+              <p className="text-sm font-medium text-bark mb-2">Kjeller:</p>
+              <div className="flex flex-wrap gap-2">
+                {cellars.map(c => (
+                  <button
+                    key={c.id}
+                    type="button"
+                    onClick={() => setSelectedCellarId(c.id)}
+                    className={`px-3 py-1.5 text-sm rounded-lg border transition-colors ${
+                      selectedCellarId === c.id
+                        ? 'bg-wine text-white border-wine'
+                        : 'bg-surface text-clay border-stone hover:bg-warm'
+                    }`}
+                  >
+                    {c.name}
+                  </button>
+                ))}
+              </div>
+            </div>
           )}
 
           <div className="text-center">

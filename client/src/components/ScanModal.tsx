@@ -13,6 +13,7 @@ type Mode = 'add' | 'remove'
 
 type ScanState =
   | { status: 'scanning' }
+  | { status: 'cellar-pick'; barcode: string }
   | { status: 'loading' }
   | { status: 'success'; entry: CellarEntry; prevQuantity: number; wineName: string | null; imageUrl: string | null }
   | { status: 'error'; message: string }
@@ -33,13 +34,12 @@ export default function ScanModal({ mode, cellarId, onClose, onAdjusted }: Props
   const [selectedCellarId, setSelectedCellarId] = useState(cellarId)
   const [state, setState] = useState<ScanState>({ status: 'scanning' })
 
-  const handleScan = useCallback(async (barcode: string) => {
+  const doAdjust = useCallback(async (barcode: string) => {
     setState({ status: 'loading' })
     try {
       const delta = mode === 'add' ? 1 : -1
       const entry = await adjustEntry(selectedCellarId, barcode, delta)
       const prevQuantity = entry.quantity - delta
-
       try {
         const wineData = await getWineData(barcode)
         onAdjusted()
@@ -59,6 +59,14 @@ export default function ScanModal({ mode, cellarId, onClose, onAdjusted }: Props
       setState({ status: 'error', message })
     }
   }, [mode, selectedCellarId, onAdjusted])
+
+  const handleScan = useCallback((barcode: string) => {
+    if (cellars.length > 1) {
+      setState({ status: 'cellar-pick', barcode })
+    } else {
+      doAdjust(barcode)
+    }
+  }, [cellars.length, doAdjust])
 
   const handleCapture = useCallback(async (blob: Blob) => {
     if (state.status !== 'capture') return
@@ -107,26 +115,44 @@ export default function ScanModal({ mode, cellarId, onClose, onAdjusted }: Props
 
   return (
     <Modal title={mode === 'add' ? 'Legg til vin' : 'Fjern vin'} onClose={onClose}>
-      {cellars.length > 1 && (state.status === 'scanning' || state.status === 'error') && (
-        <div className="mb-3">
-          <select
-            value={selectedCellarId}
-            onChange={e => setSelectedCellarId(parseInt(e.target.value, 10))}
-            className="w-full border border-stone rounded-lg px-3 py-2 text-sm bg-surface text-bark focus:outline-none focus:border-wine"
-          >
-            {cellars.map(c => (
-              <option key={c.id} value={c.id}>{c.name}</option>
-            ))}
-          </select>
-        </div>
-      )}
-
       {showCamera && <BarcodeScanner onScan={handleScan} paused={false} />}
       {showLabelCamera && <LabelCamera onCapture={handleCapture} disabled={state.status === 'identifying'} />}
 
       <div className="mt-4 min-h-8">
         {state.status === 'scanning' && (
           <p className="text-clay text-sm">Skann strekkoden på flasken.</p>
+        )}
+
+        {state.status === 'cellar-pick' && (
+          <div className="flex flex-col gap-4">
+            <div>
+              <p className="text-sm font-medium text-bark mb-2">Velg kjeller:</p>
+              <div className="flex flex-wrap gap-2">
+                {cellars.map(c => (
+                  <button
+                    key={c.id}
+                    type="button"
+                    onClick={() => setSelectedCellarId(c.id)}
+                    className={`px-3 py-1.5 text-sm rounded-lg border transition-colors ${
+                      selectedCellarId === c.id
+                        ? 'bg-wine text-white border-wine'
+                        : 'bg-surface text-clay border-stone hover:bg-warm'
+                    }`}
+                  >
+                    {c.name}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div className="flex gap-2">
+              <button type="button" className="flex-1" onClick={() => doAdjust(state.barcode)}>
+                Bekreft
+              </button>
+              <button type="button" className="secondary flex-1" onClick={() => setState({ status: 'scanning' })}>
+                Skann på nytt
+              </button>
+            </div>
+          </div>
         )}
 
         {isSpinning && <div className="spinner" />}
