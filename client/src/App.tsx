@@ -2,6 +2,7 @@ import { createBrowserRouter, RouterProvider, Outlet, Navigate, useParams, useNa
 import { AuthProvider, useAuth } from './context/AuthContext'
 import CellarPage from './pages/CellarPage'
 import AdminPage from './pages/AdminPage'
+import ProfilePage from './pages/ProfilePage'
 import LoginForm from './components/LoginForm'
 import RegisterForm from './components/RegisterForm'
 
@@ -28,12 +29,17 @@ function Layout() {
         <div className="flex items-center gap-4">
           <span className="text-xs opacity-50">{new Date(__BUILD_TIME__).toLocaleString('no-NO', { dateStyle: 'short', timeStyle: 'short' })}</span>
           {isAuthenticated && (
-            <button
-              onClick={logout}
-              className="bg-transparent border border-white/40 text-white text-xs px-3 py-1 rounded-lg hover:bg-white/10"
-            >
-              {username ? `Logg ut (${username})` : 'Logg ut'}
-            </button>
+            <div className="flex items-center gap-2">
+              <Link to="/profile" className="text-xs text-white/70 hover:text-white no-underline">
+                {username}
+              </Link>
+              <button
+                onClick={logout}
+                className="bg-transparent border border-white/40 text-white text-xs px-3 py-1 rounded-lg hover:bg-white/10"
+              >
+                Logg ut
+              </button>
+            </div>
           )}
         </div>
       </header>
@@ -85,6 +91,7 @@ const router = createBrowserRouter([
     children: [
       { index: true, element: <RequireAuth><CellarPage /></RequireAuth> },
       { path: 'admin', element: <RequireAdmin><AdminPage /></RequireAdmin> },
+      { path: 'profile', element: <RequireAuth><ProfilePage /></RequireAuth> },
       { path: 'invite/:token', element: <InvitePage /> },
       { path: 'login', element: <LoginPage /> },
     ],

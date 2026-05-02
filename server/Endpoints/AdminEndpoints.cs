@@ -5,6 +5,8 @@ using WineApp.Api.Models;
 
 namespace WineApp.Api.Endpoints;
 
+record ResetPasswordRequest(string NewPassword);
+
 public static class AdminEndpoints
 {
     public static void MapAdminEndpoints(this WebApplication app)
@@ -19,6 +21,28 @@ public static class AdminEndpoints
                 .Select(u => new { u.Id, u.Username, u.IsAdmin })
                 .ToListAsync();
             return Results.Ok(users);
+        });
+
+        // PATCH /api/admin/users/{id}/password — reset a user's password
+        group.MapPatch("/users/{id}/password", async (int id, ResetPasswordRequest req, AppDbContext db) =>
+        {
+            if (string.IsNullOrWhiteSpace(req.NewPassword))
+                return Results.BadRequest(new { message = "Passord kan ikke være tomt." });
+
+            var user = await db.Users.FindAsync(id);
+            if (user is null)
+                return Results.NotFound();
+
+            user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(req.NewPassword);
+            user.FailedAttempts = 0;
+            user.LockedUntil = null;
+
+            await db.RefreshTokens
+                .Where(r => r.UserId == id)
+                .ExecuteUpdateAsync(s => s.SetProperty(r => r.IsRevoked, true));
+
+            await db.SaveChangesAsync();
+            return Results.NoContent();
         });
 
         // POST /api/admin/invites — generate a single-use invite link

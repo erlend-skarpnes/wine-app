@@ -98,6 +98,25 @@ public static class AuthEndpoints
                 : Results.Ok(new { username, isAdmin });
         }).RequireAuthorization();
 
+        // PATCH /api/auth/me/password — self-service password change
+        group.MapPatch("/me/password", async (ChangePasswordRequest req, ClaimsPrincipal principal, AppDbContext db) =>
+        {
+            if (string.IsNullOrWhiteSpace(req.NewPassword))
+                return Results.BadRequest(new { message = "Passord kan ikke være tomt." });
+
+            var userId = int.Parse(principal.FindFirstValue("sub")!);
+            var user = await db.Users.FindAsync(userId);
+            if (user is null)
+                return Results.Unauthorized();
+
+            if (!BCrypt.Net.BCrypt.Verify(req.CurrentPassword, user.PasswordHash))
+                return Results.Json(new { message = "Nåværende passord er feil." }, statusCode: 401);
+
+            user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(req.NewPassword);
+            await db.SaveChangesAsync();
+            return Results.NoContent();
+        }).RequireAuthorization();
+
         // GET /api/auth/invites?key=<adminKey> — admin only, generates a single-use invite link
         group.MapGet("/invites", async (AppDbContext db, IConfiguration config, HttpRequest request) =>
         {
@@ -231,3 +250,4 @@ public static class AuthEndpoints
 record LoginRequest(string Username, string Password);
 record RegisterRequest(string InviteToken, string Username, string Password);
 record CreateUserRequest(string Username, string Password);
+record ChangePasswordRequest(string CurrentPassword, string NewPassword);
