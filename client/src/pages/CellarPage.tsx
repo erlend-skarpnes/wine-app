@@ -71,6 +71,17 @@ export default function CellarPage() {
 
   const entries = combineEntries(visibleGroups)
 
+  // Per-cellar quantities for all barcodes (used by WineDetailModal)
+  const cellarQuantityMap = new Map<string, Map<number, number>>()
+  entryQueries.forEach((q, i) => {
+    const cellarId = cellars[i]?.id
+    if (!cellarId || !q.data) return
+    for (const entry of q.data) {
+      if (!cellarQuantityMap.has(entry.barcode)) cellarQuantityMap.set(entry.barcode, new Map())
+      cellarQuantityMap.get(entry.barcode)!.set(cellarId, entry.quantity)
+    }
+  })
+
   const allPairings = [...new Set(entries.flatMap(e => e.pairings))].sort()
   const allTypes = [...new Set(entries.map(e => e.type).filter(Boolean))].sort() as string[]
   const allGrapes = [...new Set(entries.flatMap(e => e.grapes))].sort()
@@ -151,8 +162,8 @@ export default function CellarPage() {
         <WineDetailModal
           barcode={selected.barcode}
           name={selected.name}
-          quantity={selected.quantity}
           cellarId={activeCellar.id}
+          cellarQuantities={cellarQuantityMap.get(selected.barcode) ?? new Map()}
           onAdjusted={handleAdjusted}
           onClose={() => setSelected(null)}
         />

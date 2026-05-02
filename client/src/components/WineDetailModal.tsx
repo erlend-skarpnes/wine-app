@@ -10,18 +10,22 @@ import QuantityAdjuster from './QuantityAdjuster'
 interface Props {
   barcode: string
   name: string | null
-  quantity: number
   cellarId: number
+  cellarQuantities: Map<number, number>
   onAdjusted: () => void
   onClose: () => void
 }
 
-export default function WineDetailModal({ barcode, name, quantity: initialQuantity, cellarId, onAdjusted, onClose }: Props) {
+export default function WineDetailModal({ barcode, name, cellarId, cellarQuantities, onAdjusted, onClose }: Props) {
   const { cellars } = useCellar()
   const [editingStock, setEditingStock] = useState(false)
   const [selectedCellarId, setSelectedCellarId] = useState(cellarId)
+  const initialQuantity = cellarQuantities.get(cellarId) ?? 0
   const [quantity, setQuantity] = useState(initialQuantity)
   const [prevQuantity, setPrevQuantity] = useState(initialQuantity)
+
+  // Cellars where this wine actually exists
+  const relevantCellars = cellars.filter(c => cellarQuantities.has(c.id))
 
   const { data: wine, isLoading } = useQuery({
     queryKey: ['wine', barcode],
@@ -48,15 +52,20 @@ export default function WineDetailModal({ barcode, name, quantity: initialQuanti
             <WineImage src={wine.imageUrl} alt={wine.name} className="w-24 h-auto self-center rounded" />
           )}
 
-          {cellars.length > 1 && (
+          {relevantCellars.length > 1 && (
             <div>
               <p className="text-sm font-medium text-bark mb-2">Kjeller:</p>
               <div className="flex flex-wrap gap-2">
-                {cellars.map(c => (
+                {relevantCellars.map(c => (
                   <button
                     key={c.id}
                     type="button"
-                    onClick={() => setSelectedCellarId(c.id)}
+                    onClick={() => {
+                      const q = cellarQuantities.get(c.id) ?? 0
+                      setSelectedCellarId(c.id)
+                      setQuantity(q)
+                      setPrevQuantity(q)
+                    }}
                     className={`px-3 py-1.5 text-sm rounded-lg border transition-colors ${
                       selectedCellarId === c.id
                         ? 'bg-wine text-white border-wine'
@@ -106,7 +115,7 @@ export default function WineDetailModal({ barcode, name, quantity: initialQuanti
           )}
 
           <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-1 text-sm">
-            <dt className="text-clay">Beholdning</dt><dd>{quantity} {quantity === 1 ? 'flaske' : 'flasker'}</dd>
+            <dt className="text-clay">Beholdning</dt><dd>{initialQuantity} {initialQuantity === 1 ? 'flaske' : 'flasker'}</dd>
             {wine.type     && <><dt className="text-clay">Type</dt>          <dd>{wine.type}</dd></>}
             {wine.winery   && <><dt className="text-clay">Produsent</dt>     <dd>{wine.winery}</dd></>}
             {wine.region   && <><dt className="text-clay">Region</dt>        <dd>{[wine.region, wine.country].filter(Boolean).join(', ')}</dd></>}
