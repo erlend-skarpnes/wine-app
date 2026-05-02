@@ -10,6 +10,12 @@ import RegisterForm from './components/RegisterForm'
 
 function Layout() {
   const { isAuthenticated, isAdmin, username, loading, logout } = useAuth()
+  const navigate = useNavigate()
+
+  async function handleLogout() {
+    await logout()
+    navigate('/login', { replace: true })
+  }
 
   if (loading) {
     return (
@@ -36,7 +42,7 @@ function Layout() {
                 {username}
               </Link>
               <button
-                onClick={logout}
+                onClick={handleLogout}
                 className="bg-transparent border border-white/40 text-white text-xs px-3 py-1 rounded-lg hover:bg-white/10"
               >
                 Logg ut

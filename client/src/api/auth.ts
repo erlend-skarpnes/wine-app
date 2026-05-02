@@ -16,7 +16,7 @@ export async function login(username: string, password: string): Promise<{ usern
 }
 
 export async function logout(): Promise<void> {
-  await post('/logout')
+  await fetch(`${BASE}/logout`, { method: 'POST', credentials: 'include' })
 }
 
 export async function register(inviteToken: string, username: string, password: string): Promise<{ username: string }> {
