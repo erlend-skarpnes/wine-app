@@ -318,47 +318,54 @@ export default function ProfilePage() {
   }
 
   return (
-    <div className="max-w-sm space-y-8">
-      <section>
-        <h2 className="text-lg font-semibold text-bark mb-4">Profil</h2>
-        <div className="bg-surface rounded-xl border border-stone p-4 space-y-3">
-          <div className="flex justify-between items-center text-sm">
-            <span className="text-clay">Brukernavn</span>
-            <span className="font-medium">{username}</span>
+    <div className="grid grid-cols-1 sm:grid-cols-2 gap-8 items-start max-w-2xl mx-auto">
+      {/* Left column: profile info + password + app info */}
+      <div className="space-y-8">
+        <section>
+          <h2 className="text-lg font-semibold text-bark mb-4">Profil</h2>
+          <div className="bg-surface rounded-xl border border-stone p-4 space-y-3">
+            <div className="flex justify-between items-center text-sm">
+              <span className="text-clay">Brukernavn</span>
+              <span className="font-medium">{username}</span>
+            </div>
+            <div className="flex justify-between items-center text-sm">
+              <span className="text-clay">Rolle</span>
+              {isAdmin
+                ? <Link to="/admin" className="text-xs bg-wine/10 text-wine px-2 py-0.5 rounded-full font-medium no-underline">Admin</Link>
+                : <span className="text-clay text-xs">Bruker</span>
+              }
+            </div>
+            <div className="pt-1">
+              <button
+                onClick={handleLogout}
+                className="secondary text-xs px-3 py-1.5 text-red-600 border-red-200 hover:bg-red-50 flex items-center gap-1.5"
+              >
+                <LogOut size={14} /> Logg ut
+              </button>
+            </div>
           </div>
-          <div className="flex justify-between items-center text-sm">
-            <span className="text-clay">Rolle</span>
-            {isAdmin
-              ? <Link to="/admin" className="text-xs bg-wine/10 text-wine px-2 py-0.5 rounded-full font-medium no-underline">Admin</Link>
-              : <span className="text-clay text-xs">Bruker</span>
-            }
-          </div>
-          <div className="pt-1">
-            <button
-              onClick={handleLogout}
-              className="secondary text-xs px-3 py-1.5 text-red-600 border-red-200 hover:bg-red-50 flex items-center gap-1.5"
-            >
-              <LogOut size={14} /> Logg ut
-            </button>
-          </div>
-        </div>
-      </section>
+        </section>
 
-      <CellarSection />
-      <PasswordSection />
+        <PasswordSection />
 
-      <section className="flex flex-col items-start gap-2">
-        <button
-          onClick={handleForceRefresh}
-          disabled={refreshing}
-          className="secondary text-xs px-3 py-1.5 flex items-center gap-1.5"
-        >
-          <RefreshCw size={14} /> {refreshing ? 'Oppdaterer…' : 'Se etter ny versjon'}
-        </button>
-        <p className="text-xs text-clay">
-          Bygd {new Date(__BUILD_TIME__).toLocaleString('no-NO', { dateStyle: 'short', timeStyle: 'short' })}
-        </p>
-      </section>
+        <section className="flex flex-col items-start gap-2">
+          <button
+            onClick={handleForceRefresh}
+            disabled={refreshing}
+            className="secondary text-xs px-3 py-1.5 flex items-center gap-1.5"
+          >
+            <RefreshCw size={14} /> {refreshing ? 'Oppdaterer…' : 'Se etter ny versjon'}
+          </button>
+          <p className="text-xs text-clay">
+            Bygd {new Date(__BUILD_TIME__).toLocaleString('no-NO', { dateStyle: 'short', timeStyle: 'short' })}
+          </p>
+        </section>
+      </div>
+
+      {/* Right column: cellars */}
+      <div>
+        <CellarSection />
+      </div>
     </div>
   )
 }
