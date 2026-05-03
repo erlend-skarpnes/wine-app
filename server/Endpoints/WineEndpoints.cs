@@ -15,12 +15,17 @@ public static class WineEndpoints
         group.MapGet("/{barcode}", async (string barcode, AppDbContext db, VinmonopoletService vinmonopolet) =>
         {
             var data = await db.WineData.FindAsync(barcode);
-            if (data is not null)
+            if (data is not null && !data.Refetch)
                 return Results.Ok(data);
 
             var fetched = await vinmonopolet.GetByBarcodeAsync(barcode);
             if (fetched is null)
+            {
+                // If we have stale data but the API is unreachable, serve what we have
+                if (data is not null)
+                    return Results.Ok(data);
                 return Results.NotFound();
+            }
 
             await Upsert(db, fetched);
             return Results.Ok(fetched);
