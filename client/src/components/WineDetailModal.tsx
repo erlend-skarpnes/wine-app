@@ -44,15 +44,30 @@ export default function WineDetailModal({ barcode, name, cellarId, cellarQuantit
 
   const title = wine?.name ?? name ?? barcode
 
-  function ScaleBar({ label, raw }: { label: string; raw: string }) {
+  function PieChart({ label, raw }: { label: string; raw: string }) {
     const value = parseFloat(raw)
     if (isNaN(value)) return null
+    const size = 40
+    const cx = size / 2
+    const cy = size / 2
+    const r = size / 2 - 2
+    const fraction = Math.min(value / 12, 1)
+    const angle = fraction * 2 * Math.PI
+    const x = cx + r * Math.sin(angle)
+    const y = cy - r * Math.cos(angle)
+    const largeArc = fraction > 0.5 ? 1 : 0
+    const slicePath = fraction >= 1
+      ? undefined
+      : `M ${cx} ${cy} L ${cx} ${cy - r} A ${r} ${r} 0 ${largeArc} 1 ${x.toFixed(2)} ${y.toFixed(2)} Z`
     return (
-      <div className="flex flex-col gap-1 flex-1">
+      <div className="flex flex-col items-center gap-1">
+        <svg width={size} height={size}>
+          <circle cx={cx} cy={cy} r={r} fill="var(--color-stone)" />
+          {fraction >= 1
+            ? <circle cx={cx} cy={cy} r={r} fill="var(--color-wine)" />
+            : <path d={slicePath} fill="var(--color-wine)" />}
+        </svg>
         <span className="text-clay text-xs">{label}</span>
-        <div className="h-1.5 bg-stone rounded-full overflow-hidden">
-          <div className="h-full bg-wine rounded-full" style={{ width: `${(value / 12) * 100}%` }} />
-        </div>
       </div>
     )
   }
@@ -123,46 +138,55 @@ export default function WineDetailModal({ barcode, name, cellarId, cellarQuantit
 
       {wine && (
         <div className="flex flex-col gap-4">
-          {wine.imageUrl && (
-            <WineImage src={wine.imageUrl} alt={wine.name} className="w-24 h-auto self-center rounded" />
-          )}
-
-          <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-1 text-sm">
-            <dt className="text-clay">Beholdning</dt><dd>{initialQuantity} {initialQuantity === 1 ? 'flaske' : 'flasker'}</dd>
-            {wine.type     && <><dt className="text-clay">Type</dt>          <dd>{wine.type}</dd></>}
-            {wine.winery   && <><dt className="text-clay">Produsent</dt>     <dd>{wine.winery}</dd></>}
-            {wine.region   && <><dt className="text-clay">Region</dt>        <dd>{[wine.region, wine.country].filter(Boolean).join(', ')}</dd></>}
-            {!wine.region && wine.country && <><dt className="text-clay">Land</dt><dd>{wine.country}</dd></>}
-            {wine.alcoholContent != null && <><dt className="text-clay">Alkohol</dt>   <dd>{wine.alcoholContent}%</dd></>}
-            {wine.storagePotential && <><dt className="text-clay">Lagringsevne</dt><dd>{wine.storagePotential}</dd></>}
-          </dl>
-
-          {(wine.body || wine.acidity) && (
-            <div className="flex gap-4">
-              {wine.body    && <ScaleBar label="Fylde"    raw={wine.body} />}
-              {wine.acidity && <ScaleBar label="Friskhet" raw={wine.acidity} />}
+          <div className="flex gap-4 items-center">
+            <div className="flex flex-col items-center gap-3 flex-shrink-0">
+              {wine.imageUrl && (
+                <WineImage src={wine.imageUrl} alt={wine.name} className="w-24 h-auto rounded" />
+              )}
+              {(wine.body || wine.acidity) && (
+                <div className="flex gap-3">
+                  {wine.body    && <PieChart label="Fylde"    raw={wine.body} />}
+                  {wine.acidity && <PieChart label="Friskhet" raw={wine.acidity} />}
+                </div>
+              )}
             </div>
-          )}
 
-          {wine.grapes.length > 0 && (
-            <div>
-              <p className="text-clay text-xs font-semibold mb-1 uppercase tracking-wide">Druer</p>
-              <div className="flex flex-col gap-0.5">
-                {wine.grapes.map((g, i) => {
-                  const parts = g.split(' ')
-                  const hasPct = parts.length > 1 && parts[parts.length - 1].endsWith('%')
-                  const name = hasPct ? parts.slice(0, -1).join(' ') : g
-                  const pct  = hasPct ? parts[parts.length - 1] : null
-                  return (
-                    <div key={i} className="flex justify-between text-sm">
-                      <span>{name}</span>
-                      {pct && <span className="text-clay">{pct}</span>}
-                    </div>
-                  )
-                })}
-              </div>
+            <div className="flex flex-col gap-4 flex-1 min-w-0">
+              <dl className="grid grid-cols-1 sm:grid-cols-[auto_1fr] gap-x-4 gap-y-1 text-sm">
+                <dt className="text-clay">Beholdning</dt><dd>{initialQuantity} {initialQuantity === 1 ? 'flaske' : 'flasker'}</dd>
+                {wine.type     && <><dt className="text-clay">Type</dt>          <dd>{wine.type}</dd></>}
+                {wine.winery   && <><dt className="text-clay">Produsent</dt>     <dd>{wine.winery}</dd></>}
+                {wine.region   && <><dt className="text-clay">Region</dt>        <dd>{[wine.region, wine.country].filter(Boolean).join(', ')}</dd></>}
+                {!wine.region && wine.country && <><dt className="text-clay">Land</dt><dd>{wine.country}</dd></>}
+                {wine.alcoholContent != null && <><dt className="text-clay">Alkohol</dt>   <dd>{wine.alcoholContent}%</dd></>}
+                {wine.storagePotential && <><dt className="text-clay">Lagringsevne</dt><dd>{wine.storagePotential}</dd></>}
+              </dl>
+
+              {wine.grapes.length > 0 && (
+                <div>
+                  <p className="text-clay text-xs font-semibold mb-1 uppercase tracking-wide">Druer</p>
+                  <div className="flex flex-col gap-0.5">
+                    {wine.grapes.map((g, i) => {
+                      const parts = g.split(' ')
+                      const hasPct = parts.length > 1 && parts[parts.length - 1].endsWith('%')
+                      const name = hasPct ? parts.slice(0, -1).join(' ') : g
+                      const pct  = hasPct ? parts[parts.length - 1] : null
+                      return (
+                        <div key={i} className="flex justify-between text-sm">
+                          <span>{name}</span>
+                          {pct && <span className="text-clay">{pct}</span>}
+                        </div>
+                      )
+                    })}
+                  </div>
+                </div>
+              )}
+
+              {wine.description && (
+                <p className="text-[0.85rem] text-clay leading-relaxed">{wine.description}</p>
+              )}
             </div>
-          )}
+          </div>
 
           {wine.pairings.length > 0 && (
             <div>
@@ -173,10 +197,6 @@ export default function WineDetailModal({ barcode, name, cellarId, cellarQuantit
                 ))}
               </div>
             </div>
-          )}
-
-          {wine.description && (
-            <p className="text-[0.85rem] text-clay leading-relaxed">{wine.description}</p>
           )}
         </div>
       )}
