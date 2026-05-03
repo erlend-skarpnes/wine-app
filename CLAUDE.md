@@ -13,6 +13,7 @@ A wine cellar inventory PWA. Users scan barcodes to add/remove bottles, capture 
 yarn dev        # Vite dev server on :5173, proxies /api → localhost:5000
 yarn build      # TypeScript check + Vite build → dist/
 yarn preview    # Preview production build
+yarn test:e2e   # Playwright E2E tests (starts server + Vite automatically)
 ```
 
 ### Server (.NET 9 — run from `server/`)
@@ -101,7 +102,7 @@ Swagger available at `/swagger` in Development mode.
 | `server/Endpoints/AdminEndpoints.cs` | Admin user management |
 | `server/Models/` | `AppUser`, `Cellar`, `CellarMember`, `CellarShareToken`, `CellarEntry` |
 | `server/Data/AppDbContext.cs` | EF Core DbContext; composite PKs, unique indexes |
-| `server/Migrations/` | EF Core migrations (do not edit manually) |
+| `server/Migrations/` | EF Core migrations — generate with `dotnet ef migrations add <Name>`; adding `migrationBuilder.Sql()` for data migrations is fine |
 | `server/Program.cs` | DI setup, JWT config, CORS, middleware order |
 
 ### Client
@@ -128,7 +129,8 @@ Swagger available at `/swagger` in Development mode.
 
 - **Cellar**: owned by one user; members join via share tokens
 - **CellarMember**: composite PK `(CellarId, UserId)`, role = owner | member
-- **CellarEntry**: composite PK `(CellarId, Barcode)` — quantity per cellar
+- **CellarEntry**: composite PK `(CellarId, Barcode)` — quantity per cellar; `Grapes` has percentages stripped (filter-safe names only)
+- **WineData**: cached from Vinmonopolet; `Refetch = true` triggers a re-fetch from the API on next request instead of serving the cached row — use this in migrations when adding new mapped fields
 - On registration: a default "Min kjeller" cellar is auto-created for the user
 
 ## Conventions
