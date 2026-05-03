@@ -20,7 +20,10 @@ test('admin can generate invite link', async ({ adminPage: page }) => {
 
 test('admin can reset user password', async ({ adminPage: page }) => {
   await page.goto('/admin')
-  await page.getByRole('button', { name: 'Tilbakestill passord' }).first().click()
+  // Target testlockout — alphabetically second (testadmin, testlockout, testuser).
+  // testlockout is only used with wrong passwords, so resetting it here is safe.
+  // Resetting testadmin would break the join test; resetting testuser would break every authenticatedPage fixture.
+  await page.getByRole('row', { name: /testlockout/ }).getByRole('button', { name: 'Tilbakestill passord' }).click()
   await page.getByPlaceholder('Nytt passord').fill('NewPass1234!')
   await page.getByRole('button', { name: 'Lagre' }).click()
   await expect(page.getByText('Passord oppdatert')).toBeVisible()

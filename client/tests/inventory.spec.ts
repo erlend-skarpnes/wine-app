@@ -78,8 +78,10 @@ test('adjust quantity in detail modal updates count', async ({ authenticatedPage
   await page.getByText('7090016664323').click()
   await page.getByRole('button', { name: 'Rediger beholdning' }).click()
 
-  const before = await page.locator('span.text-2xl').textContent()
-  await page.locator('button').filter({ has: page.locator('svg') }).last().click() // Plus button
+  const modal = page.getByRole('dialog')
+  const before = await modal.locator('span.text-2xl').textContent()
+  // Plus button is the last SVG button inside the modal (close X, minus, plus)
+  await modal.locator('button').filter({ has: page.locator('svg') }).last().click()
   // Wait for the async API call to complete and update the displayed quantity
-  await expect(page.locator('span.text-2xl')).toHaveText(String(Number(before) + 1))
+  await expect(modal.locator('span.text-2xl')).toHaveText(String(Number(before) + 1))
 })

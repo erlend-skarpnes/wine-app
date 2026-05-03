@@ -20,8 +20,10 @@ test('rename cellar shows updated name', async ({ authenticatedPage: page }) => 
   const newName = `Renamed ${Date.now()}`
   const card = page.locator('[data-testid="cellar-row"]').filter({ hasText: originalName })
   await card.getByRole('button', { name: 'Endre navn' }).click()
-  await page.locator('input[value]').first().fill(newName)
-  await page.getByRole('button', { name: 'Lagre' }).first().click()
+  // After clicking, the card's hasText filter no longer matches (input value ≠ text content),
+  // so locate the rename input by its value attribute instead
+  await page.locator(`input[value="${originalName}"]`).fill(newName)
+  await page.getByRole('button', { name: 'Lagre' }).click()
   await expect(page.getByText(newName)).toBeVisible()
 })
 

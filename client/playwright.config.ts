@@ -22,5 +22,6 @@ export default defineConfig({
   use: {
     baseURL: 'https://localhost:4173',
     ignoreHTTPSErrors: true,
+    actionTimeout: 10_000,
   },
 })
