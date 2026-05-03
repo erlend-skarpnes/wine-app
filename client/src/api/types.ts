@@ -40,6 +40,7 @@ export interface WineData {
   country: string | null
   body: string | null
   acidity: string | null
+  tannins: string | null
   alcoholContent: number | null
   description: string | null
   imageUrl: string | null

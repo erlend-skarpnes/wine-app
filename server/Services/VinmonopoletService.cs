@@ -146,6 +146,7 @@ public class VinmonopoletService(HttpClient http)
             .ToArray() ?? [],
         Body             = FindCharacteristic(p.Content?.Characteristics, "Fylde"),
         Acidity          = FindCharacteristic(p.Content?.Characteristics, "Friskhet"),
+        Tannins          = FindCharacteristic(p.Content?.Characteristics, "Garvestoffer"),
         StoragePotential = p.Content?.StoragePotential?.FormattedValue,
     };
 

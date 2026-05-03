@@ -67,7 +67,7 @@ export default function WineDetailModal({ barcode, name, cellarId, cellarQuantit
             ? <circle cx={cx} cy={cy} r={r} fill="var(--color-wine)" />
             : <path d={slicePath} fill="var(--color-wine)" />}
         </svg>
-        <span className="text-clay text-xs">{label}</span>
+        <span className="text-clay text-[10px]">{label}</span>
       </div>
     )
   }
@@ -143,10 +143,11 @@ export default function WineDetailModal({ barcode, name, cellarId, cellarQuantit
               {wine.imageUrl && (
                 <WineImage src={wine.imageUrl} alt={wine.name} className="w-24 h-auto rounded" />
               )}
-              {(wine.body || wine.acidity) && (
-                <div className="flex gap-3">
-                  {wine.body    && <PieChart label="Fylde"    raw={wine.body} />}
-                  {wine.acidity && <PieChart label="Friskhet" raw={wine.acidity} />}
+              {(wine.body || wine.acidity || wine.tannins) && (
+                <div className="grid grid-cols-3">
+                  {wine.body    && <PieChart label="Fylde"        raw={wine.body} />}
+                  {wine.acidity && <PieChart label="Friskhet"     raw={wine.acidity} />}
+                  {wine.tannins && <PieChart label="Garvestoffer" raw={wine.tannins} />}
                 </div>
               )}
             </div>

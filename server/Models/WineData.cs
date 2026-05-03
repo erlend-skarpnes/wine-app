@@ -12,6 +12,7 @@ public class WineData
     public string? Country { get; set; }
     public string? Body { get; set; }
     public string? Acidity { get; set; }
+    public string? Tannins { get; set; }
     public double? AlcoholContent { get; set; }
     public string? Description { get; set; }
     public string? ImageUrl { get; set; }
