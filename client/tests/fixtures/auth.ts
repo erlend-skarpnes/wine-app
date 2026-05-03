@@ -1,21 +1,24 @@
-import { test as base, type Page } from '@playwright/test'
+import { test as base, type Page, type BrowserContext } from '@playwright/test'
 
-async function loginAs(page: Page, username: string, password: string) {
-  await page.goto('/login')
-  await page.getByPlaceholder('Brukernavn').fill(username)
-  await page.getByPlaceholder('Passord').fill(password)
-  await page.getByRole('button', { name: 'Logg inn' }).click()
-  await page.waitForURL('/')
+async function newAuthContext(
+  { browser }: { browser: import('@playwright/test').Browser },
+  storageState: string
+): Promise<{ context: BrowserContext; page: Page }> {
+  const context = await browser.newContext({ storageState, ignoreHTTPSErrors: true })
+  const page = await context.newPage()
+  return { context, page }
 }
 
 export const test = base.extend<{ authenticatedPage: Page; adminPage: Page }>({
-  authenticatedPage: async ({ page }, use) => {
-    await loginAs(page, 'testuser', 'Test1234!')
+  authenticatedPage: async ({ browser }, use) => {
+    const { context, page } = await newAuthContext({ browser }, 'tests/.auth/testuser.json')
     await use(page)
+    await context.close()
   },
-  adminPage: async ({ page }, use) => {
-    await loginAs(page, 'testadmin', 'Test1234!')
+  adminPage: async ({ browser }, use) => {
+    const { context, page } = await newAuthContext({ browser }, 'tests/.auth/testadmin.json')
     await use(page)
+    await context.close()
   },
 })
 

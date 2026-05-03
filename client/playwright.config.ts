@@ -2,6 +2,7 @@ import { defineConfig } from '@playwright/test'
 
 export default defineConfig({
   testDir: './tests',
+  globalSetup: './tests/global-setup.ts',
   webServer: [
     {
       command: 'dotnet run --project ../server --environment Testing --urls http://localhost:5001',

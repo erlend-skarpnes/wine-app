@@ -109,3 +109,4 @@ http-client.private.env.json
 
 # Playwright tests
 client/test-results
+client/tests/.auth/
