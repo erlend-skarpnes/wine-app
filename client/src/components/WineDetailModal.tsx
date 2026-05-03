@@ -44,6 +44,19 @@ export default function WineDetailModal({ barcode, name, cellarId, cellarQuantit
 
   const title = wine?.name ?? name ?? barcode
 
+  function ScaleBar({ label, raw }: { label: string; raw: string }) {
+    const value = parseFloat(raw)
+    if (isNaN(value)) return null
+    return (
+      <div className="flex flex-col gap-1 flex-1">
+        <span className="text-clay text-xs">{label}</span>
+        <div className="h-1.5 bg-stone rounded-full overflow-hidden">
+          <div className="h-full bg-wine rounded-full" style={{ width: `${(value / 12) * 100}%` }} />
+        </div>
+      </div>
+    )
+  }
+
   if (editingStock) {
     return (
       <Modal title={title} onClose={onClose} maxWidth="max-w-[480px]">
@@ -121,15 +134,33 @@ export default function WineDetailModal({ barcode, name, cellarId, cellarQuantit
             {wine.region   && <><dt className="text-clay">Region</dt>        <dd>{[wine.region, wine.country].filter(Boolean).join(', ')}</dd></>}
             {!wine.region && wine.country && <><dt className="text-clay">Land</dt><dd>{wine.country}</dd></>}
             {wine.alcoholContent != null && <><dt className="text-clay">Alkohol</dt>   <dd>{wine.alcoholContent}%</dd></>}
-            {wine.body     && <><dt className="text-clay">Fylde</dt>         <dd>{wine.body}</dd></>}
-            {wine.acidity  && <><dt className="text-clay">Friskhet</dt>      <dd>{wine.acidity}</dd></>}
             {wine.storagePotential && <><dt className="text-clay">Lagringsevne</dt><dd>{wine.storagePotential}</dd></>}
           </dl>
+
+          {(wine.body || wine.acidity) && (
+            <div className="flex gap-4">
+              {wine.body    && <ScaleBar label="Fylde"    raw={wine.body} />}
+              {wine.acidity && <ScaleBar label="Friskhet" raw={wine.acidity} />}
+            </div>
+          )}
 
           {wine.grapes.length > 0 && (
             <div>
               <p className="text-clay text-xs font-semibold mb-1 uppercase tracking-wide">Druer</p>
-              <p className="text-sm">{wine.grapes.join(', ')}</p>
+              <div className="flex flex-col gap-0.5">
+                {wine.grapes.map((g, i) => {
+                  const parts = g.split(' ')
+                  const hasPct = parts.length > 1 && parts[parts.length - 1].endsWith('%')
+                  const name = hasPct ? parts.slice(0, -1).join(' ') : g
+                  const pct  = hasPct ? parts[parts.length - 1] : null
+                  return (
+                    <div key={i} className="flex justify-between text-sm">
+                      <span>{name}</span>
+                      {pct && <span className="text-clay">{pct}</span>}
+                    </div>
+                  )
+                })}
+              </div>
             </div>
           )}
 

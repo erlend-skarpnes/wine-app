@@ -102,7 +102,7 @@ public static class CellarEndpoints
                     Name             = wine != null ? wine.Name             : null,
                     Type             = wine != null ? wine.Type             : null,
                     Pairings         = wine != null ? wine.Pairings         : new string[0],
-                    Grapes           = wine != null ? wine.Grapes           : new string[0],
+                    Grapes           = wine != null ? wine.Grapes.Select(g => StripGrapePercentage(g)).ToArray() : new string[0],
                     StoragePotential = wine != null ? wine.StoragePotential : null,
                     AlcoholContent   = wine != null ? wine.AlcoholContent   : (double?)null,
                 })
@@ -248,6 +248,15 @@ public static class CellarEndpoints
 
     private static int GetUserId(ClaimsPrincipal user) =>
         int.Parse(user.FindFirstValue("sub")!);
+
+    // "Malbec 40%" → "Malbec"  |  "Cabernet Sauvignon" → "Cabernet Sauvignon"
+    private static string StripGrapePercentage(string grape)
+    {
+        var parts = grape.Split(' ');
+        return parts.Length > 1 && parts[^1].EndsWith('%')
+            ? string.Join(' ', parts[..^1])
+            : grape;
+    }
 
     private static async Task<bool> IsMember(int userId, int cellarId, AppDbContext db) =>
         await db.CellarMembers.AnyAsync(m => m.CellarId == cellarId && m.UserId == userId);

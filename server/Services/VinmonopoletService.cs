@@ -136,7 +136,7 @@ public class VinmonopoletService(HttpClient http)
             .FirstOrDefault(i => i.Format == "product")?.Url
             ?? p.Images?.FirstOrDefault()?.Url,
         Grapes         = p.Content?.Ingredients?
-            .Select(i => StripPercentage(i.FormattedValue))
+            .Select(i => i.FormattedValue)
             .Where(s => s is not null)
             .Select(s => s!)
             .ToArray() ?? [],
