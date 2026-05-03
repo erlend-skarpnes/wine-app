@@ -18,8 +18,9 @@ export default function LoginForm({ onLogin }: Props) {
     try {
       const { username: name, isAdmin } = await login(username, password)
       onLogin(name, isAdmin)
-    } catch {
-      setError('Feil brukernavn eller passord.')
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : ''
+      setError(msg.includes('låst') ? msg : 'Feil brukernavn eller passord.')
     } finally {
       setLoading(false)
     }

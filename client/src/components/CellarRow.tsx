@@ -92,7 +92,7 @@ export default function CellarRow({ cellar }: { cellar: CellarSummary }) {
   })
 
   return (
-    <div className="bg-surface rounded-xl border border-stone p-4 space-y-3">
+    <div data-testid="cellar-row" className="bg-surface rounded-xl border border-stone p-4 space-y-3">
       <div className="flex items-center justify-between gap-2 flex-wrap">
         {renaming ? (
           <input

@@ -9,7 +9,14 @@ async function post(path: string, body?: unknown) {
     headers: body ? { 'Content-Type': 'application/json' } : undefined,
     body: body ? JSON.stringify(body) : undefined,
   })
-  if (!res.ok) throw new Error(`Auth request failed: ${res.status}`)
+  if (!res.ok) {
+    const err = new Error(`${res.status}`)
+    if (res.headers.get('content-type')?.includes('json')) {
+      const data = await res.json().catch(() => ({}))
+      if (data.message) err.message = data.message
+    }
+    throw err
+  }
   return res.json()
 }
 
