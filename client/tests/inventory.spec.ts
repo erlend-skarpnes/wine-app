@@ -33,47 +33,13 @@ test('filters persist after page reload', async ({ authenticatedPage: page }) =>
 })
 
 test('clicking wine entry opens detail modal', async ({ authenticatedPage: page }) => {
-  // Mock external wine API
-  await page.route('**/api/wines/**', route =>
-    route.fulfill({
-      json: {
-        barcode: '7090016664323',
-        name: 'Testvinen',
-        type: 'Rødvin',
-        winery: null,
-        region: null,
-        country: null,
-        body: null,
-        acidity: null,
-        alcoholContent: null,
-        description: null,
-        imageUrl: null,
-        grapes: [],
-        pairings: [],
-        storagePotential: null,
-      }
-    })
-  )
-
   await page.goto('/')
-  await page.getByText('7090016664323').click()
+  // Entry shows barcode before wine data is cached, name after — match either
+  await page.locator('tr').filter({ hasText: /7090016664323|Testvinen/ }).first().click()
   await expect(page.getByText('Testvinen')).toBeVisible()
 })
 
 test('adjust quantity in detail modal updates count', async ({ authenticatedPage: page }) => {
-  await page.route('**/api/wines/**', route =>
-    route.fulfill({
-      json: {
-        barcode: '7090016664323',
-        name: 'Testvinen',
-        type: 'Rødvin',
-        winery: null, region: null, country: null, body: null,
-        acidity: null, alcoholContent: null, description: null, imageUrl: null,
-        grapes: [], pairings: [], storagePotential: null,
-      }
-    })
-  )
-
   // Mock entry-locations to a single location so no location picker is shown
   await page.route('**/api/homes/*/entries/*/locations', route =>
     route.fulfill({
@@ -89,7 +55,8 @@ test('adjust quantity in detail modal updates count', async ({ authenticatedPage
   )
 
   await page.goto('/')
-  await page.getByText('7090016664323').click()
+  // Entry shows barcode before wine data is cached, name after — match either
+  await page.locator('tr').filter({ hasText: /7090016664323|Testvinen/ }).first().click()
   await page.getByRole('button', { name: 'Rediger beholdning' }).click()
 
   const modal = page.getByRole('dialog')

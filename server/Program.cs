@@ -26,20 +26,28 @@ if (builder.Environment.IsEnvironment("Testing"))
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
 
-builder.Services.AddHttpClient<WineApiService>((serviceProvider, client) =>
+if (builder.Environment.IsEnvironment("Testing"))
 {
-    var config = serviceProvider.GetRequiredService<IConfiguration>();
-    client.BaseAddress = new Uri(config["WineApi:BaseUrl"] ?? "http://api.wineapi.io/");
-    var apiKey = config["WineApi:ApiKey"];
-    if (!string.IsNullOrEmpty(apiKey))
-        client.DefaultRequestHeaders.Add("X-API-Key", apiKey);
-});
+    builder.Services.AddSingleton<IVinmonopoletService, FakeVinmonopoletService>();
+    builder.Services.AddSingleton<IWineApiService, FakeWineApiService>();
+}
+else
+{
+    builder.Services.AddHttpClient<IVinmonopoletService, VinmonopoletService>((serviceProvider, client) =>
+    {
+        var config = serviceProvider.GetRequiredService<IConfiguration>();
+        client.BaseAddress = new Uri(config["Vinmonopolet:BaseUrl"] ?? "https://app.vinmonopolet.no/vmpws/v2/vmp/");
+    });
 
-builder.Services.AddHttpClient<VinmonopoletService>((serviceProvider, client) =>
-{
-    var config = serviceProvider.GetRequiredService<IConfiguration>();
-    client.BaseAddress = new Uri(config["Vinmonopolet:BaseUrl"] ?? "https://app.vinmonopolet.no/vmpws/v2/vmp/");
-});
+    builder.Services.AddHttpClient<IWineApiService, WineApiService>((serviceProvider, client) =>
+    {
+        var config = serviceProvider.GetRequiredService<IConfiguration>();
+        client.BaseAddress = new Uri(config["WineApi:BaseUrl"] ?? "http://api.wineapi.io/");
+        var apiKey = config["WineApi:ApiKey"];
+        if (!string.IsNullOrEmpty(apiKey))
+            client.DefaultRequestHeaders.Add("X-API-Key", apiKey);
+    });
+}
 
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>

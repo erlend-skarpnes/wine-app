@@ -75,7 +75,7 @@ file record WineDetailPairing(string Food, double? Confidence, string? Notes);
 
 // --- Service ---
 
-public class WineApiService(HttpClient http)
+public class WineApiService(HttpClient http) : IWineApiService
 {
     private const double ConfidenceThreshold = 0.8;
 

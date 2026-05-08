@@ -12,7 +12,7 @@ public static class WineEndpoints
 
         // GET /api/wines/{barcode}
         // Checks the local DB first; on a miss, tries Vinmonopolet automatically.
-        group.MapGet("/{barcode}", async (string barcode, AppDbContext db, VinmonopoletService vinmonopolet) =>
+        group.MapGet("/{barcode}", async (string barcode, AppDbContext db, IVinmonopoletService vinmonopolet) =>
         {
             var data = await db.WineData.FindAsync(barcode);
             if (data is not null && !data.Refetch)
@@ -32,7 +32,7 @@ public static class WineEndpoints
         });
 
         // POST /api/wines/identify  (multipart/form-data: barcode + image)
-        group.MapPost("/identify", async (HttpRequest request, AppDbContext db, WineApiService wineApi) =>
+        group.MapPost("/identify", async (HttpRequest request, AppDbContext db, IWineApiService wineApi) =>
         {
             if (!request.HasFormContentType)
                 return Results.BadRequest("Expected multipart/form-data");
@@ -59,7 +59,7 @@ public static class WineEndpoints
         });
 
         // POST /api/wines/link  { barcode, productCode }
-        group.MapPost("/link", async (LinkRequest req, AppDbContext db, WineApiService wineApi) =>
+        group.MapPost("/link", async (LinkRequest req, AppDbContext db, IWineApiService wineApi) =>
         {
             var wineData = await wineApi.GetDetailAsync(req.ProductCode, req.Barcode);
             await Upsert(db, wineData);

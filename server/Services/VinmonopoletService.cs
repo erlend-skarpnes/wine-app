@@ -91,7 +91,7 @@ internal class VmpCharacteristic
 
 // --- Service ---
 
-public class VinmonopoletService(HttpClient http)
+public class VinmonopoletService(HttpClient http) : IVinmonopoletService
 {
     /// <summary>Returns null when the barcode is not found or the API is unreachable.</summary>
     public async Task<WineData?> GetByBarcodeAsync(string barcode, CancellationToken ct = default)
