@@ -1,24 +1,38 @@
-export interface CellarSummary {
+export interface HomeSummary {
   id: number
   name: string
-  role: 'owner' | 'member'
+  isOwner: boolean
   memberCount: number
 }
 
-export interface CellarMember {
+export interface HomeMember {
   userId: number
   username: string
-  role: 'owner' | 'member'
+  isOwner: boolean
   joinedAt: string
 }
 
-export interface AdminUser {
+export interface Section {
   id: number
-  username: string
-  isAdmin: boolean
+  name: string
 }
 
-export interface CellarEntry {
+export interface Location {
+  id: number
+  name: string
+  isDefault: boolean
+  sections: Section[]
+}
+
+export interface LocationEntry {
+  locationId: number
+  locationName: string
+  sectionId: number | null
+  sectionName: string | null
+  quantity: number
+}
+
+export interface Entry {
   barcode: string
   quantity: number
   name: string | null
@@ -27,6 +41,13 @@ export interface CellarEntry {
   grapes: string[]
   storagePotential: string | null
   alcoholContent: number | null
+  locations: LocationEntry[]
+}
+
+export interface AdminUser {
+  id: number
+  username: string
+  isAdmin: boolean
 }
 
 export interface WineData {

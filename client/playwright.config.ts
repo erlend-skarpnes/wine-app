@@ -24,5 +24,9 @@ export default defineConfig({
     baseURL: 'https://localhost:4173',
     ignoreHTTPSErrors: true,
     actionTimeout: 10_000,
+    permissions: ['camera'],
+    launchOptions: {
+      args: ['--use-fake-device-for-media-stream'],
+    },
   },
 })

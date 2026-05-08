@@ -1,8 +1,8 @@
-import type { CellarEntry } from '../api/types'
+import type { Entry } from '../api/types'
 
 interface Props {
-  entries: CellarEntry[]
-  onSelect: (entry: CellarEntry) => void
+  entries: Entry[]
+  onSelect: (entry: Entry) => void
 }
 
 export default function WineTable({ entries, onSelect }: Props) {

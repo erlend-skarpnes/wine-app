@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { ChevronRight } from 'lucide-react'
 
-interface CellarOption {
+interface LocationOption {
   id: number
   name: string
 }
@@ -18,9 +18,9 @@ interface Props {
   allTypes: string[]
   allPairings: string[]
   allGrapes: string[]
-  allCellars: CellarOption[]
-  cellarFilter: number[]
-  onCellarFilter: (ids: number[]) => void
+  allLocations: LocationOption[]
+  locationFilter: number[]
+  onLocationFilter: (ids: number[]) => void
 }
 
 function filterBtn(active: boolean) {
@@ -37,15 +37,15 @@ export default function FilterBar({
   pairingFilter, onPairingFilter,
   grapeFilter, onGrapeFilter,
   allTypes, allPairings, allGrapes,
-  allCellars, cellarFilter, onCellarFilter,
+  allLocations, locationFilter, onLocationFilter,
 }: Props) {
   const [filtersOpen, setFiltersOpen] = useState(false)
   const activeFilterCount = [storageFilter, typeFilter, pairingFilter, grapeFilter].filter(Boolean).length
-    + (cellarFilter.length > 0 ? 1 : 0)
+    + (locationFilter.length > 0 ? 1 : 0)
 
-  function toggleCellar(id: number) {
-    onCellarFilter(
-      cellarFilter.includes(id) ? cellarFilter.filter(c => c !== id) : [...cellarFilter, id]
+  function toggleLocation(id: number) {
+    onLocationFilter(
+      locationFilter.includes(id) ? locationFilter.filter(l => l !== id) : [...locationFilter, id]
     )
   }
 
@@ -67,17 +67,17 @@ export default function FilterBar({
 
       {filtersOpen && (
         <div className="flex flex-col divide-y divide-stone bg-stone rounded-lg px-3">
-          {allCellars.length > 1 && (
+          {allLocations.length > 1 && (
             <div className="flex items-center gap-1.5 flex-wrap py-2">
-              <span className="text-[0.7rem] font-semibold text-clay uppercase tracking-wide w-14 shrink-0">Kjeller</span>
-              {allCellars.map(c => (
+              <span className="text-[0.7rem] font-semibold text-clay uppercase tracking-wide w-14 shrink-0">Oppbevaring</span>
+              {allLocations.map(l => (
                 <button
-                  key={c.id}
+                  key={l.id}
                   type="button"
-                  className={filterBtn(cellarFilter.includes(c.id))}
-                  onClick={() => toggleCellar(c.id)}
+                  className={filterBtn(locationFilter.includes(l.id))}
+                  onClick={() => toggleLocation(l.id)}
                 >
-                  {c.name}
+                  {l.name}
                 </button>
               ))}
             </div>

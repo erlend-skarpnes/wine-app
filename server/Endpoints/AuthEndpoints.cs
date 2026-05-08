@@ -156,9 +156,10 @@ public static class AuthEndpoints
             invite.IsUsed = true;
             await db.SaveChangesAsync();
 
-            var defaultCellar = new Cellar { Name = "Min kjeller", OwnerId = user.Id };
-            db.Cellars.Add(defaultCellar);
-            db.CellarMembers.Add(new CellarMember { Cellar = defaultCellar, UserId = user.Id, Role = "owner" });
+            var defaultHome = new Home { Name = "Mitt hjem", OwnerId = user.Id };
+            db.Homes.Add(defaultHome);
+            db.HomeMembers.Add(new HomeMember { Home = defaultHome, UserId = user.Id });
+            db.Locations.Add(new Location { Name = "Standard", Home = defaultHome, IsDefault = true });
             await db.SaveChangesAsync();
 
             await IssueTokenPair(user, db, config, response);

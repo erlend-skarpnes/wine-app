@@ -2,12 +2,12 @@ import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { LogOut, RefreshCw, KeyRound } from 'lucide-react'
 import Modal from '../components/Modal'
-import CellarRow from '../components/CellarRow'
+import HomeRow from '../components/HomeRow'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { useAuth } from '../context/AuthContext'
-import { useCellar } from '../context/CellarContext'
+import { useHome } from '../context/HomeContext'
 import { api } from '../api/client'
-import { createCellar } from '../api/cellars'
+import { createHome } from '../api/homes'
 
 // --- Password modal ---
 
@@ -70,44 +70,43 @@ function extractPasswordError(err: unknown): string {
   return 'Noe gikk galt. Prøv igjen.'
 }
 
-// --- Cellar section ---
+// --- Home section ---
 
-function CellarSection() {
-  const { cellars } = useCellar()
+function HomeSection() {
+  const { homes } = useHome()
   const queryClient = useQueryClient()
   const [newName, setNewName] = useState('')
 
   const createMutation = useMutation({
-    mutationFn: () => createCellar(newName),
+    mutationFn: () => createHome(newName),
     onSuccess: () => {
       setNewName('')
-      queryClient.invalidateQueries({ queryKey: ['cellars'] })
+      queryClient.invalidateQueries({ queryKey: ['homes'] })
     },
   })
 
   return (
     <section>
-      <h2 className="text-lg font-semibold text-bark mb-4">Vinkjellere</h2>
+      <h2 className="text-lg font-semibold text-bark mb-4">Mine hjem</h2>
       <div className="space-y-3">
-        {cellars.map(c => <CellarRow key={c.id} cellar={c} />)}
+        {homes.map(h => (
+          <HomeRow key={h.id} home={h} onChanged={() => queryClient.invalidateQueries({ queryKey: ['homes'] })} />
+        ))}
       </div>
 
       <div className="mt-4 flex gap-2">
         <input
           type="text"
-          placeholder="Navn på ny kjeller"
+          placeholder="Navn på nytt hjem"
           value={newName}
           onChange={e => setNewName(e.target.value)}
           className="flex-1 border border-stone rounded-lg px-4 py-2.5 text-sm bg-surface text-bark focus:outline-none focus:border-wine"
         />
-        <button
-          onClick={() => createMutation.mutate()}
-          disabled={createMutation.isPending || !newName.trim()}
-        >
+        <button onClick={() => createMutation.mutate()} disabled={createMutation.isPending || !newName.trim()}>
           {createMutation.isPending ? 'Oppretter…' : 'Opprett'}
         </button>
       </div>
-      {createMutation.isError && <p className="text-red-600 text-xs mt-1">Kunne ikke opprette kjeller.</p>}
+      {createMutation.isError && <p className="text-red-600 text-xs mt-1">Kunne ikke opprette hjem.</p>}
     </section>
   )
 }
@@ -186,9 +185,9 @@ export default function ProfilePage() {
           {changingPassword && <PasswordModal onClose={() => setChangingPassword(false)} />}
         </div>
 
-        {/* Right column: cellars */}
+        {/* Right column: homes */}
         <div>
-          <CellarSection />
+          <HomeSection />
         </div>
       </div>
     </div>

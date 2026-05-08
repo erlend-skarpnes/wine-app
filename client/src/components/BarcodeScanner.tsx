@@ -38,6 +38,12 @@ export default function BarcodeScanner({ onScan, paused = false }: Props) {
   useEffect(() => { onScanRef.current = onScan }, [onScan])
 
   useEffect(() => {
+    if (!import.meta.env.DEV) return
+    ;(window as any).__triggerScan = (barcode: string) => onScanRef.current(barcode)
+    return () => { delete (window as any).__triggerScan }
+  }, [])
+
+  useEffect(() => {
     if (paused || !videoRef.current) return
 
     let cancelled = false

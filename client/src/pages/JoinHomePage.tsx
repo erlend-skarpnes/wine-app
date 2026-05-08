@@ -1,25 +1,25 @@
 import { useParams, useNavigate } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { getShareTokenInfo, joinCellar } from '../api/cellars'
-import { useCellar } from '../context/CellarContext'
+import { getShareTokenInfo, joinHome } from '../api/homes'
+import { useHome } from '../context/HomeContext'
 
-export default function JoinCellarPage() {
+export default function JoinHomePage() {
   const { token } = useParams<{ token: string }>()
   const navigate = useNavigate()
   const queryClient = useQueryClient()
-  const { setActiveCellar } = useCellar()
+  const { setActiveHome } = useHome()
 
   const { data: info, isLoading, isError } = useQuery({
-    queryKey: ['cellar-join', token],
+    queryKey: ['home-join', token],
     queryFn: () => getShareTokenInfo(token!),
     retry: false,
   })
 
   const joinMutation = useMutation({
-    mutationFn: () => joinCellar(token!),
-    onSuccess: (cellar) => {
-      queryClient.invalidateQueries({ queryKey: ['cellars'] })
-      setActiveCellar(cellar)
+    mutationFn: () => joinHome(token!),
+    onSuccess: (home) => {
+      queryClient.invalidateQueries({ queryKey: ['homes'] })
+      setActiveHome(home)
       navigate('/', { replace: true })
     },
   })
@@ -47,13 +47,13 @@ export default function JoinCellarPage() {
     <div className="flex flex-col items-center gap-6 py-16 text-center max-w-sm mx-auto">
       <div>
         <h2 className="text-xl font-semibold text-bark mb-1">Du er invitert</h2>
-        <p className="text-clay text-sm">Bli med i kjelleren <strong>{info?.cellarName}</strong>.</p>
+        <p className="text-clay text-sm">Bli med i hjemmet <strong>{info?.homeName}</strong>.</p>
       </div>
 
       {alreadyMember ? (
         <>
-          <p className="text-clay text-sm">Du er allerede medlem av denne kjelleren.</p>
-          <button onClick={() => navigate('/')}>Gå til kjelleren</button>
+          <p className="text-clay text-sm">Du er allerede medlem av dette hjemmet.</p>
+          <button onClick={() => navigate('/')}>Gå til hjemmet</button>
         </>
       ) : (
         <>

@@ -1,46 +1,69 @@
 import { useState, useCallback } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { getWineData } from '../api/wine'
-import { adjustEntry } from '../api/cellars'
-import { useCellar } from '../context/CellarContext'
+import { adjustEntry, getEntryLocations } from '../api/locations'
 import Modal from './Modal'
 import WineImage from './WineImage'
 import QuantityAdjuster from './QuantityAdjuster'
+import type { LocationEntry } from '../api/types'
 
 interface Props {
   barcode: string
   name: string | null
-  cellarId: number
-  cellarQuantities: Map<number, number>
+  homeId: number
+  quantity: number
   onAdjusted: () => void
   onClose: () => void
 }
 
-export default function WineDetailModal({ barcode, name, cellarId, cellarQuantities, onAdjusted, onClose }: Props) {
-  const { cellars } = useCellar()
+export default function WineDetailModal({ barcode, name, homeId, quantity: initialQuantity, onAdjusted, onClose }: Props) {
   const [editingStock, setEditingStock] = useState(false)
-  const [selectedCellarId, setSelectedCellarId] = useState(cellarId)
-  const initialQuantity = cellarQuantities.get(cellarId) ?? 0
-  const [quantity, setQuantity] = useState(initialQuantity)
-  const [prevQuantity, setPrevQuantity] = useState(initialQuantity)
+  const [selectedLocationId, setSelectedLocationId] = useState<number | null>(null)
+  const [editQuantity, setEditQuantity] = useState(0)
+  const [prevEditQuantity, setPrevEditQuantity] = useState(0)
 
-  // Cellars where this wine actually exists
-  const relevantCellars = cellars.filter(c => cellarQuantities.has(c.id))
+  const { data: locationEntries = [] } = useQuery<LocationEntry[]>({
+    queryKey: ['entry-locations', homeId, barcode],
+    queryFn: () => getEntryLocations(homeId, barcode),
+  })
 
   const { data: wine, isLoading } = useQuery({
     queryKey: ['wine', barcode],
     queryFn: () => getWineData(barcode),
   })
 
+  const totalQuantity = locationEntries.length > 0
+    ? locationEntries.reduce((sum, le) => sum + le.quantity, 0)
+    : initialQuantity
+
+  const selectedEntry = locationEntries.find(le => le.locationId === selectedLocationId) ?? locationEntries[0]
+
   const handleAdjust = useCallback(async (delta: 1 | -1) => {
+    if (!selectedEntry) return
     try {
-      const entry = await adjustEntry(selectedCellarId, barcode, delta)
-      setQuantity(entry.quantity)
+      const result = await adjustEntry(selectedEntry.locationId, barcode, delta, selectedEntry.sectionId ?? undefined)
+      setEditQuantity(result.quantity)
       onAdjusted()
     } catch {
       // ignore
     }
-  }, [selectedCellarId, barcode, onAdjusted])
+  }, [selectedEntry, barcode, onAdjusted])
+
+  function enterEditStock() {
+    const first = locationEntries[0]
+    if (first) {
+      setSelectedLocationId(first.locationId)
+      setEditQuantity(first.quantity)
+      setPrevEditQuantity(first.quantity)
+    }
+    setEditingStock(true)
+  }
+
+  function selectLocation(le: LocationEntry) {
+    setSelectedLocationId(le.locationId)
+    setEditQuantity(le.quantity)
+    setPrevEditQuantity(le.quantity)
+  }
 
   const title = wine?.name ?? name ?? barcode
 
@@ -80,27 +103,22 @@ export default function WineDetailModal({ barcode, name, cellarId, cellarQuantit
             <WineImage src={wine.imageUrl} alt={wine.name} className="w-24 h-auto self-center rounded" />
           )}
 
-          {relevantCellars.length > 1 && (
+          {locationEntries.length > 1 && (
             <div>
-              <p className="text-sm font-medium text-bark mb-2">Kjeller:</p>
+              <p className="text-sm font-medium text-bark mb-2">Plassering:</p>
               <div className="flex flex-wrap gap-2">
-                {relevantCellars.map(c => (
+                {locationEntries.map(le => (
                   <button
-                    key={c.id}
+                    key={le.locationId}
                     type="button"
-                    onClick={() => {
-                      const q = cellarQuantities.get(c.id) ?? 0
-                      setSelectedCellarId(c.id)
-                      setQuantity(q)
-                      setPrevQuantity(q)
-                    }}
+                    onClick={() => selectLocation(le)}
                     className={`px-3 py-1.5 text-sm rounded-lg border transition-colors ${
-                      selectedCellarId === c.id
+                      selectedEntry?.locationId === le.locationId
                         ? 'bg-wine text-white border-wine'
                         : 'bg-surface text-clay border-stone hover:bg-warm'
                     }`}
                   >
-                    {c.name}
+                    {le.locationName}{le.sectionName ? ` › ${le.sectionName}` : ''}
                   </button>
                 ))}
               </div>
@@ -109,14 +127,14 @@ export default function WineDetailModal({ barcode, name, cellarId, cellarQuantit
 
           <div className="text-center">
             <p className="text-clay text-[0.85rem]">
-              Beholdning: {prevQuantity} → {quantity}
+              Beholdning: {prevEditQuantity} → {editQuantity}
             </p>
           </div>
 
-          <QuantityAdjuster value={quantity} onChange={handleAdjust} />
+          <QuantityAdjuster value={editQuantity} onChange={handleAdjust} />
 
           <div className="flex gap-2">
-            <button type="button" className="flex-1 py-3 text-base" onClick={() => { setPrevQuantity(quantity); setEditingStock(false) }}>
+            <button type="button" className="flex-1 py-3 text-base" onClick={() => { setPrevEditQuantity(editQuantity); setEditingStock(false) }}>
               Tilbake
             </button>
             <button type="button" className="secondary flex-1 py-3 text-base" onClick={onClose}>
@@ -154,7 +172,7 @@ export default function WineDetailModal({ barcode, name, cellarId, cellarQuantit
 
             <div className="flex flex-col gap-4 flex-1 min-w-0">
               <dl className="grid grid-cols-1 sm:grid-cols-[auto_1fr] gap-x-4 gap-y-1 text-sm">
-                <dt className="text-clay">Beholdning</dt><dd>{initialQuantity} {initialQuantity === 1 ? 'flaske' : 'flasker'}</dd>
+                <dt className="text-clay">Beholdning</dt><dd>{totalQuantity} {totalQuantity === 1 ? 'flaske' : 'flasker'}</dd>
                 {wine.type     && <><dt className="text-clay">Type</dt>          <dd>{wine.type}</dd></>}
                 {wine.winery   && <><dt className="text-clay">Produsent</dt>     <dd>{wine.winery}</dd></>}
                 {wine.region   && <><dt className="text-clay">Region</dt>        <dd>{[wine.region, wine.country].filter(Boolean).join(', ')}</dd></>}
@@ -170,11 +188,11 @@ export default function WineDetailModal({ barcode, name, cellarId, cellarQuantit
                     {wine.grapes.map((g, i) => {
                       const parts = g.split(' ')
                       const hasPct = parts.length > 1 && parts[parts.length - 1].endsWith('%')
-                      const name = hasPct ? parts.slice(0, -1).join(' ') : g
-                      const pct  = hasPct ? parts[parts.length - 1] : null
+                      const gname = hasPct ? parts.slice(0, -1).join(' ') : g
+                      const pct   = hasPct ? parts[parts.length - 1] : null
                       return (
                         <div key={i} className="flex justify-between text-sm">
-                          <span>{name}</span>
+                          <span>{gname}</span>
                           {pct && <span className="text-clay">{pct}</span>}
                         </div>
                       )
@@ -203,7 +221,7 @@ export default function WineDetailModal({ barcode, name, cellarId, cellarQuantit
       )}
 
       <div className="mt-4 pt-4 border-t border-stone flex gap-2">
-        <button type="button" className="flex-1 py-3 text-base" onClick={() => { setPrevQuantity(quantity); setEditingStock(true) }}>
+        <button type="button" className="flex-1 py-3 text-base" onClick={enterEditStock}>
           Rediger beholdning
         </button>
         <button type="button" className="secondary flex-1 py-3 text-base" onClick={onClose}>

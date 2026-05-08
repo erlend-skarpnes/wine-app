@@ -1,10 +1,10 @@
 import { useState } from 'react'
-import { useQueries, useQueryClient } from '@tanstack/react-query'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { Link } from 'react-router-dom'
 import { Plus, Minus } from 'lucide-react'
-import { getCellarEntries } from '../api/cellars'
-import { useCellar } from '../context/CellarContext'
-import type { CellarEntry } from '../api/types'
+import { getHomeEntries } from '../api/locations'
+import { useHome } from '../context/HomeContext'
+import type { Entry } from '../api/types'
 import ScanModal from '../components/ScanModal'
 import WineDetailModal from '../components/WineDetailModal'
 import FilterBar from '../components/FilterBar'
@@ -12,81 +12,59 @@ import WineTable from '../components/WineTable'
 
 type ModalMode = 'add' | 'remove' | null
 
-function combineEntries(groups: CellarEntry[][]): CellarEntry[] {
-  const map = new Map<string, CellarEntry>()
-  for (const entries of groups) {
-    for (const entry of entries) {
-      const existing = map.get(entry.barcode)
-      if (existing) {
-        map.set(entry.barcode, { ...existing, quantity: existing.quantity + entry.quantity })
-      } else {
-        map.set(entry.barcode, { ...entry })
-      }
-    }
-  }
-  return [...map.values()].sort((a, b) => a.barcode.localeCompare(b.barcode))
-}
-
 export default function CellarPage() {
   const queryClient = useQueryClient()
-  const { cellars, activeCellar, isLoading: cellarLoading } = useCellar()
+  const { activeHome, isLoading: homeLoading } = useHome()
 
   const [modal, setModal] = useState<ModalMode>(null)
-  const [selected, setSelected] = useState<CellarEntry | null>(null)
-  const [cellarFilter, setCellarFilter] = useState<number[]>(() => {
+  const [selected, setSelected] = useState<Entry | null>(null)
+
+  const [locationFilter, setLocationFilter] = useState<number[]>(() => {
     try {
-      const stored = localStorage.getItem('cellarFilter')
+      const stored = localStorage.getItem('locationFilter')
       return stored ? JSON.parse(stored) : []
     } catch { return [] }
   })
-
-  function handleCellarFilter(ids: number[]) {
-    setCellarFilter(ids)
-    localStorage.setItem('cellarFilter', JSON.stringify(ids))
+  function handleLocationFilter(ids: number[]) {
+    setLocationFilter(ids)
+    localStorage.setItem('locationFilter', JSON.stringify(ids))
   }
+
   const [storageFilter, setStorageFilter] = useState<'drink-now' | 'store' | null>(null)
   const [typeFilter, setTypeFilter] = useState<string | null>(null)
   const [pairingFilter, setPairingFilter] = useState<string | null>(null)
   const [grapeFilter, setGrapeFilter] = useState<string | null>(null)
 
-  const entryQueries = useQueries({
-    queries: cellars.map(c => ({
-      queryKey: ['cellar', c.id] as const,
-      queryFn: () => getCellarEntries(c.id),
-    })),
+  const { data: entries = [], isLoading: entriesLoading, isError } = useQuery<Entry[]>({
+    queryKey: ['home-entries', activeHome?.id],
+    queryFn: () => getHomeEntries(activeHome!.id),
+    enabled: !!activeHome,
   })
 
   function handleAdjusted() {
-    cellars.forEach(c => queryClient.invalidateQueries({ queryKey: ['cellar', c.id] }))
+    queryClient.invalidateQueries({ queryKey: ['home-entries', activeHome?.id] })
+    if (selected) {
+      queryClient.invalidateQueries({ queryKey: ['entry-locations', activeHome?.id, selected.barcode] })
+    }
   }
 
-  const isLoading = cellarLoading || entryQueries.some(q => q.isLoading)
-  const hasError = entryQueries.some(q => q.isError)
+  const isLoading = homeLoading || entriesLoading
 
-  // Which cellar IDs are currently selected (empty = all)
-  const visibleIds = cellarFilter.length > 0 ? cellarFilter : cellars.map(c => c.id)
-  const visibleGroups = entryQueries
-    .filter((_, i) => visibleIds.includes(cellars[i]?.id))
-    .map(q => q.data ?? [])
-
-  const entries = combineEntries(visibleGroups)
-
-  // Per-cellar quantities for all barcodes (used by WineDetailModal)
-  const cellarQuantityMap = new Map<string, Map<number, number>>()
-  entryQueries.forEach((q, i) => {
-    const cellarId = cellars[i]?.id
-    if (!cellarId || !q.data) return
-    for (const entry of q.data) {
-      if (!cellarQuantityMap.has(entry.barcode)) cellarQuantityMap.set(entry.barcode, new Map())
-      cellarQuantityMap.get(entry.barcode)!.set(cellarId, entry.quantity)
+  const allLocations = (() => {
+    const seen = new Map<number, { id: number; name: string }>()
+    for (const entry of entries) {
+      for (const le of entry.locations) {
+        if (!seen.has(le.locationId)) seen.set(le.locationId, { id: le.locationId, name: le.locationName })
+      }
     }
-  })
+    return [...seen.values()]
+  })()
 
   const allPairings = [...new Set(entries.flatMap(e => e.pairings))].sort()
-  const allTypes = [...new Set(entries.map(e => e.type).filter(Boolean))].sort() as string[]
-  const allGrapes = [...new Set(entries.flatMap(e => e.grapes))].sort()
+  const allTypes    = [...new Set(entries.map(e => e.type).filter(Boolean))].sort() as string[]
+  const allGrapes   = [...new Set(entries.flatMap(e => e.grapes))].sort()
 
-  function matchesStorageFilter(entry: CellarEntry) {
+  function matchesStorageFilter(entry: Entry) {
     if (storageFilter === null) return true
     const sp = entry.storagePotential
     const isDrinkNow = !sp || !sp.toLowerCase().includes('kan også lagres')
@@ -94,21 +72,22 @@ export default function CellarPage() {
   }
 
   const visibleEntries = entries.filter(e =>
+    (locationFilter.length === 0 || e.locations.some(le => locationFilter.includes(le.locationId))) &&
     (!pairingFilter || e.pairings.includes(pairingFilter)) &&
-    (!grapeFilter || e.grapes.includes(grapeFilter)) &&
+    (!grapeFilter   || e.grapes.includes(grapeFilter)) &&
     matchesStorageFilter(e) &&
-    (!typeFilter || e.type === typeFilter)
+    (!typeFilter    || e.type === typeFilter)
   )
 
-  if (cellarLoading) {
+  if (homeLoading) {
     return <p className="text-clay text-sm">Laster…</p>
   }
 
-  if (!activeCellar) {
+  if (!activeHome) {
     return (
       <div className="flex flex-col items-center justify-center gap-4 py-16 text-center">
-        <p className="text-clay">Du har ingen kjellere ennå.</p>
-        <Link to="/profile"><button>Opprett din første kjeller</button></Link>
+        <p className="text-clay">Du har ingen hjem ennå.</p>
+        <Link to="/profile"><button>Opprett ditt første hjem</button></Link>
       </div>
     )
   }
@@ -116,9 +95,9 @@ export default function CellarPage() {
   return (
     <div>
       <FilterBar
-        allCellars={cellars}
-        cellarFilter={cellarFilter}
-        onCellarFilter={handleCellarFilter}
+        allLocations={allLocations}
+        locationFilter={locationFilter}
+        onLocationFilter={handleLocationFilter}
         storageFilter={storageFilter}
         onStorageFilter={setStorageFilter}
         typeFilter={typeFilter}
@@ -132,10 +111,10 @@ export default function CellarPage() {
         allGrapes={allGrapes}
       />
 
-      {hasError && <p className="text-red-600 text-sm mb-4">Kunne ikke laste kjelleren.</p>}
+      {isError   && <p className="text-red-600 text-sm mb-4">Kunne ikke laste hjemmet.</p>}
       {isLoading && <p className="text-clay text-sm">Laster…</p>}
-      {!isLoading && !hasError && entries.length === 0 && (
-        <p className="text-clay text-sm">Kjelleren er tom. Skann en flaske for å legge den til.</p>
+      {!isLoading && !isError && entries.length === 0 && (
+        <p className="text-clay text-sm">Hjemmet er tomt. Skann en flaske for å legge den til.</p>
       )}
       {!isLoading && visibleEntries.length === 0 && entries.length > 0 && (
         <p className="text-clay text-sm">Ingen viner matcher filteret.</p>
@@ -145,14 +124,18 @@ export default function CellarPage() {
       )}
 
       <div className="fixed bottom-0 left-0 right-0 z-50 bg-surface border-t border-stone px-6 pt-3 flex gap-3 bottom-bar-safe">
-        <button type="button" className="flex-1 py-3 text-base flex items-center justify-center gap-2" onClick={() => setModal('add')}><Plus size={18} className="shrink-0" /> Legg til vin</button>
-        <button type="button" className="flex-1 py-3 text-base flex items-center justify-center gap-2" onClick={() => setModal('remove')}><Minus size={18} className="shrink-0" /> Fjern vin</button>
+        <button type="button" className="flex-1 py-3 text-base flex items-center justify-center gap-2" onClick={() => setModal('add')}>
+          <Plus size={18} className="shrink-0" /> Legg til vin
+        </button>
+        <button type="button" className="flex-1 py-3 text-base flex items-center justify-center gap-2" onClick={() => setModal('remove')}>
+          <Minus size={18} className="shrink-0" /> Fjern vin
+        </button>
       </div>
 
       {modal && (
         <ScanModal
           mode={modal}
-          cellarId={activeCellar.id}
+          homeId={activeHome.id}
           onClose={() => setModal(null)}
           onAdjusted={handleAdjusted}
         />
@@ -162,8 +145,8 @@ export default function CellarPage() {
         <WineDetailModal
           barcode={selected.barcode}
           name={selected.name}
-          cellarId={activeCellar.id}
-          cellarQuantities={cellarQuantityMap.get(selected.barcode) ?? new Map()}
+          homeId={activeHome.id}
+          quantity={selected.quantity}
           onAdjusted={handleAdjusted}
           onClose={() => setSelected(null)}
         />

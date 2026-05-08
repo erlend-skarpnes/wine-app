@@ -5,24 +5,74 @@ namespace WineApp.Api.Data;
 
 public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(options)
 {
-    public DbSet<CellarEntry> CellarEntries => Set<CellarEntry>();
+    public DbSet<Home> Homes => Set<Home>();
+    public DbSet<HomeMember> HomeMembers => Set<HomeMember>();
+    public DbSet<HomeShareToken> HomeShareTokens => Set<HomeShareToken>();
+    public DbSet<Location> Locations => Set<Location>();
+    public DbSet<Section> Sections => Set<Section>();
+    public DbSet<Entry> Entries => Set<Entry>();
     public DbSet<WineData> WineData => Set<WineData>();
     public DbSet<AppUser> Users => Set<AppUser>();
     public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
     public DbSet<Invitation> Invitations => Set<Invitation>();
-    public DbSet<Cellar> Cellars => Set<Cellar>();
-    public DbSet<CellarMember> CellarMembers => Set<CellarMember>();
-    public DbSet<CellarShareToken> CellarShareTokens => Set<CellarShareToken>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
-        modelBuilder.Entity<CellarEntry>()
-            .HasKey(e => new { e.CellarId, e.Barcode });
+        modelBuilder.Entity<Entry>()
+            .HasKey(e => new { e.LocationId, e.Barcode });
 
-        modelBuilder.Entity<CellarEntry>()
-            .HasOne(e => e.Cellar)
-            .WithMany(c => c.Entries)
-            .HasForeignKey(e => e.CellarId);
+        modelBuilder.Entity<Entry>()
+            .HasOne(e => e.Location)
+            .WithMany(l => l.Entries)
+            .HasForeignKey(e => e.LocationId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<Entry>()
+            .HasOne(e => e.Section)
+            .WithMany(s => s.Entries)
+            .HasForeignKey(e => e.SectionId)
+            .OnDelete(DeleteBehavior.SetNull);
+
+        modelBuilder.Entity<Home>()
+            .HasOne(h => h.Owner)
+            .WithMany()
+            .HasForeignKey(h => h.OwnerId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        modelBuilder.Entity<HomeMember>()
+            .HasKey(m => new { m.HomeId, m.UserId });
+
+        modelBuilder.Entity<HomeMember>()
+            .HasOne(m => m.Home)
+            .WithMany(h => h.Members)
+            .HasForeignKey(m => m.HomeId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<HomeMember>()
+            .HasOne(m => m.User)
+            .WithMany(u => u.HomeMemberships)
+            .HasForeignKey(m => m.UserId);
+
+        modelBuilder.Entity<HomeShareToken>()
+            .HasIndex(t => t.Token).IsUnique();
+
+        modelBuilder.Entity<HomeShareToken>()
+            .HasOne(t => t.Home)
+            .WithMany(h => h.ShareTokens)
+            .HasForeignKey(t => t.HomeId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<Location>()
+            .HasOne(l => l.Home)
+            .WithMany(h => h.Locations)
+            .HasForeignKey(l => l.HomeId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<Section>()
+            .HasOne(s => s.Location)
+            .WithMany(l => l.Sections)
+            .HasForeignKey(s => s.LocationId)
+            .OnDelete(DeleteBehavior.Cascade);
 
         modelBuilder.Entity<WineData>(entity =>
         {
@@ -44,32 +94,5 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
 
         modelBuilder.Entity<Invitation>()
             .HasIndex(i => i.Token).IsUnique();
-
-        modelBuilder.Entity<Cellar>()
-            .HasOne(c => c.Owner)
-            .WithMany()
-            .HasForeignKey(c => c.OwnerId)
-            .OnDelete(DeleteBehavior.Restrict);
-
-        modelBuilder.Entity<CellarMember>()
-            .HasKey(m => new { m.CellarId, m.UserId });
-
-        modelBuilder.Entity<CellarMember>()
-            .HasOne(m => m.Cellar)
-            .WithMany(c => c.Members)
-            .HasForeignKey(m => m.CellarId);
-
-        modelBuilder.Entity<CellarMember>()
-            .HasOne(m => m.User)
-            .WithMany(u => u.CellarMemberships)
-            .HasForeignKey(m => m.UserId);
-
-        modelBuilder.Entity<CellarShareToken>()
-            .HasIndex(t => t.Token).IsUnique();
-
-        modelBuilder.Entity<CellarShareToken>()
-            .HasOne(t => t.Cellar)
-            .WithMany(c => c.ShareTokens)
-            .HasForeignKey(t => t.CellarId);
     }
 }

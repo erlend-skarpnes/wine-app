@@ -7,23 +7,23 @@ test('cellar page loads seeded wine entries', async ({ authenticatedPage: page }
   await expect(page.getByText('7090016460692')).toBeVisible()
 })
 
-test('cellar filter shows only selected cellar entries', async ({ authenticatedPage: page }) => {
+test('location filter shows only entries in selected location', async ({ authenticatedPage: page }) => {
   await page.goto('/')
 
   // Open filter panel
   await page.getByRole('button', { name: 'Filter' }).click()
 
-  // Select Testkjeller
-  await page.getByRole('button', { name: 'Testkjeller', exact: true }).click()
+  // Select Kjøleskap (second seeded location — has barcode 7090016664323 only)
+  await page.getByRole('button', { name: 'Kjøleskap', exact: true }).click()
 
-  // Entries should still be visible (only cellar selected)
+  // Entries from Kjøleskap should still be visible
   await expect(page.getByText('7090016664323')).toBeVisible()
 })
 
 test('filters persist after page reload', async ({ authenticatedPage: page }) => {
   await page.goto('/')
   await page.getByRole('button', { name: 'Filter' }).click()
-  await page.getByRole('button', { name: 'Testkjeller', exact: true }).click()
+  await page.getByRole('button', { name: 'Kjøleskap', exact: true }).click()
 
   await page.reload()
 
@@ -71,6 +71,20 @@ test('adjust quantity in detail modal updates count', async ({ authenticatedPage
         acidity: null, alcoholContent: null, description: null, imageUrl: null,
         grapes: [], pairings: [], storagePotential: null,
       }
+    })
+  )
+
+  // Mock entry-locations to a single location so no location picker is shown
+  await page.route('**/api/homes/*/entries/*/locations', route =>
+    route.fulfill({
+      json: [{ locationId: 1, locationName: 'Standard', sectionId: null, sectionName: null, quantity: 3 }]
+    })
+  )
+
+  // Mock the adjust endpoint to avoid proxy errors against the real server
+  await page.route('**/api/locations/*/entries/adjust', route =>
+    route.fulfill({
+      json: { locationId: 1, barcode: '7090016664323', quantity: 4, sectionId: null }
     })
   )
 
