@@ -215,7 +215,7 @@ public static class AuthEndpoints
         {
             HttpOnly = true,
             Secure = true,
-            SameSite = SameSiteMode.Strict,
+            SameSite = SameSiteMode.Lax,  // Strict blocks cookies on cross-app navigations (e.g. tapping a link from iMessage)
             Path = "/api/auth/",  // refresh token only sent to auth routes
             MaxAge = RefreshTokenLifetime,
         });

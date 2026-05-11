@@ -17,6 +17,18 @@ export function setUnauthenticatedHandler(fn: () => void) {
   onUnauthenticated = fn
 }
 
+// Deduplicate concurrent refresh calls — only one request hits the server;
+// all concurrent 401 handlers await the same promise and reuse its result.
+let refreshPromise: Promise<boolean> | null = null
+function refreshSession(): Promise<boolean> {
+  if (!refreshPromise) {
+    refreshPromise = fetch(`${BASE}/auth/refresh`, { method: 'POST', credentials: 'include' })
+      .then(res => res.ok)
+      .finally(() => { refreshPromise = null })
+  }
+  return refreshPromise
+}
+
 async function request<T>(path: string, init?: RequestInit, isRetry = false): Promise<T> {
   const res = await fetch(`${BASE}${path}`, {
     ...init,
@@ -24,12 +36,8 @@ async function request<T>(path: string, init?: RequestInit, isRetry = false): Pr
   })
 
   if (res.status === 401 && !isRetry) {
-    // Try to refresh the session
-    const refreshed = await fetch(`${BASE}/auth/refresh`, {
-      method: 'POST',
-      credentials: 'include',
-    })
-    if (refreshed.ok) {
+    const refreshed = await refreshSession()
+    if (refreshed) {
       return request<T>(path, init, true) // retry once with fresh cookie
     }
     onUnauthenticated?.()
