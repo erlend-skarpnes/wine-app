@@ -143,3 +143,17 @@ Swagger available at `/swagger` in Development mode.
 - Icons: Lucide React (`lucide-react`) — `size={14}` for small buttons, `size={18}` for normal
 - CORS allows `:3000` (Nginx) and `:5173` (Vite) — add new origins in both `server/appsettings.json` and `server/Program.cs`
 - `JwtSecret` is not in `appsettings.json` — set via environment variable (Docker) or `dotnet user-secrets` (local)
+
+## Agent skills
+
+### Issue tracker
+
+Issues live as local markdown files under `.scratch/`. See `docs/agents/issue-tracker.md`.
+
+### Triage labels
+
+Default canonical label strings (`needs-triage`, `needs-info`, `ready-for-agent`, `ready-for-human`, `wontfix`). See `docs/agents/triage-labels.md`.
+
+### Domain docs
+
+Single-context repo — one `CONTEXT.md` + `docs/adr/` at the root. See `docs/agents/domain.md`.
