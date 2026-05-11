@@ -1,26 +1,12 @@
 import { useState } from 'react'
 import { ChevronRight } from 'lucide-react'
-
-interface LocationOption {
-  id: number
-  name: string
-}
+import type { Filters, FilterOptions } from '../hooks/useFilters'
 
 interface Props {
-  storageFilter: 'drink-now' | 'store' | null
-  onStorageFilter: (v: 'drink-now' | 'store' | null) => void
-  typeFilter: string | null
-  onTypeFilter: (v: string | null) => void
-  pairingFilter: string | null
-  onPairingFilter: (v: string | null) => void
-  grapeFilter: string | null
-  onGrapeFilter: (v: string | null) => void
-  allTypes: string[]
-  allPairings: string[]
-  allGrapes: string[]
-  allLocations: LocationOption[]
-  locationFilter: number[]
-  onLocationFilter: (ids: number[]) => void
+  filters: Filters
+  options: FilterOptions
+  activeCount: number
+  onFilterChange: <K extends keyof Filters>(key: K, value: Filters[K]) => void
 }
 
 function filterBtn(active: boolean) {
@@ -31,22 +17,14 @@ function filterBtn(active: boolean) {
   }`
 }
 
-export default function FilterBar({
-  storageFilter, onStorageFilter,
-  typeFilter, onTypeFilter,
-  pairingFilter, onPairingFilter,
-  grapeFilter, onGrapeFilter,
-  allTypes, allPairings, allGrapes,
-  allLocations, locationFilter, onLocationFilter,
-}: Props) {
+export default function FilterBar({ filters, options, activeCount, onFilterChange }: Props) {
   const [filtersOpen, setFiltersOpen] = useState(false)
-  const activeFilterCount = [storageFilter, typeFilter, pairingFilter, grapeFilter].filter(Boolean).length
-    + (locationFilter.length > 0 ? 1 : 0)
 
   function toggleLocation(id: number) {
-    onLocationFilter(
-      locationFilter.includes(id) ? locationFilter.filter(l => l !== id) : [...locationFilter, id]
-    )
+    const next = filters.location.includes(id)
+      ? filters.location.filter(l => l !== id)
+      : [...filters.location, id]
+    onFilterChange('location', next)
   }
 
   return (
@@ -58,25 +36,20 @@ export default function FilterBar({
       >
         <ChevronRight size={14} className={`transition-transform duration-200 ${filtersOpen ? 'rotate-90' : ''}`} />
         <span>Filter</span>
-        {activeFilterCount > 0 && (
+        {activeCount > 0 && (
           <span className="inline-flex items-center justify-center w-4 h-4 rounded-full bg-wine text-white text-[0.6rem] font-bold">
-            {activeFilterCount}
+            {activeCount}
           </span>
         )}
       </button>
 
       {filtersOpen && (
         <div className="flex flex-col divide-y divide-stone bg-stone rounded-lg px-3">
-          {allLocations.length > 1 && (
+          {options.locations.length > 1 && (
             <div className="flex items-center gap-1.5 flex-wrap py-2">
               <span className="text-[0.7rem] font-semibold text-clay uppercase tracking-wide w-14 shrink-0">Oppbevaring</span>
-              {allLocations.map(l => (
-                <button
-                  key={l.id}
-                  type="button"
-                  className={filterBtn(locationFilter.includes(l.id))}
-                  onClick={() => toggleLocation(l.id)}
-                >
+              {options.locations.map(l => (
+                <button key={l.id} type="button" className={filterBtn(filters.location.includes(l.id))} onClick={() => toggleLocation(l.id)}>
                   {l.name}
                 </button>
               ))}
@@ -85,59 +58,36 @@ export default function FilterBar({
           <div className="flex items-center gap-1.5 flex-wrap py-2">
             <span className="text-[0.7rem] font-semibold text-clay uppercase tracking-wide w-14 shrink-0">Lagring</span>
             {(['drink-now', 'store'] as const).map(opt => (
-              <button
-                key={opt}
-                type="button"
-                className={filterBtn(storageFilter === opt)}
-                onClick={() => onStorageFilter(storageFilter === opt ? null : opt)}
-              >
+              <button key={opt} type="button" className={filterBtn(filters.storage === opt)} onClick={() => onFilterChange('storage', filters.storage === opt ? null : opt)}>
                 {opt === 'drink-now' ? 'Drikk nå' : 'Kan lagres'}
               </button>
             ))}
           </div>
-
-          {allTypes.length > 0 && (
+          {options.types.length > 0 && (
             <div className="flex items-center gap-1.5 flex-wrap py-2">
               <span className="text-[0.7rem] font-semibold text-clay uppercase tracking-wide w-14 shrink-0">Type</span>
-              {allTypes.map(type => (
-                <button
-                  key={type}
-                  type="button"
-                  className={filterBtn(typeFilter === type)}
-                  onClick={() => onTypeFilter(typeFilter === type ? null : type)}
-                >
+              {options.types.map(type => (
+                <button key={type} type="button" className={filterBtn(filters.type === type)} onClick={() => onFilterChange('type', filters.type === type ? null : type)}>
                   {type}
                 </button>
               ))}
             </div>
           )}
-
-          {allGrapes.length > 0 && (
+          {options.grapes.length > 0 && (
             <div className="flex items-center gap-1.5 flex-wrap py-2">
               <span className="text-[0.7rem] font-semibold text-clay uppercase tracking-wide w-14 shrink-0">Drue</span>
-              {allGrapes.map(grape => (
-                <button
-                  key={grape}
-                  type="button"
-                  className={filterBtn(grapeFilter === grape)}
-                  onClick={() => onGrapeFilter(grapeFilter === grape ? null : grape)}
-                >
+              {options.grapes.map(grape => (
+                <button key={grape} type="button" className={filterBtn(filters.grape === grape)} onClick={() => onFilterChange('grape', filters.grape === grape ? null : grape)}>
                   {grape}
                 </button>
               ))}
             </div>
           )}
-
-          {allPairings.length > 0 && (
+          {options.pairings.length > 0 && (
             <div className="flex items-center gap-1.5 flex-wrap py-2">
               <span className="text-[0.7rem] font-semibold text-clay uppercase tracking-wide w-14 shrink-0">Passer til</span>
-              {allPairings.map(pairing => (
-                <button
-                  key={pairing}
-                  type="button"
-                  className={filterBtn(pairingFilter === pairing)}
-                  onClick={() => onPairingFilter(pairingFilter === pairing ? null : pairing)}
-                >
+              {options.pairings.map(pairing => (
+                <button key={pairing} type="button" className={filterBtn(filters.pairing === pairing)} onClick={() => onFilterChange('pairing', filters.pairing === pairing ? null : pairing)}>
                   {pairing}
                 </button>
               ))}

@@ -5,6 +5,7 @@ import { Plus, Minus } from 'lucide-react'
 import { getHomeEntries } from '../api/locations'
 import { queryKeys } from '../api/queryKeys'
 import { useHome } from '../context/HomeContext'
+import { useFilters } from '../hooks/useFilters'
 import type { Entry } from '../api/types'
 import ScanModal from '../components/ScanModal'
 import WineDetailModal from '../components/WineDetailModal'
@@ -20,27 +21,13 @@ export default function CellarPage() {
   const [modal, setModal] = useState<ModalMode>(null)
   const [selected, setSelected] = useState<Entry | null>(null)
 
-  const [locationFilter, setLocationFilter] = useState<number[]>(() => {
-    try {
-      const stored = localStorage.getItem('locationFilter')
-      return stored ? JSON.parse(stored) : []
-    } catch { return [] }
-  })
-  function handleLocationFilter(ids: number[]) {
-    setLocationFilter(ids)
-    localStorage.setItem('locationFilter', JSON.stringify(ids))
-  }
-
-  const [storageFilter, setStorageFilter] = useState<'drink-now' | 'store' | null>(null)
-  const [typeFilter, setTypeFilter] = useState<string | null>(null)
-  const [pairingFilter, setPairingFilter] = useState<string | null>(null)
-  const [grapeFilter, setGrapeFilter] = useState<string | null>(null)
-
   const { data: entries = [], isLoading: entriesLoading, isError } = useQuery<Entry[]>({
     queryKey: activeHome ? queryKeys.homeEntries(activeHome.id) : ['home-entries'],
     queryFn: () => getHomeEntries(activeHome!.id),
     enabled: !!activeHome,
   })
+
+  const { filters, options, visibleEntries, setFilter, activeCount } = useFilters(entries)
 
   function handleAdjusted() {
     if (activeHome) {
@@ -52,36 +39,6 @@ export default function CellarPage() {
   }
 
   const isLoading = homeLoading || entriesLoading
-
-  const allLocations = (() => {
-    const seen = new Map<number, { id: number; name: string }>()
-    for (const entry of entries) {
-      for (const le of entry.locations) {
-        if (le.locationId !== null && !seen.has(le.locationId))
-          seen.set(le.locationId, { id: le.locationId, name: le.locationName! })
-      }
-    }
-    return [...seen.values()]
-  })()
-
-  const allPairings = [...new Set(entries.flatMap(e => e.pairings))].sort()
-  const allTypes    = [...new Set(entries.map(e => e.type).filter(Boolean))].sort() as string[]
-  const allGrapes   = [...new Set(entries.flatMap(e => e.grapes))].sort()
-
-  function matchesStorageFilter(entry: Entry) {
-    if (storageFilter === null) return true
-    const sp = entry.storagePotential
-    const isDrinkNow = !sp || !sp.toLowerCase().includes('kan også lagres')
-    return storageFilter === 'drink-now' ? isDrinkNow : !isDrinkNow
-  }
-
-  const visibleEntries = entries.filter(e =>
-    (locationFilter.length === 0 || e.locations.some(le => le.locationId !== null && locationFilter.includes(le.locationId))) &&
-    (!pairingFilter || e.pairings.includes(pairingFilter)) &&
-    (!grapeFilter   || e.grapes.includes(grapeFilter)) &&
-    matchesStorageFilter(e) &&
-    (!typeFilter    || e.type === typeFilter)
-  )
 
   if (homeLoading) {
     return <p className="text-clay text-sm">Laster…</p>
@@ -98,22 +55,7 @@ export default function CellarPage() {
 
   return (
     <div>
-      <FilterBar
-        allLocations={allLocations}
-        locationFilter={locationFilter}
-        onLocationFilter={handleLocationFilter}
-        storageFilter={storageFilter}
-        onStorageFilter={setStorageFilter}
-        typeFilter={typeFilter}
-        onTypeFilter={setTypeFilter}
-        pairingFilter={pairingFilter}
-        onPairingFilter={setPairingFilter}
-        grapeFilter={grapeFilter}
-        onGrapeFilter={setGrapeFilter}
-        allTypes={allTypes}
-        allPairings={allPairings}
-        allGrapes={allGrapes}
-      />
+      <FilterBar filters={filters} options={options} activeCount={activeCount} onFilterChange={setFilter} />
 
       {isError   && <p className="text-red-600 text-sm mb-4">Kunne ikke laste hjemmet.</p>}
       {isLoading && <p className="text-clay text-sm">Laster…</p>}
