@@ -21,7 +21,6 @@ public static class WineEndpoints
             var fetched = await vinmonopolet.GetByBarcodeAsync(barcode);
             if (fetched is null)
             {
-                // If we have stale data but the API is unreachable, serve what we have
                 if (data is not null)
                     return Results.Ok(data);
                 return Results.NotFound();
@@ -32,7 +31,7 @@ public static class WineEndpoints
         });
 
         // POST /api/wines/identify  (multipart/form-data: barcode + image)
-        group.MapPost("/identify", async (HttpRequest request, AppDbContext db, IWineApiService wineApi) =>
+        group.MapPost("/identify", async (HttpRequest request, IWineIdentifier identifier) =>
         {
             if (!request.HasFormContentType)
                 return Results.BadRequest("Expected multipart/form-data");
@@ -44,26 +43,20 @@ public static class WineEndpoints
             if (string.IsNullOrWhiteSpace(barcode) || imageFile is null)
                 return Results.BadRequest("barcode and image are required");
 
-            var identified = await wineApi.IdentifyAsync(
-                imageFile.OpenReadStream(),
-                imageFile.ContentType ?? "image/jpeg");
-
-            if (identified.WineId is not null)
+            var outcome = await identifier.IdentifyAsync(barcode, imageFile.OpenReadStream(), imageFile.ContentType ?? "image/jpeg");
+            return outcome switch
             {
-                var wineData = await wineApi.GetDetailAsync(identified.WineId, barcode);
-                await Upsert(db, wineData);
-                return Results.Ok(new { status = "identified", wineData });
-            }
-
-            return Results.Ok(new { status = "suggestions", suggestions = identified.Suggestions });
+                WineIdentified(var wine)         => Results.Ok(new { status = "identified", wineData = wine }),
+                WineSuggestions(var suggestions) => Results.Ok(new { status = "suggestions", suggestions }),
+                _                                => Results.Problem()
+            };
         });
 
         // POST /api/wines/link  { barcode, productCode }
-        group.MapPost("/link", async (LinkRequest req, AppDbContext db, IWineApiService wineApi) =>
+        group.MapPost("/link", async (LinkRequest req, IWineIdentifier identifier) =>
         {
-            var wineData = await wineApi.GetDetailAsync(req.ProductCode, req.Barcode);
-            await Upsert(db, wineData);
-            return Results.Ok(wineData);
+            var wine = await identifier.LinkAsync(req.Barcode, req.ProductCode);
+            return Results.Ok(wine);
         });
     }
 
@@ -74,7 +67,6 @@ public static class WineEndpoints
             db.Entry(existing).CurrentValues.SetValues(incoming);
         else
             db.WineData.Add(incoming);
-
         await db.SaveChangesAsync();
     }
 }
