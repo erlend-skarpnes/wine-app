@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react'
+import { useReducer, useCallback } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { ScanBarcode, RotateCcw, ChevronsRight } from 'lucide-react'
 import BarcodeScanner from './BarcodeScanner'
@@ -8,21 +8,11 @@ import WineImage from './WineImage'
 import QuantityAdjuster from './QuantityAdjuster'
 import { adjustEntry, getLocations } from '../api/locations'
 import { getWineData, identifyWine, linkWine } from '../api/wine'
+import { ApiError } from '../api/client'
+import { scanReducer, initialScanState } from './scanReducer'
 import type { Location, WineSuggestion } from '../api/types'
 
 type Mode = 'add' | 'remove'
-
-type ScanState =
-  | { status: 'scanning' }
-  | { status: 'location-pick'; barcode: string }
-  | { status: 'section-pick'; barcode: string; locationId: number }
-  | { status: 'loading' }
-  | { status: 'success'; barcode: string; locationId: number; quantity: number; prevQuantity: number; wineName: string | null; imageUrl: string | null }
-  | { status: 'error'; message: string }
-  | { status: 'capture'; barcode: string; locationId: number; quantity: number }
-  | { status: 'identifying'; barcode: string; locationId: number; quantity: number }
-  | { status: 'suggestions'; barcode: string; locationId: number; quantity: number; suggestions: WineSuggestion[] }
-  | { status: 'linking'; barcode: string; locationId: number; wineName: string | null }
 
 interface Props {
   mode: Mode
@@ -32,9 +22,7 @@ interface Props {
 }
 
 export default function ScanModal({ mode, homeId, onClose, onAdjusted }: Props) {
-  const [state, setState] = useState<ScanState>({ status: 'scanning' })
-  const [pendingLocationId, setPendingLocationId] = useState<number | null>(null)
-  const [pendingSectionId, setPendingSectionId] = useState<number | null>(null)
+  const [state, dispatch] = useReducer(scanReducer, initialScanState)
 
   const { data: locations = [], isLoading: locationsLoading } = useQuery<Location[]>({
     queryKey: ['locations', homeId],
@@ -42,7 +30,7 @@ export default function ScanModal({ mode, homeId, onClose, onAdjusted }: Props) 
   })
 
   const doAdjust = useCallback(async (barcode: string, locationId: number, sectionId?: number) => {
-    setState({ status: 'loading' })
+    dispatch({ type: 'ADJUST_START' })
     try {
       const delta = mode === 'add' ? 1 : -1
       const result = await adjustEntry(locationId, barcode, delta, sectionId)
@@ -50,70 +38,64 @@ export default function ScanModal({ mode, homeId, onClose, onAdjusted }: Props) 
       try {
         const wineData = await getWineData(barcode)
         onAdjusted()
-        setState({ status: 'success', barcode, locationId, quantity: result.quantity, prevQuantity, wineName: wineData.name, imageUrl: wineData.imageUrl })
+        dispatch({ type: 'ADJUST_SUCCESS', barcode, locationId, quantity: result.quantity, prevQuantity, wineName: wineData.name, imageUrl: wineData.imageUrl })
       } catch {
         onAdjusted()
         if (mode === 'add') {
-          setState({ status: 'capture', barcode, locationId, quantity: result.quantity })
+          dispatch({ type: 'GO_TO_CAPTURE', barcode, locationId, quantity: result.quantity })
         } else {
-          setState({ status: 'success', barcode, locationId, quantity: result.quantity, prevQuantity, wineName: null, imageUrl: null })
+          dispatch({ type: 'ADJUST_SUCCESS', barcode, locationId, quantity: result.quantity, prevQuantity, wineName: null, imageUrl: null })
         }
       }
     } catch (err) {
-      const message = err instanceof Error && err.message.includes('400')
+      const message = err instanceof ApiError && err.code === 'NOTHING_TO_REMOVE'
         ? 'Ingenting å fjerne.'
         : 'Noe gikk galt.'
-      setState({ status: 'error', message })
+      dispatch({ type: 'ADJUST_ERROR', message })
     }
   }, [mode, onAdjusted])
 
   const handleScan = useCallback((barcode: string) => {
     if (locationsLoading) return
     if (locations.length === 0) {
-      setState({ status: 'error', message: 'Ingen plasseringer funnet.' })
+      dispatch({ type: 'ERROR', message: 'Ingen plasseringer funnet.' })
       return
     }
-
     const first = locations[0]
-    setPendingLocationId(first.id)
-    setPendingSectionId(null)
-
     if (locations.length === 1 && first.sections.length === 0) {
       doAdjust(barcode, first.id)
     } else if (locations.length === 1 && first.sections.length > 0) {
-      setState({ status: 'section-pick', barcode, locationId: first.id })
+      dispatch({ type: 'GO_TO_SECTION_PICK', barcode, locationId: first.id })
     } else {
-      setState({ status: 'location-pick', barcode })
+      dispatch({ type: 'GO_TO_LOCATION_PICK', barcode, selectedLocationId: first.id })
     }
   }, [locations, locationsLoading, doAdjust])
 
   const handleCapture = useCallback(async (blob: Blob) => {
     if (state.status !== 'capture') return
-    const { barcode, locationId, quantity } = state
-    setState({ status: 'identifying', barcode, locationId, quantity })
+    const { barcode } = state
+    dispatch({ type: 'IDENTIFY_START' })
     try {
       const result = await identifyWine(barcode, blob)
-      const prevQuantity = quantity - 1
       if (result.status === 'identified') {
-        setState({ status: 'success', barcode, locationId, quantity, prevQuantity, wineName: result.wineData.name, imageUrl: result.wineData.imageUrl })
+        dispatch({ type: 'IDENTIFIED', wineName: result.wineData.name, imageUrl: result.wineData.imageUrl })
       } else {
-        setState({ status: 'suggestions', barcode, locationId, quantity, suggestions: result.suggestions })
+        dispatch({ type: 'SUGGESTIONS', suggestions: result.suggestions })
       }
     } catch {
-      setState({ status: 'capture', barcode, locationId, quantity })
+      dispatch({ type: 'IDENTIFY_FAILED' })
     }
   }, [state])
 
   const handleSelectSuggestion = useCallback(async (suggestion: WineSuggestion) => {
     if (state.status !== 'suggestions') return
-    const { barcode, locationId, quantity } = state
-    const prevQuantity = quantity - 1
-    setState({ status: 'linking', barcode, locationId, wineName: suggestion.name })
+    const { barcode } = state
+    dispatch({ type: 'LINK_START', wineName: suggestion.name })
     try {
       const wineData = await linkWine(barcode, suggestion.id)
-      setState({ status: 'success', barcode, locationId, quantity, prevQuantity, wineName: wineData.name, imageUrl: wineData.imageUrl })
+      dispatch({ type: 'LINKED', wineName: wineData.name, imageUrl: wineData.imageUrl })
     } catch {
-      setState({ status: 'success', barcode, locationId, quantity, prevQuantity, wineName: suggestion.name, imageUrl: null })
+      dispatch({ type: 'LINKED', wineName: suggestion.name, imageUrl: null })
     }
   }, [state])
 
@@ -122,21 +104,22 @@ export default function ScanModal({ mode, homeId, onClose, onAdjusted }: Props) 
     try {
       const result = await adjustEntry(state.locationId, state.barcode, delta)
       onAdjusted()
-      setState(prev => prev.status === 'success' ? { ...prev, quantity: result.quantity } : prev)
+      dispatch({ type: 'INLINE_ADJUST_SUCCESS', quantity: result.quantity })
     } catch {
       // ignore — quantity display stays as-is
     }
   }, [state, onAdjusted])
 
   const confirmLocationPick = useCallback(() => {
-    if (state.status !== 'location-pick' || pendingLocationId === null) return
-    const loc = locations.find(l => l.id === pendingLocationId)
+    if (state.status !== 'location-pick') return
+    const { barcode, selectedLocationId } = state
+    const loc = locations.find(l => l.id === selectedLocationId)
     if (loc && loc.sections.length > 0) {
-      setState({ status: 'section-pick', barcode: state.barcode, locationId: pendingLocationId })
+      dispatch({ type: 'GO_TO_SECTION_PICK', barcode, locationId: selectedLocationId })
     } else {
-      doAdjust(state.barcode, pendingLocationId)
+      doAdjust(barcode, selectedLocationId)
     }
-  }, [state, pendingLocationId, locations, doAdjust])
+  }, [state, locations, doAdjust])
 
   const showCamera = state.status === 'scanning'
   const showLabelCamera = state.status === 'capture' || state.status === 'identifying'
@@ -168,8 +151,8 @@ export default function ScanModal({ mode, homeId, onClose, onAdjusted }: Props) 
                   <button
                     key={loc.id}
                     type="button"
-                    onClick={() => setPendingLocationId(loc.id)}
-                    className={pickerBtn(pendingLocationId === loc.id)}
+                    onClick={() => dispatch({ type: 'PICK_LOCATION', locationId: loc.id })}
+                    className={pickerBtn(state.selectedLocationId === loc.id)}
                   >
                     {loc.name}
                   </button>
@@ -180,7 +163,7 @@ export default function ScanModal({ mode, homeId, onClose, onAdjusted }: Props) 
               <button type="button" className="flex-1" onClick={confirmLocationPick}>
                 Bekreft
               </button>
-              <button type="button" className="secondary flex-1" onClick={() => setState({ status: 'scanning' })}>
+              <button type="button" className="secondary flex-1" onClick={() => dispatch({ type: 'RESET' })}>
                 Skann på nytt
               </button>
             </div>
@@ -194,8 +177,8 @@ export default function ScanModal({ mode, homeId, onClose, onAdjusted }: Props) 
               <div className="flex flex-wrap gap-2">
                 <button
                   type="button"
-                  onClick={() => setPendingSectionId(null)}
-                  className={pickerBtn(pendingSectionId === null)}
+                  onClick={() => dispatch({ type: 'PICK_SECTION', sectionId: null })}
+                  className={pickerBtn(state.selectedSectionId === null)}
                 >
                   Ingen seksjon
                 </button>
@@ -203,8 +186,8 @@ export default function ScanModal({ mode, homeId, onClose, onAdjusted }: Props) 
                   <button
                     key={sec.id}
                     type="button"
-                    onClick={() => setPendingSectionId(sec.id)}
-                    className={pickerBtn(pendingSectionId === sec.id)}
+                    onClick={() => dispatch({ type: 'PICK_SECTION', sectionId: sec.id })}
+                    className={pickerBtn(state.selectedSectionId === sec.id)}
                   >
                     {sec.name}
                   </button>
@@ -212,10 +195,10 @@ export default function ScanModal({ mode, homeId, onClose, onAdjusted }: Props) 
               </div>
             </div>
             <div className="flex gap-2">
-              <button type="button" className="flex-1" onClick={() => doAdjust(state.barcode, state.locationId, pendingSectionId ?? undefined)}>
+              <button type="button" className="flex-1" onClick={() => doAdjust(state.barcode, state.locationId, state.selectedSectionId ?? undefined)}>
                 Bekreft
               </button>
-              <button type="button" className="secondary flex-1" onClick={() => setState({ status: 'scanning' })}>
+              <button type="button" className="secondary flex-1" onClick={() => dispatch({ type: 'RESET' })}>
                 Skann på nytt
               </button>
             </div>
@@ -245,7 +228,7 @@ export default function ScanModal({ mode, homeId, onClose, onAdjusted }: Props) 
             <button
               type="button"
               className="secondary flex items-center gap-1.5"
-              onClick={() => setState({ status: 'success', barcode: state.barcode, locationId: state.locationId, quantity: state.quantity, prevQuantity: state.quantity - 1, wineName: null, imageUrl: null })}
+              onClick={() => dispatch({ type: 'SKIP_IDENTIFY' })}
             >
               <ChevronsRight size={16} /> Hopp over
             </button>
@@ -265,7 +248,7 @@ export default function ScanModal({ mode, homeId, onClose, onAdjusted }: Props) 
             </div>
             <QuantityAdjuster value={state.quantity} onChange={handleInlineAdjust} />
             <div className="flex gap-2">
-              <button type="button" className="flex-1 py-3 text-base flex items-center justify-center gap-2" onClick={() => setState({ status: 'scanning' })}>
+              <button type="button" className="flex-1 py-3 text-base flex items-center justify-center gap-2" onClick={() => dispatch({ type: 'RESET' })}>
                 <ScanBarcode size={18} /> Skann en til
               </button>
               <button type="button" className="secondary flex-1 py-3 text-base" onClick={onClose}>
@@ -278,7 +261,7 @@ export default function ScanModal({ mode, homeId, onClose, onAdjusted }: Props) 
         {state.status === 'error' && (
           <div>
             <p className="text-red-600 text-[0.9rem] mb-3">{state.message}</p>
-            <button type="button" className="flex items-center gap-2" onClick={() => setState({ status: 'scanning' })}>
+            <button type="button" className="flex items-center gap-2" onClick={() => dispatch({ type: 'RESET' })}>
               <RotateCcw size={18} /> Prøv igjen
             </button>
           </div>
