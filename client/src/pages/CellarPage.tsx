@@ -57,7 +57,8 @@ export default function CellarPage() {
     const seen = new Map<number, { id: number; name: string }>()
     for (const entry of entries) {
       for (const le of entry.locations) {
-        if (!seen.has(le.locationId)) seen.set(le.locationId, { id: le.locationId, name: le.locationName })
+        if (le.locationId !== null && !seen.has(le.locationId))
+          seen.set(le.locationId, { id: le.locationId, name: le.locationName! })
       }
     }
     return [...seen.values()]
@@ -75,7 +76,7 @@ export default function CellarPage() {
   }
 
   const visibleEntries = entries.filter(e =>
-    (locationFilter.length === 0 || e.locations.some(le => locationFilter.includes(le.locationId))) &&
+    (locationFilter.length === 0 || e.locations.some(le => le.locationId !== null && locationFilter.includes(le.locationId))) &&
     (!pairingFilter || e.pairings.includes(pairingFilter)) &&
     (!grapeFilter   || e.grapes.includes(grapeFilter)) &&
     matchesStorageFilter(e) &&

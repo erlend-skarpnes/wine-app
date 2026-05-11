@@ -19,19 +19,38 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.Entity<Entry>()
-            .HasKey(e => new { e.LocationId, e.Barcode });
+            .HasKey(e => e.Id);
+
+        modelBuilder.Entity<Entry>()
+            .HasOne(e => e.Home)
+            .WithMany()
+            .HasForeignKey(e => e.HomeId)
+            .OnDelete(DeleteBehavior.Cascade);
 
         modelBuilder.Entity<Entry>()
             .HasOne(e => e.Location)
             .WithMany(l => l.Entries)
             .HasForeignKey(e => e.LocationId)
-            .OnDelete(DeleteBehavior.Cascade);
+            .OnDelete(DeleteBehavior.Cascade)
+            .IsRequired(false);
 
         modelBuilder.Entity<Entry>()
             .HasOne(e => e.Section)
             .WithMany(s => s.Entries)
             .HasForeignKey(e => e.SectionId)
             .OnDelete(DeleteBehavior.SetNull);
+
+        // At most one unlocated entry per barcode per home
+        modelBuilder.Entity<Entry>()
+            .HasIndex(e => new { e.HomeId, e.Barcode })
+            .IsUnique()
+            .HasFilter("\"LocationId\" IS NULL");
+
+        // At most one entry per barcode per location
+        modelBuilder.Entity<Entry>()
+            .HasIndex(e => new { e.HomeId, e.Barcode, e.LocationId })
+            .IsUnique()
+            .HasFilter("\"LocationId\" IS NOT NULL");
 
         modelBuilder.Entity<Home>()
             .HasOne(h => h.Owner)

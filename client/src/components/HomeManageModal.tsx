@@ -149,9 +149,6 @@ export default function HomeManageModal({ home, onClose, onChanged }: Props) {
                     onClick={() => { setError(null); setManagingLocation(loc) }}
                   >
                     <span className="flex-1 text-sm font-medium text-bark">{loc.name}</span>
-                    {loc.isDefault && (
-                      <span className="text-xs bg-stone text-clay px-2 py-0.5 rounded-full shrink-0">Standard</span>
-                    )}
                     {loc.sections.length > 0 && (
                       <span className="text-xs text-clay shrink-0">
                         {loc.sections.length} seksjon{loc.sections.length !== 1 ? 'er' : ''}

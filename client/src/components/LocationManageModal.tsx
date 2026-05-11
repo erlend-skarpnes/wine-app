@@ -93,7 +93,7 @@ export default function LocationManageModal({ homeId, location, isOwner, onBack,
           {error && <p className="text-red-600 text-sm">{error}</p>}
 
           {/* Rename */}
-          {isOwner && !location.isDefault && (
+          {isOwner && (
             <div>
               <p className="text-xs font-semibold text-clay uppercase tracking-wide mb-2">Navn</p>
               <div className="flex gap-2">
@@ -200,7 +200,7 @@ export default function LocationManageModal({ homeId, location, isOwner, onBack,
           </div>
 
           {/* Delete location */}
-          {isOwner && !location.isDefault && (
+          {isOwner && (
             <div className="pt-2 border-t border-stone">
               <button
                 type="button"

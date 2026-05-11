@@ -27,7 +27,6 @@ public static class LocationEndpoints
                 {
                     l.Id,
                     l.Name,
-                    l.IsDefault,
                     Sections = l.Sections
                         .OrderBy(s => s.CreatedAt)
                         .Select(s => new { s.Id, s.Name })
@@ -48,14 +47,13 @@ public static class LocationEndpoints
             if (!await HomeAuthorization.IsOwner(userId, homeId, db))
                 return Results.Forbid();
 
-            var location = new Location { Name = req.Name.Trim(), HomeId = homeId, IsDefault = false };
+            var location = new Location { Name = req.Name.Trim(), HomeId = homeId };
             db.Locations.Add(location);
             await db.SaveChangesAsync();
             return Results.Created($"/api/homes/{homeId}/locations/{location.Id}", new
             {
                 location.Id,
                 location.Name,
-                location.IsDefault,
                 Sections = Array.Empty<object>(),
             });
         });
@@ -87,9 +85,6 @@ public static class LocationEndpoints
 
             var location = await db.Locations.FirstOrDefaultAsync(l => l.Id == locId && l.HomeId == homeId);
             if (location is null) return Results.NotFound();
-
-            if (location.IsDefault)
-                return Results.Conflict(new { code = "DEFAULT_LOCATION", message = "Standardplasseringen kan ikke slettes." });
 
             if (await db.Entries.AnyAsync(e => e.LocationId == locId && e.Quantity > 0))
                 return Results.Conflict(new { code = "BOTTLES_REMAINING", message = "Plasseringen inneholder fremdeles flasker. Tøm den før du sletter." });

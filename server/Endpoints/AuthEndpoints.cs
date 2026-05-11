@@ -160,7 +160,6 @@ public static class AuthEndpoints
             var defaultHome = new Home { Name = "Mitt hjem", OwnerId = user.Id };
             db.Homes.Add(defaultHome);
             db.HomeMembers.Add(new HomeMember { Home = defaultHome, UserId = user.Id });
-            db.Locations.Add(new Location { Name = "Standard", Home = defaultHome, IsDefault = true });
             await db.SaveChangesAsync();
 
             await IssueTokenPair(user, db, config, response);

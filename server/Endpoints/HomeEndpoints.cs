@@ -42,7 +42,6 @@ public static class HomeEndpoints
             var home = new Home { Name = req.Name.Trim(), OwnerId = userId };
             db.Homes.Add(home);
             db.HomeMembers.Add(new HomeMember { Home = home, UserId = userId });
-            db.Locations.Add(new Location { Name = "Standard", Home = home, IsDefault = true });
             await db.SaveChangesAsync();
             return Results.Created($"/api/homes/{home.Id}", new
             {
@@ -78,7 +77,7 @@ public static class HomeEndpoints
             if (!await HomeAuthorization.IsOwner(userId, id, db))
                 return Results.Forbid();
 
-            if (await db.Entries.AnyAsync(e => e.Location.HomeId == id && e.Quantity > 0))
+            if (await db.Entries.AnyAsync(e => e.HomeId == id && e.Quantity > 0))
                 return Results.Conflict(new { code = "BOTTLES_REMAINING", message = "Hjemmet inneholder fremdeles flasker. Tøm det før du sletter." });
 
             var ownedHomeCount = await db.Homes.CountAsync(h => h.OwnerId == userId);

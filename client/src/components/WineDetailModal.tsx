@@ -42,13 +42,13 @@ export default function WineDetailModal({ barcode, name, homeId, quantity: initi
   const handleAdjust = useCallback(async (delta: 1 | -1) => {
     if (!selectedEntry) return
     try {
-      const result = await adjustEntry(selectedEntry.locationId, barcode, delta, selectedEntry.sectionId ?? undefined)
+      const result = await adjustEntry(homeId, barcode, delta, selectedEntry.locationId ?? undefined, selectedEntry.sectionId ?? undefined)
       setEditQuantity(result.quantity)
       onAdjusted()
     } catch {
       // ignore
     }
-  }, [selectedEntry, barcode, onAdjusted])
+  }, [homeId, selectedEntry, barcode, onAdjusted])
 
   function enterEditStock() {
     const first = locationEntries[0]
@@ -108,9 +108,9 @@ export default function WineDetailModal({ barcode, name, homeId, quantity: initi
             <div>
               <p className="text-sm font-medium text-bark mb-2">Plassering:</p>
               <div className="flex flex-wrap gap-2">
-                {locationEntries.map(le => (
+                {locationEntries.map((le, i) => (
                   <button
-                    key={le.locationId}
+                    key={le.locationId ?? `unlocated-${i}`}
                     type="button"
                     onClick={() => selectLocation(le)}
                     className={`px-3 py-1.5 text-sm rounded-lg border transition-colors ${
@@ -119,7 +119,7 @@ export default function WineDetailModal({ barcode, name, homeId, quantity: initi
                         : 'bg-surface text-clay border-stone hover:bg-warm'
                     }`}
                   >
-                    {le.locationName}{le.sectionName ? ` › ${le.sectionName}` : ''}
+                    {le.locationName ?? 'Uten plassering'}{le.sectionName ? ` › ${le.sectionName}` : ''}
                   </button>
                 ))}
               </div>

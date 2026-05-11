@@ -29,9 +29,10 @@ export const getEntryLocations = (homeId: number, barcode: string): Promise<Loca
   api.get(`/homes/${homeId}/entries/${barcode}/locations`)
 
 export const adjustEntry = (
-  locationId: number,
+  homeId: number,
   barcode: string,
   delta: number,
+  locationId?: number,
   sectionId?: number,
-): Promise<{ locationId: number; barcode: string; quantity: number; sectionId: number | null }> =>
-  api.post(`/locations/${locationId}/entries/adjust`, { barcode, delta, sectionId })
+): Promise<{ homeId: number; locationId: number | null; barcode: string; quantity: number; sectionId: number | null }> =>
+  api.post(`/homes/${homeId}/entries/adjust`, { barcode, delta, locationId, sectionId })

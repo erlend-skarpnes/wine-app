@@ -120,18 +120,17 @@ using (var scope = app.Services.CreateScope())
             new HomeMember { HomeId = home.Id,  UserId = user.Id, JoinedAt = DateTime.UtcNow },
             new HomeMember { HomeId = home2.Id, UserId = user.Id, JoinedAt = DateTime.UtcNow }
         );
-        var loc     = new Location { Name = "Standard",  HomeId = home.Id,  IsDefault = true,  CreatedAt = DateTime.UtcNow };
-        var locCool = new Location { Name = "Kjøleskap", HomeId = home.Id,  IsDefault = false, CreatedAt = DateTime.UtcNow };
-        var loc2    = new Location { Name = "Standard",  HomeId = home2.Id, IsDefault = true,  CreatedAt = DateTime.UtcNow };
-        db.Locations.AddRange(loc, locCool, loc2);
+        var loc     = new Location { Name = "Standard",  HomeId = home.Id,  CreatedAt = DateTime.UtcNow };
+        var locCool = new Location { Name = "Kjøleskap", HomeId = home.Id,  CreatedAt = DateTime.UtcNow };
+        db.Locations.AddRange(loc, locCool);
         await db.SaveChangesAsync();
 
         db.Sections.Add(new Section { Name = "Hylle A", LocationId = locCool.Id, CreatedAt = DateTime.UtcNow });
 
         db.Entries.AddRange(
-            new Entry { LocationId = loc.Id,     Barcode = "7090016664323", Quantity = 3 },
-            new Entry { LocationId = loc.Id,     Barcode = "7090016460692", Quantity = 1 },
-            new Entry { LocationId = locCool.Id, Barcode = "7090016664323", Quantity = 2 }
+            new Entry { HomeId = home.Id, LocationId = loc.Id,     Barcode = "7090016664323", Quantity = 3 },
+            new Entry { HomeId = home.Id, LocationId = loc.Id,     Barcode = "7090016460692", Quantity = 1 },
+            new Entry { HomeId = home.Id, LocationId = locCool.Id, Barcode = "7090016664323", Quantity = 2 }
         );
         await db.SaveChangesAsync();
     }

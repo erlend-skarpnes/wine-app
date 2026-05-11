@@ -12,10 +12,10 @@ public static class EntryEndpoints
 {
     public static void MapEntryEndpoints(this WebApplication app)
     {
-        var homeGroup = app.MapGroup("/api/homes/{homeId}/entries").WithTags("Entries").RequireAuthorization();
+        var group = app.MapGroup("/api/homes/{homeId}/entries").WithTags("Entries").RequireAuthorization();
 
         // GET /api/homes/{homeId}/entries
-        homeGroup.MapGet("/", async (int homeId, ClaimsPrincipal user, AppDbContext db, IStockQuery stockQuery) =>
+        group.MapGet("/", async (int homeId, ClaimsPrincipal user, AppDbContext db, IStockQuery stockQuery) =>
         {
             var userId = user.GetUserId();
             if (!await HomeAuthorization.IsMember(userId, homeId, db))
@@ -26,7 +26,7 @@ public static class EntryEndpoints
         });
 
         // GET /api/homes/{homeId}/entries/{barcode}/locations
-        homeGroup.MapGet("/{barcode}/locations", async (int homeId, string barcode, ClaimsPrincipal user, AppDbContext db, IStockQuery stockQuery) =>
+        group.MapGet("/{barcode}/locations", async (int homeId, string barcode, ClaimsPrincipal user, AppDbContext db, IStockQuery stockQuery) =>
         {
             var userId = user.GetUserId();
             if (!await HomeAuthorization.IsMember(userId, homeId, db))
@@ -36,25 +36,29 @@ public static class EntryEndpoints
             return Results.Ok(locations);
         });
 
-        // POST /api/locations/{locationId}/entries/adjust
-        var locationGroup = app.MapGroup("/api/locations/{locationId}/entries").WithTags("Entries").RequireAuthorization();
-
-        locationGroup.MapPost("/adjust", async (int locationId, AdjustRequest req, ClaimsPrincipal user, AppDbContext db) =>
+        // POST /api/homes/{homeId}/entries/adjust
+        group.MapPost("/adjust", async (int homeId, AdjustRequest req, ClaimsPrincipal user, AppDbContext db) =>
         {
             var userId = user.GetUserId();
-
-            var location = await db.Locations.FindAsync(locationId);
-            if (location is null) return Results.NotFound();
-
-            if (!await HomeAuthorization.IsMember(userId, location.HomeId, db))
+            if (!await HomeAuthorization.IsMember(userId, homeId, db))
                 return Results.Forbid();
 
-            var entry = await db.Entries.FindAsync(locationId, req.Barcode);
+            if (req.LocationId.HasValue)
+            {
+                var locationExists = await db.Locations.AnyAsync(l => l.Id == req.LocationId.Value && l.HomeId == homeId);
+                if (!locationExists) return Results.NotFound();
+            }
+
+            var entry = await db.Entries.FirstOrDefaultAsync(e =>
+                e.HomeId == homeId &&
+                e.Barcode == req.Barcode &&
+                e.LocationId == req.LocationId);
+
             if (entry is null)
             {
                 if (req.Delta <= 0)
                     return Results.BadRequest(new { code = "NOTHING_TO_REMOVE", message = "Nothing to remove." });
-                entry = new Entry { LocationId = locationId, Barcode = req.Barcode, Quantity = req.Delta, SectionId = req.SectionId };
+                entry = new Entry { HomeId = homeId, LocationId = req.LocationId, Barcode = req.Barcode, Quantity = req.Delta, SectionId = req.SectionId };
                 db.Entries.Add(entry);
             }
             else
@@ -65,10 +69,10 @@ public static class EntryEndpoints
             }
 
             await db.SaveChangesAsync();
-            return Results.Ok(new { locationId = entry.LocationId, barcode = entry.Barcode, quantity = entry.Quantity, sectionId = entry.SectionId });
+            return Results.Ok(new { homeId, locationId = entry.LocationId, barcode = entry.Barcode, quantity = entry.Quantity, sectionId = entry.SectionId });
         });
     }
 
 }
 
-record AdjustRequest(string Barcode, int Delta, int? SectionId);
+record AdjustRequest(string Barcode, int Delta, int? LocationId, int? SectionId);

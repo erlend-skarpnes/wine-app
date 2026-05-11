@@ -20,13 +20,12 @@ export interface Section {
 export interface Location {
   id: number
   name: string
-  isDefault: boolean
   sections: Section[]
 }
 
 export interface LocationEntry {
-  locationId: number
-  locationName: string
+  locationId: number | null
+  locationName: string | null
   sectionId: number | null
   sectionName: string | null
   quantity: number

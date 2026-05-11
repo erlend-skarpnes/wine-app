@@ -78,15 +78,15 @@ test('delete non-empty location shows error', async ({ authenticatedPage: page }
   await expect(locModal.getByText(/flasker/i)).toBeVisible()
 })
 
-test('default location has no rename or delete buttons', async ({ authenticatedPage: page }) => {
+test('any location can be renamed and deleted', async ({ authenticatedPage: page }) => {
   const homeModal = await openHomeManageModal(page, 'Testhjemmet')
 
   await getLocationItem(homeModal, 'Standard').first().click()
   const locModal = page.getByRole('dialog').last()
 
-  // Standard is isDefault — no rename input and no delete button
-  await expect(locModal.locator('input:not([placeholder])')).not.toBeVisible()
-  await expect(locModal.getByRole('button', { name: 'Slett plassering' })).not.toBeVisible()
+  // All locations now have rename and delete controls
+  await expect(locModal.locator('input').first()).toBeVisible()
+  await expect(locModal.getByRole('button', { name: 'Slett plassering' })).toBeVisible()
 })
 
 // --- Sections ---

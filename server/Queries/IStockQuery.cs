@@ -1,6 +1,6 @@
 namespace WineApp.Api.Queries;
 
-public record LocationStock(int LocationId, string LocationName, int? SectionId, string? SectionName, int Quantity);
+public record LocationStock(int? LocationId, string? LocationName, int? SectionId, string? SectionName, int Quantity);
 
 public record AggregatedStock(string Barcode, int Quantity, string? Name, string? Type,
     string[] Pairings, string[] Grapes, string? StoragePotential,

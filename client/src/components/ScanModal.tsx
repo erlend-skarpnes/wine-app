@@ -30,22 +30,23 @@ export default function ScanModal({ mode, homeId, onClose, onAdjusted }: Props) 
     queryFn: () => getLocations(homeId),
   })
 
-  const doAdjust = useCallback(async (barcode: string, locationId: number, sectionId?: number) => {
+  const doAdjust = useCallback(async (barcode: string, locationId?: number, sectionId?: number) => {
     dispatch({ type: 'ADJUST_START' })
     try {
       const delta = mode === 'add' ? 1 : -1
-      const result = await adjustEntry(locationId, barcode, delta, sectionId)
+      const result = await adjustEntry(homeId, barcode, delta, locationId, sectionId)
+      const loc = locationId ?? null
       const prevQuantity = result.quantity - delta
       try {
         const wineData = await getWineData(barcode)
         onAdjusted()
-        dispatch({ type: 'ADJUST_SUCCESS', barcode, locationId, quantity: result.quantity, prevQuantity, wineName: wineData.name, imageUrl: wineData.imageUrl })
+        dispatch({ type: 'ADJUST_SUCCESS', barcode, locationId: loc, quantity: result.quantity, prevQuantity, wineName: wineData.name, imageUrl: wineData.imageUrl })
       } catch {
         onAdjusted()
         if (mode === 'add') {
-          dispatch({ type: 'GO_TO_CAPTURE', barcode, locationId, quantity: result.quantity })
+          dispatch({ type: 'GO_TO_CAPTURE', barcode, locationId: loc, quantity: result.quantity })
         } else {
-          dispatch({ type: 'ADJUST_SUCCESS', barcode, locationId, quantity: result.quantity, prevQuantity, wineName: null, imageUrl: null })
+          dispatch({ type: 'ADJUST_SUCCESS', barcode, locationId: loc, quantity: result.quantity, prevQuantity, wineName: null, imageUrl: null })
         }
       }
     } catch (err) {
@@ -54,21 +55,21 @@ export default function ScanModal({ mode, homeId, onClose, onAdjusted }: Props) 
         : 'Noe gikk galt.'
       dispatch({ type: 'ADJUST_ERROR', message })
     }
-  }, [mode, onAdjusted])
+  }, [mode, homeId, onAdjusted])
 
   const handleScan = useCallback((barcode: string) => {
     if (locationsLoading) return
     if (locations.length === 0) {
-      dispatch({ type: 'ERROR', message: 'Ingen plasseringer funnet.' })
-      return
-    }
-    const first = locations[0]
-    if (locations.length === 1 && first.sections.length === 0) {
-      doAdjust(barcode, first.id)
-    } else if (locations.length === 1 && first.sections.length > 0) {
-      dispatch({ type: 'GO_TO_SECTION_PICK', barcode, locationId: first.id })
+      doAdjust(barcode)
     } else {
-      dispatch({ type: 'GO_TO_LOCATION_PICK', barcode, selectedLocationId: first.id })
+      const first = locations[0]
+      if (locations.length === 1 && first.sections.length === 0) {
+        doAdjust(barcode, first.id)
+      } else if (locations.length === 1 && first.sections.length > 0) {
+        dispatch({ type: 'GO_TO_SECTION_PICK', barcode, locationId: first.id })
+      } else {
+        dispatch({ type: 'GO_TO_LOCATION_PICK', barcode, selectedLocationId: first.id })
+      }
     }
   }, [locations, locationsLoading, doAdjust])
 
@@ -103,13 +104,13 @@ export default function ScanModal({ mode, homeId, onClose, onAdjusted }: Props) 
   const handleInlineAdjust = useCallback(async (delta: 1 | -1) => {
     if (state.status !== 'success') return
     try {
-      const result = await adjustEntry(state.locationId, state.barcode, delta)
+      const result = await adjustEntry(homeId, state.barcode, delta, state.locationId ?? undefined)
       onAdjusted()
       dispatch({ type: 'INLINE_ADJUST_SUCCESS', quantity: result.quantity })
     } catch {
       // ignore — quantity display stays as-is
     }
-  }, [state, onAdjusted])
+  }, [homeId, state, onAdjusted])
 
   const confirmLocationPick = useCallback(() => {
     if (state.status !== 'location-pick') return
@@ -118,7 +119,7 @@ export default function ScanModal({ mode, homeId, onClose, onAdjusted }: Props) 
     if (loc && loc.sections.length > 0) {
       dispatch({ type: 'GO_TO_SECTION_PICK', barcode, locationId: selectedLocationId })
     } else {
-      doAdjust(barcode, selectedLocationId)
+      doAdjust(barcode, selectedLocationId ?? undefined)
     }
   }, [state, locations, doAdjust])
 

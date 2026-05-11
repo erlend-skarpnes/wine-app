@@ -5,12 +5,12 @@ export type ScanState =
   | { status: 'location-pick'; barcode: string; selectedLocationId: number }
   | { status: 'section-pick'; barcode: string; locationId: number; selectedSectionId: number | null }
   | { status: 'loading' }
-  | { status: 'success'; barcode: string; locationId: number; quantity: number; prevQuantity: number; wineName: string | null; imageUrl: string | null }
+  | { status: 'success'; barcode: string; locationId: number | null; quantity: number; prevQuantity: number; wineName: string | null; imageUrl: string | null }
   | { status: 'error'; message: string }
-  | { status: 'capture'; barcode: string; locationId: number; quantity: number }
-  | { status: 'identifying'; barcode: string; locationId: number; quantity: number }
-  | { status: 'suggestions'; barcode: string; locationId: number; quantity: number; suggestions: WineSuggestion[] }
-  | { status: 'linking'; barcode: string; locationId: number; quantity: number; wineName: string | null }
+  | { status: 'capture'; barcode: string; locationId: number | null; quantity: number }
+  | { status: 'identifying'; barcode: string; locationId: number | null; quantity: number }
+  | { status: 'suggestions'; barcode: string; locationId: number | null; quantity: number; suggestions: WineSuggestion[] }
+  | { status: 'linking'; barcode: string; locationId: number | null; quantity: number; wineName: string | null }
 
 export type ScanAction =
   | { type: 'GO_TO_LOCATION_PICK'; barcode: string; selectedLocationId: number }
@@ -18,8 +18,8 @@ export type ScanAction =
   | { type: 'PICK_LOCATION'; locationId: number }
   | { type: 'PICK_SECTION'; sectionId: number | null }
   | { type: 'ADJUST_START' }
-  | { type: 'ADJUST_SUCCESS'; barcode: string; locationId: number; quantity: number; prevQuantity: number; wineName: string | null; imageUrl: string | null }
-  | { type: 'GO_TO_CAPTURE'; barcode: string; locationId: number; quantity: number }
+  | { type: 'ADJUST_SUCCESS'; barcode: string; locationId: number | null; quantity: number; prevQuantity: number; wineName: string | null; imageUrl: string | null }
+  | { type: 'GO_TO_CAPTURE'; barcode: string; locationId: number | null; quantity: number }
   | { type: 'ADJUST_ERROR'; message: string }
   | { type: 'IDENTIFY_START' }
   | { type: 'IDENTIFIED'; wineName: string | null; imageUrl: string | null }
