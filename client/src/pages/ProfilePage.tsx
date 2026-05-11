@@ -8,6 +8,7 @@ import { useAuth } from '../context/AuthContext'
 import { useHome } from '../context/HomeContext'
 import { api } from '../api/client'
 import { createHome } from '../api/homes'
+import { queryKeys } from '../api/queryKeys'
 
 // --- Password modal ---
 
@@ -81,7 +82,7 @@ function HomeSection() {
     mutationFn: () => createHome(newName),
     onSuccess: () => {
       setNewName('')
-      queryClient.invalidateQueries({ queryKey: ['homes'] })
+      queryClient.invalidateQueries({ queryKey: queryKeys.homes() })
     },
   })
 
@@ -90,7 +91,7 @@ function HomeSection() {
       <h2 className="text-lg font-semibold text-bark mb-4">Mine hjem</h2>
       <div className="space-y-3">
         {homes.map(h => (
-          <HomeRow key={h.id} home={h} onChanged={() => queryClient.invalidateQueries({ queryKey: ['homes'] })} />
+          <HomeRow key={h.id} home={h} onChanged={() => queryClient.invalidateQueries({ queryKey: queryKeys.homes() })} />
         ))}
       </div>
 

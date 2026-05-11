@@ -4,6 +4,7 @@ import { ChevronRight, Copy, Share2, Trash2 } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 import { renameHome, deleteHome, generateShareLink, removeMember, getHomeMembers } from '../api/homes'
 import { ApiError } from '../api/client'
+import { queryKeys } from '../api/queryKeys'
 import { createLocation, getLocations } from '../api/locations'
 import type { HomeMember, HomeSummary, Location } from '../api/types'
 import Modal from './Modal'
@@ -25,22 +26,22 @@ export default function HomeManageModal({ home, onClose, onChanged }: Props) {
   const [error, setError] = useState<string | null>(null)
 
   const { data: members = [], isLoading: membersLoading } = useQuery<HomeMember[]>({
-    queryKey: ['home-members', home.id],
+    queryKey: queryKeys.homeMembers(home.id),
     queryFn: () => getHomeMembers(home.id),
   })
 
   const { data: locations = [], isLoading: locationsLoading } = useQuery<Location[]>({
-    queryKey: ['locations', home.id],
+    queryKey: queryKeys.locations(home.id),
     queryFn: () => getLocations(home.id),
   })
 
   function invalidateHomes() {
-    queryClient.invalidateQueries({ queryKey: ['homes'] })
+    queryClient.invalidateQueries({ queryKey: queryKeys.homes() })
     onChanged()
   }
 
   function invalidateLocations() {
-    queryClient.invalidateQueries({ queryKey: ['locations', home.id] })
+    queryClient.invalidateQueries({ queryKey: queryKeys.locations(home.id) })
   }
 
   const renameMutation = useMutation({
@@ -77,7 +78,7 @@ export default function HomeManageModal({ home, onClose, onChanged }: Props) {
     },
     onSuccess: () => {
       invalidateHomes()
-      queryClient.invalidateQueries({ queryKey: ['home-members', home.id] })
+      queryClient.invalidateQueries({ queryKey: queryKeys.homeMembers(home.id) })
       onClose()
     },
     onError: (err) => {

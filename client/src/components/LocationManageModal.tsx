@@ -3,6 +3,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { ChevronLeft, Pencil, Trash2, X } from 'lucide-react'
 import { renameLocation, deleteLocation, createSection, renameSection, deleteSection } from '../api/locations'
 import { ApiError } from '../api/client'
+import { queryKeys } from '../api/queryKeys'
 import type { Location } from '../api/types'
 
 interface Props {
@@ -23,7 +24,7 @@ export default function LocationManageModal({ homeId, location, isOwner, onBack,
   const [error, setError] = useState<string | null>(null)
 
   function invalidate() {
-    queryClient.invalidateQueries({ queryKey: ['locations', homeId] })
+    queryClient.invalidateQueries({ queryKey: queryKeys.locations(homeId) })
     onChanged()
   }
 

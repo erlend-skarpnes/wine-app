@@ -2,6 +2,7 @@ import { useParams, useNavigate } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { getShareTokenInfo, joinHome } from '../api/homes'
 import { ApiError } from '../api/client'
+import { queryKeys } from '../api/queryKeys'
 import { useHome } from '../context/HomeContext'
 
 export default function JoinHomePage() {
@@ -19,7 +20,7 @@ export default function JoinHomePage() {
   const joinMutation = useMutation({
     mutationFn: () => joinHome(token!),
     onSuccess: (home) => {
-      queryClient.invalidateQueries({ queryKey: ['homes'] })
+      queryClient.invalidateQueries({ queryKey: queryKeys.homes() })
       setActiveHome(home)
       navigate('/', { replace: true })
     },

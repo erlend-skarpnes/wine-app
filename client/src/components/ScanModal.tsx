@@ -7,6 +7,7 @@ import Modal from './Modal'
 import WineImage from './WineImage'
 import QuantityAdjuster from './QuantityAdjuster'
 import { adjustEntry, getLocations } from '../api/locations'
+import { queryKeys } from '../api/queryKeys'
 import { getWineData, identifyWine, linkWine } from '../api/wine'
 import { ApiError } from '../api/client'
 import { scanReducer, initialScanState } from './scanReducer'
@@ -25,7 +26,7 @@ export default function ScanModal({ mode, homeId, onClose, onAdjusted }: Props) 
   const [state, dispatch] = useReducer(scanReducer, initialScanState)
 
   const { data: locations = [], isLoading: locationsLoading } = useQuery<Location[]>({
-    queryKey: ['locations', homeId],
+    queryKey: queryKeys.locations(homeId),
     queryFn: () => getLocations(homeId),
   })
 

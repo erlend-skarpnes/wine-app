@@ -1,6 +1,7 @@
 import { useState, useCallback } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { getWineData } from '../api/wine'
+import { queryKeys } from '../api/queryKeys'
 import { adjustEntry, getEntryLocations } from '../api/locations'
 import Modal from './Modal'
 import WineImage from './WineImage'
@@ -23,12 +24,12 @@ export default function WineDetailModal({ barcode, name, homeId, quantity: initi
   const [prevEditQuantity, setPrevEditQuantity] = useState(0)
 
   const { data: locationEntries = [] } = useQuery<LocationEntry[]>({
-    queryKey: ['entry-locations', homeId, barcode],
+    queryKey: queryKeys.entryLocations(homeId, barcode),
     queryFn: () => getEntryLocations(homeId, barcode),
   })
 
   const { data: wine, isLoading } = useQuery({
-    queryKey: ['wine', barcode],
+    queryKey: queryKeys.wine(barcode),
     queryFn: () => getWineData(barcode),
   })
 

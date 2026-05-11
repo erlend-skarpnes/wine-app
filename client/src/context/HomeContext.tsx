@@ -2,6 +2,7 @@ import { createContext, useContext, useEffect, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { useAuth } from './AuthContext'
 import { getHomes } from '../api/homes'
+import { queryKeys } from '../api/queryKeys'
 import type { HomeSummary } from '../api/types'
 
 interface HomeState {
@@ -22,7 +23,7 @@ export function HomeProvider({ children }: { children: React.ReactNode }) {
   })
 
   const { data: homes = [], isLoading } = useQuery<HomeSummary[]>({
-    queryKey: ['homes'],
+    queryKey: queryKeys.homes(),
     queryFn: getHomes,
     enabled: isAuthenticated,
   })

@@ -3,6 +3,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { Link } from 'react-router-dom'
 import { Plus, Minus } from 'lucide-react'
 import { getHomeEntries } from '../api/locations'
+import { queryKeys } from '../api/queryKeys'
 import { useHome } from '../context/HomeContext'
 import type { Entry } from '../api/types'
 import ScanModal from '../components/ScanModal'
@@ -36,15 +37,17 @@ export default function CellarPage() {
   const [grapeFilter, setGrapeFilter] = useState<string | null>(null)
 
   const { data: entries = [], isLoading: entriesLoading, isError } = useQuery<Entry[]>({
-    queryKey: ['home-entries', activeHome?.id],
+    queryKey: activeHome ? queryKeys.homeEntries(activeHome.id) : ['home-entries'],
     queryFn: () => getHomeEntries(activeHome!.id),
     enabled: !!activeHome,
   })
 
   function handleAdjusted() {
-    queryClient.invalidateQueries({ queryKey: ['home-entries', activeHome?.id] })
-    if (selected) {
-      queryClient.invalidateQueries({ queryKey: ['entry-locations', activeHome?.id, selected.barcode] })
+    if (activeHome) {
+      queryClient.invalidateQueries({ queryKey: queryKeys.homeEntries(activeHome.id) })
+      if (selected) {
+        queryClient.invalidateQueries({ queryKey: queryKeys.entryLocations(activeHome.id, selected.barcode) })
+      }
     }
   }
 
