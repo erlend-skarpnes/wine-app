@@ -6,6 +6,7 @@ using Testcontainers.PostgreSql;
 using WineApp.Api.Data;
 using WineApp.Api.Endpoints;
 using WineApp.Api.Models;
+using WineApp.Api.Queries;
 using WineApp.Api.Services;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -82,6 +83,8 @@ builder.Services.AddAuthorization(options =>
         policy.RequireAuthenticatedUser()
               .RequireClaim("isAdmin", "true"));
 });
+
+builder.Services.AddScoped<IStockQuery, StockQuery>();
 
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
