@@ -164,7 +164,7 @@ public static class HomeEndpoints
                 .Include(t => t.Home)
                 .FirstOrDefaultAsync(t => t.Token == token);
 
-            if (shareToken is null || shareToken.IsUsed || shareToken.ExpiresAt < DateTime.UtcNow)
+            if (shareToken is null || !shareToken.IsValid())
                 return Results.NotFound(new { message = "Invitasjonen er ugyldig eller utløpt." });
 
             return Results.Ok(new { homeId = shareToken.HomeId, homeName = shareToken.Home.Name });
@@ -179,7 +179,7 @@ public static class HomeEndpoints
                 .Include(t => t.Home)
                 .FirstOrDefaultAsync(t => t.Token == token);
 
-            if (shareToken is null || shareToken.IsUsed || shareToken.ExpiresAt < DateTime.UtcNow)
+            if (shareToken is null || !shareToken.IsValid())
                 return Results.BadRequest(new { code = "INVALID_TOKEN", message = "Invitasjonen er ugyldig eller utløpt." });
 
             if (await db.HomeMembers.AnyAsync(m => m.HomeId == shareToken.HomeId && m.UserId == userId))

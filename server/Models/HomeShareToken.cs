@@ -1,6 +1,6 @@
 namespace WineApp.Api.Models;
 
-public class HomeShareToken
+public class HomeShareToken : IExpirableToken
 {
     public int Id { get; set; }
     public required string Token { get; set; }

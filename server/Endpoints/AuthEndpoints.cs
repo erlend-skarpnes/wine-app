@@ -5,6 +5,7 @@ using System.Text;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using WineApp.Api.Data;
+using WineApp.Api.Extensions;
 using WineApp.Api.Models;
 
 namespace WineApp.Api.Endpoints;
@@ -140,7 +141,7 @@ public static class AuthEndpoints
         group.MapPost("/register", async (RegisterRequest req, AppDbContext db, IConfiguration config, HttpResponse response) =>
         {
             var invite = await db.Invitations.FirstOrDefaultAsync(i => i.Token == req.InviteToken);
-            if (invite is null || invite.IsUsed || invite.ExpiresAt < DateTime.UtcNow)
+            if (invite is null || !invite.IsValid())
                 return Results.BadRequest(new { code = "INVALID_TOKEN", message = "Invitasjonen er ugyldig eller utløpt." });
 
             var normalizedUsername = req.Username.ToLower();
