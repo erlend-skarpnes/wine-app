@@ -174,6 +174,18 @@ export default function WineDetailModal({ barcode, name, homeId, quantity: initi
             <div className="flex flex-col gap-4 flex-1 min-w-0">
               <dl className="grid grid-cols-1 sm:grid-cols-[auto_1fr] gap-x-4 gap-y-1 text-sm">
                 <dt className="text-clay">Beholdning</dt><dd>{totalQuantity} {totalQuantity === 1 ? 'flaske' : 'flasker'}</dd>
+                {locationEntries.length > 0 && (
+                  <>
+                    <dt className="text-clay">Plassering</dt>
+                    <dd className="flex flex-col gap-0.5">
+                      {locationEntries.map((le, i) => (
+                        <span key={i}>
+                          {le.locationName ?? 'Uten plassering'}{le.sectionName ? ` › ${le.sectionName}` : ''}{locationEntries.length > 1 ? ` (${le.quantity})` : ''}
+                        </span>
+                      ))}
+                    </dd>
+                  </>
+                )}
                 {wine.type     && <><dt className="text-clay">Type</dt>          <dd>{wine.type}</dd></>}
                 {wine.winery   && <><dt className="text-clay">Produsent</dt>     <dd>{wine.winery}</dd></>}
                 {wine.region   && <><dt className="text-clay">Region</dt>        <dd>{[wine.region, wine.country].filter(Boolean).join(', ')}</dd></>}
