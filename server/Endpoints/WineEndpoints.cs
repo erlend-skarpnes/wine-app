@@ -1,5 +1,4 @@
 using WineApp.Api.Data;
-using WineApp.Api.Models;
 using WineApp.Api.Services;
 
 namespace WineApp.Api.Endpoints;
@@ -11,23 +10,10 @@ public static class WineEndpoints
         var group = app.MapGroup("/api/wines").WithTags("Wines").RequireAuthorization();
 
         // GET /api/wines/{barcode}
-        // Checks the local DB first; on a miss, tries Vinmonopolet automatically.
-        group.MapGet("/{barcode}", async (string barcode, AppDbContext db, IVinmonopoletService vinmonopolet) =>
+        group.MapGet("/{barcode}", async (string barcode, IWineResolver resolver) =>
         {
-            var data = await db.WineData.FindAsync(barcode);
-            if (data is not null && !data.Refetch)
-                return Results.Ok(data);
-
-            var fetched = await vinmonopolet.GetByBarcodeAsync(barcode);
-            if (fetched is null)
-            {
-                if (data is not null)
-                    return Results.Ok(data);
-                return Results.NotFound();
-            }
-
-            await Upsert(db, fetched);
-            return Results.Ok(fetched);
+            var wine = await resolver.GetAsync(barcode);
+            return wine is not null ? Results.Ok(wine) : Results.NotFound();
         });
 
         // POST /api/wines/identify  (multipart/form-data: barcode + image)
@@ -60,15 +46,7 @@ public static class WineEndpoints
         });
     }
 
-    private static async Task Upsert(AppDbContext db, WineData incoming)
-    {
-        var existing = await db.WineData.FindAsync(incoming.Barcode);
-        if (existing is not null)
-            db.Entry(existing).CurrentValues.SetValues(incoming);
-        else
-            db.WineData.Add(incoming);
-        await db.SaveChangesAsync();
-    }
+
 }
 
 record LinkRequest(string Barcode, string ProductCode);

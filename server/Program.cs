@@ -86,6 +86,7 @@ builder.Services.AddAuthorization(options =>
 
 builder.Services.AddScoped<IStockQuery, StockQuery>();
 builder.Services.AddScoped<IWineIdentifier, WineIdentifier>();
+builder.Services.AddScoped<IWineResolver, WineResolver>();
 
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
