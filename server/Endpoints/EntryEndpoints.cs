@@ -1,6 +1,8 @@
 using System.Security.Claims;
 using Microsoft.EntityFrameworkCore;
+using WineApp.Api.Authorization;
 using WineApp.Api.Data;
+using WineApp.Api.Extensions;
 using WineApp.Api.Models;
 using WineApp.Api.Queries;
 
@@ -15,8 +17,8 @@ public static class EntryEndpoints
         // GET /api/homes/{homeId}/entries
         homeGroup.MapGet("/", async (int homeId, ClaimsPrincipal user, AppDbContext db, IStockQuery stockQuery) =>
         {
-            var userId = GetUserId(user);
-            if (!await IsMember(userId, homeId, db))
+            var userId = user.GetUserId();
+            if (!await HomeAuthorization.IsMember(userId, homeId, db))
                 return Results.Forbid();
 
             var result = await stockQuery.GetAggregatedAsync(homeId);
@@ -26,8 +28,8 @@ public static class EntryEndpoints
         // GET /api/homes/{homeId}/entries/{barcode}/locations
         homeGroup.MapGet("/{barcode}/locations", async (int homeId, string barcode, ClaimsPrincipal user, AppDbContext db, IStockQuery stockQuery) =>
         {
-            var userId = GetUserId(user);
-            if (!await IsMember(userId, homeId, db))
+            var userId = user.GetUserId();
+            if (!await HomeAuthorization.IsMember(userId, homeId, db))
                 return Results.Forbid();
 
             var locations = await stockQuery.GetLocationsAsync(homeId, barcode);
@@ -39,12 +41,12 @@ public static class EntryEndpoints
 
         locationGroup.MapPost("/adjust", async (int locationId, AdjustRequest req, ClaimsPrincipal user, AppDbContext db) =>
         {
-            var userId = GetUserId(user);
+            var userId = user.GetUserId();
 
             var location = await db.Locations.FindAsync(locationId);
             if (location is null) return Results.NotFound();
 
-            if (!await IsMember(userId, location.HomeId, db))
+            if (!await HomeAuthorization.IsMember(userId, location.HomeId, db))
                 return Results.Forbid();
 
             var entry = await db.Entries.FindAsync(locationId, req.Barcode);
@@ -67,11 +69,6 @@ public static class EntryEndpoints
         });
     }
 
-    private static int GetUserId(ClaimsPrincipal user) =>
-        int.Parse(user.FindFirstValue("sub")!);
-
-    private static async Task<bool> IsMember(int userId, int homeId, AppDbContext db) =>
-        await db.HomeMembers.AnyAsync(m => m.HomeId == homeId && m.UserId == userId);
 }
 
 record AdjustRequest(string Barcode, int Delta, int? SectionId);

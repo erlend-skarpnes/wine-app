@@ -1,6 +1,8 @@
 using System.Security.Claims;
 using Microsoft.EntityFrameworkCore;
+using WineApp.Api.Authorization;
 using WineApp.Api.Data;
+using WineApp.Api.Extensions;
 using WineApp.Api.Models;
 
 namespace WineApp.Api.Endpoints;
@@ -14,8 +16,8 @@ public static class LocationEndpoints
         // GET /api/homes/{homeId}/locations
         group.MapGet("/", async (int homeId, ClaimsPrincipal user, AppDbContext db) =>
         {
-            var userId = GetUserId(user);
-            if (!await IsMember(userId, homeId, db))
+            var userId = user.GetUserId();
+            if (!await HomeAuthorization.IsMember(userId, homeId, db))
                 return Results.Forbid();
 
             var locations = await db.Locations
@@ -42,8 +44,8 @@ public static class LocationEndpoints
             if (string.IsNullOrWhiteSpace(req.Name))
                 return Results.BadRequest(new { message = "Navn kan ikke være tomt." });
 
-            var userId = GetUserId(user);
-            if (!await IsOwner(userId, homeId, db))
+            var userId = user.GetUserId();
+            if (!await HomeAuthorization.IsOwner(userId, homeId, db))
                 return Results.Forbid();
 
             var location = new Location { Name = req.Name.Trim(), HomeId = homeId, IsDefault = false };
@@ -64,8 +66,8 @@ public static class LocationEndpoints
             if (string.IsNullOrWhiteSpace(req.Name))
                 return Results.BadRequest(new { message = "Navn kan ikke være tomt." });
 
-            var userId = GetUserId(user);
-            if (!await IsOwner(userId, homeId, db))
+            var userId = user.GetUserId();
+            if (!await HomeAuthorization.IsOwner(userId, homeId, db))
                 return Results.Forbid();
 
             var location = await db.Locations.FirstOrDefaultAsync(l => l.Id == locId && l.HomeId == homeId);
@@ -79,8 +81,8 @@ public static class LocationEndpoints
         // DELETE /api/homes/{homeId}/locations/{locId}
         group.MapDelete("/{locId}", async (int homeId, int locId, ClaimsPrincipal user, AppDbContext db) =>
         {
-            var userId = GetUserId(user);
-            if (!await IsOwner(userId, homeId, db))
+            var userId = user.GetUserId();
+            if (!await HomeAuthorization.IsOwner(userId, homeId, db))
                 return Results.Forbid();
 
             var location = await db.Locations.FirstOrDefaultAsync(l => l.Id == locId && l.HomeId == homeId);
@@ -103,8 +105,8 @@ public static class LocationEndpoints
             if (string.IsNullOrWhiteSpace(req.Name))
                 return Results.BadRequest(new { message = "Navn kan ikke være tomt." });
 
-            var userId = GetUserId(user);
-            if (!await IsOwner(userId, homeId, db))
+            var userId = user.GetUserId();
+            if (!await HomeAuthorization.IsOwner(userId, homeId, db))
                 return Results.Forbid();
 
             if (!await db.Locations.AnyAsync(l => l.Id == locId && l.HomeId == homeId))
@@ -124,8 +126,8 @@ public static class LocationEndpoints
             if (string.IsNullOrWhiteSpace(req.Name))
                 return Results.BadRequest(new { message = "Navn kan ikke være tomt." });
 
-            var userId = GetUserId(user);
-            if (!await IsOwner(userId, homeId, db))
+            var userId = user.GetUserId();
+            if (!await HomeAuthorization.IsOwner(userId, homeId, db))
                 return Results.Forbid();
 
             var section = await db.Sections
@@ -141,8 +143,8 @@ public static class LocationEndpoints
         // DELETE /api/homes/{homeId}/locations/{locId}/sections/{secId}
         group.MapDelete("/{locId}/sections/{secId}", async (int homeId, int locId, int secId, ClaimsPrincipal user, AppDbContext db) =>
         {
-            var userId = GetUserId(user);
-            if (!await IsOwner(userId, homeId, db))
+            var userId = user.GetUserId();
+            if (!await HomeAuthorization.IsOwner(userId, homeId, db))
                 return Results.Forbid();
 
             var section = await db.Sections
@@ -160,14 +162,6 @@ public static class LocationEndpoints
         });
     }
 
-    private static int GetUserId(ClaimsPrincipal user) =>
-        int.Parse(user.FindFirstValue("sub")!);
-
-    private static async Task<bool> IsMember(int userId, int homeId, AppDbContext db) =>
-        await db.HomeMembers.AnyAsync(m => m.HomeId == homeId && m.UserId == userId);
-
-    private static async Task<bool> IsOwner(int userId, int homeId, AppDbContext db) =>
-        await db.Homes.AnyAsync(h => h.Id == homeId && h.OwnerId == userId);
 }
 
 record CreateLocationRequest(string Name);

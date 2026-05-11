@@ -1,7 +1,9 @@
 using System.Security.Claims;
 using System.Security.Cryptography;
 using Microsoft.EntityFrameworkCore;
+using WineApp.Api.Authorization;
 using WineApp.Api.Data;
+using WineApp.Api.Extensions;
 using WineApp.Api.Models;
 
 namespace WineApp.Api.Endpoints;
@@ -15,7 +17,7 @@ public static class HomeEndpoints
         // GET /api/homes
         group.MapGet("/", async (ClaimsPrincipal user, AppDbContext db) =>
         {
-            var userId = GetUserId(user);
+            var userId = user.GetUserId();
             var homes = await db.HomeMembers
                 .Where(m => m.UserId == userId)
                 .Include(m => m.Home)
@@ -36,7 +38,7 @@ public static class HomeEndpoints
             if (string.IsNullOrWhiteSpace(req.Name))
                 return Results.BadRequest(new { message = "Navn kan ikke være tomt." });
 
-            var userId = GetUserId(user);
+            var userId = user.GetUserId();
             var home = new Home { Name = req.Name.Trim(), OwnerId = userId };
             db.Homes.Add(home);
             db.HomeMembers.Add(new HomeMember { Home = home, UserId = userId });
@@ -57,8 +59,8 @@ public static class HomeEndpoints
             if (string.IsNullOrWhiteSpace(req.Name))
                 return Results.BadRequest(new { message = "Navn kan ikke være tomt." });
 
-            var userId = GetUserId(user);
-            if (!await IsOwner(userId, id, db))
+            var userId = user.GetUserId();
+            if (!await HomeAuthorization.IsOwner(userId, id, db))
                 return Results.Forbid();
 
             var home = await db.Homes.FindAsync(id);
@@ -72,8 +74,8 @@ public static class HomeEndpoints
         // DELETE /api/homes/{id}
         group.MapDelete("/{id}", async (int id, ClaimsPrincipal user, AppDbContext db) =>
         {
-            var userId = GetUserId(user);
-            if (!await IsOwner(userId, id, db))
+            var userId = user.GetUserId();
+            if (!await HomeAuthorization.IsOwner(userId, id, db))
                 return Results.Forbid();
 
             if (await db.Entries.AnyAsync(e => e.Location.HomeId == id && e.Quantity > 0))
@@ -94,8 +96,8 @@ public static class HomeEndpoints
         // GET /api/homes/{id}/members
         group.MapGet("/{id}/members", async (int id, ClaimsPrincipal user, AppDbContext db) =>
         {
-            var userId = GetUserId(user);
-            if (!await IsMember(userId, id, db))
+            var userId = user.GetUserId();
+            if (!await HomeAuthorization.IsMember(userId, id, db))
                 return Results.Forbid();
 
             var members = await db.HomeMembers
@@ -116,8 +118,8 @@ public static class HomeEndpoints
         // DELETE /api/homes/{id}/members/{memberId}
         group.MapDelete("/{id}/members/{memberId}", async (int id, int memberId, ClaimsPrincipal user, AppDbContext db) =>
         {
-            var userId = GetUserId(user);
-            var isOwner = await IsOwner(userId, id, db);
+            var userId = user.GetUserId();
+            var isOwner = await HomeAuthorization.IsOwner(userId, id, db);
             var isSelf = userId == memberId;
 
             if (!isOwner && !isSelf)
@@ -137,8 +139,8 @@ public static class HomeEndpoints
         // POST /api/homes/{id}/share
         group.MapPost("/{id}/share", async (int id, ClaimsPrincipal user, AppDbContext db, HttpRequest request) =>
         {
-            var userId = GetUserId(user);
-            if (!await IsOwner(userId, id, db))
+            var userId = user.GetUserId();
+            if (!await HomeAuthorization.IsOwner(userId, id, db))
                 return Results.Forbid();
 
             var token = Convert.ToHexString(RandomNumberGenerator.GetBytes(32));
@@ -171,7 +173,7 @@ public static class HomeEndpoints
         // POST /api/homes/join/{token}
         group.MapPost("/join/{token}", async (string token, ClaimsPrincipal user, AppDbContext db) =>
         {
-            var userId = GetUserId(user);
+            var userId = user.GetUserId();
 
             var shareToken = await db.HomeShareTokens
                 .Include(t => t.Home)
@@ -197,14 +199,6 @@ public static class HomeEndpoints
         });
     }
 
-    private static int GetUserId(ClaimsPrincipal user) =>
-        int.Parse(user.FindFirstValue("sub")!);
-
-    private static async Task<bool> IsMember(int userId, int homeId, AppDbContext db) =>
-        await db.HomeMembers.AnyAsync(m => m.HomeId == homeId && m.UserId == userId);
-
-    private static async Task<bool> IsOwner(int userId, int homeId, AppDbContext db) =>
-        await db.Homes.AnyAsync(h => h.Id == homeId && h.OwnerId == userId);
 }
 
 record CreateHomeRequest(string Name);
