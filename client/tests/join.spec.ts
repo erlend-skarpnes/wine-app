@@ -1,35 +1,35 @@
 import { test, expect } from './fixtures/auth'
 
-test('valid share token shows home preview and join button', async ({ authenticatedPage: page, browser }) => {
-  // Generate a share link as testuser (owner of Testhjemmet)
+async function generateShareLink(page: import('@playwright/test').Page) {
   await page.goto('/profile')
   const card = page.locator('[data-testid="home-row"]').filter({ has: page.getByText('Testhjemmet', { exact: true }) })
-  await card.getByRole('button', { name: 'Del hjem' }).click()
+  await card.getByRole('button', { name: 'Administrer' }).click()
+  const modal = page.getByRole('dialog').first()
+  await modal.getByRole('button', { name: 'Generer delingslenke' }).click()
+  const linkText = await modal.locator('code').textContent()
+  return new URL(linkText!.trim()).pathname
+}
 
-  const linkText = await card.locator('code').textContent()
-  const shareUrl = new URL(linkText!.trim()).pathname
+test('valid share token shows home preview and join button', async ({ authenticatedPage: page, browser }) => {
+  const shareUrl = await generateShareLink(page)
 
   // Open the share link in a second context as testadmin
   const context2 = await browser.newContext({ ignoreHTTPSErrors: true })
   const page2 = await context2.newPage()
 
-  // Log in as testadmin
   await page2.goto('/login')
   await page2.getByPlaceholder('Brukernavn').fill('testadmin')
   await page2.getByPlaceholder('Passord').fill('Test1234!')
   await page2.getByRole('button', { name: 'Logg inn' }).click()
   await page2.waitForURL('/')
 
-  // Visit the share URL
   await page2.goto(shareUrl)
   await expect(page2.getByText('Testhjemmet')).toBeVisible()
   await expect(page2.getByRole('button', { name: 'Bli med' })).toBeVisible()
 
-  // Accept the invite
   await page2.getByRole('button', { name: 'Bli med' }).click()
   await page2.waitForURL('/')
 
-  // Testhjemmet should now appear in testadmin's profile
   await page2.goto('/profile')
   await expect(page2.getByText('Testhjemmet')).toBeVisible()
 
@@ -37,16 +37,9 @@ test('valid share token shows home preview and join button', async ({ authentica
 })
 
 test('already-member share token shows friendly error', async ({ authenticatedPage: page }) => {
-  // testuser is already a member of Testhjemmet — generate a link and try to join own home
-  await page.goto('/profile')
-  const card = page.locator('[data-testid="home-row"]').filter({ has: page.getByText('Testhjemmet', { exact: true }) })
-  await card.getByRole('button', { name: 'Del hjem' }).click()
-
-  const linkText = await card.locator('code').textContent()
-  const shareUrl = new URL(linkText!.trim()).pathname
+  const shareUrl = await generateShareLink(page)
 
   await page.goto(shareUrl)
-  // Click join — server returns 409 since testuser is already a member
   await page.getByRole('button', { name: 'Bli med' }).click()
   await expect(page.getByText(/allerede|already|medlem/i)).toBeVisible()
 })

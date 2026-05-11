@@ -1,160 +1,174 @@
 import { test, expect } from './fixtures/auth'
 
-// Helper: get the home card and expand its detail view
-async function openHomeDetails(page: import('@playwright/test').Page, homeName: string) {
+async function openHomeManageModal(page: import('@playwright/test').Page, homeName: string) {
   await page.goto('/profile')
   const homeCard = page.locator('[data-testid="home-row"]').filter({ has: page.getByText(homeName, { exact: true }) })
-  await homeCard.getByRole('button', { name: 'Vis detaljer' }).click()
-  return homeCard
+  await homeCard.getByRole('button', { name: 'Administrer' }).click()
+  await expect(page.getByRole('dialog')).toBeVisible()
+  return page.getByRole('dialog').first()
 }
 
-// Helper: get a specific location row by name within a home card
-function getLocationRow(homeCard: import('@playwright/test').Locator, name: string) {
-  return homeCard.locator('[data-testid="location-row"]').filter({ hasText: name })
+function getLocationItem(modal: import('@playwright/test').Locator, name: string) {
+  return modal.locator('[data-testid="location-row"]').filter({ hasText: name })
 }
 
 // --- Locations ---
 
-test('create location appears in home details', async ({ authenticatedPage: page }) => {
-  const homeCard = await openHomeDetails(page, 'Testhjemmet')
+test('create location appears in home manage modal', async ({ authenticatedPage: page }) => {
+  const homeModal = await openHomeManageModal(page, 'Testhjemmet')
   const name = `Stue ${Date.now()}`
 
-  await homeCard.getByPlaceholder('Ny plassering…').fill(name)
-  await homeCard.getByRole('button', { name: 'Legg til' }).click()
+  await homeModal.getByPlaceholder('Ny plassering…').fill(name)
+  await homeModal.getByRole('button', { name: 'Legg til' }).click()
 
-  await expect(getLocationRow(homeCard, name)).toBeVisible()
+  await expect(getLocationItem(homeModal, name)).toBeVisible()
 })
 
 test('rename location shows updated name', async ({ authenticatedPage: page }) => {
-  const homeCard = await openHomeDetails(page, 'Testhjemmet')
+  const homeModal = await openHomeManageModal(page, 'Testhjemmet')
   const original = `ToRenameL ${Date.now()}`
   const renamed = `RenamedL ${Date.now()}`
 
   // Create a location to rename
-  await homeCard.getByPlaceholder('Ny plassering…').fill(original)
-  await homeCard.getByRole('button', { name: 'Legg til' }).click()
-  await expect(getLocationRow(homeCard, original)).toBeVisible()
+  await homeModal.getByPlaceholder('Ny plassering…').fill(original)
+  await homeModal.getByRole('button', { name: 'Legg til' }).click()
+  await expect(getLocationItem(homeModal, original)).toBeVisible()
 
-  // Click pencil — span is replaced by a rename input, so hasText filter breaks
-  await getLocationRow(homeCard, original).getByTitle('Endre navn').click()
-  // Find the rename input by absence of placeholder (distinguishes it from "Ny plassering…")
-  await homeCard.locator('[data-testid="location-row"] input:not([placeholder])').fill(renamed)
-  await homeCard.locator('[data-testid="location-row"]').getByRole('button', { name: 'Lagre' }).click()
+  // Open LocationManageModal for this location
+  await getLocationItem(homeModal, original).click()
+  const locModal = page.getByRole('dialog').last()
 
-  await expect(getLocationRow(homeCard, renamed)).toBeVisible()
-  await expect(homeCard.getByText(original, { exact: true })).not.toBeVisible()
+  // Rename via the Navn input (first input in the modal, no placeholder)
+  await locModal.locator('input:not([placeholder])').fill(renamed)
+  await locModal.locator('input:not([placeholder])').press('Tab')
+  await locModal.getByRole('button', { name: 'Lagre' }).first().click()
+
+  // Go back to home modal and verify new name
+  await locModal.getByTitle('Tilbake').click()
+
+  await expect(getLocationItem(homeModal, renamed)).toBeVisible()
+  await expect(homeModal.getByText(original, { exact: true })).not.toBeVisible()
 })
 
 test('delete empty location removes it', async ({ authenticatedPage: page }) => {
-  const homeCard = await openHomeDetails(page, 'Testhjemmet')
+  const homeModal = await openHomeManageModal(page, 'Testhjemmet')
   const name = `ToDeleteL ${Date.now()}`
 
-  await homeCard.getByPlaceholder('Ny plassering…').fill(name)
-  await homeCard.getByRole('button', { name: 'Legg til' }).click()
-  await expect(getLocationRow(homeCard, name)).toBeVisible()
+  await homeModal.getByPlaceholder('Ny plassering…').fill(name)
+  await homeModal.getByRole('button', { name: 'Legg til' }).click()
+  await expect(getLocationItem(homeModal, name)).toBeVisible()
 
-  await getLocationRow(homeCard, name).getByTitle('Slett').click()
+  // Open and delete via LocationManageModal
+  await getLocationItem(homeModal, name).click()
+  const locModal = page.getByRole('dialog').last()
+  await locModal.getByRole('button', { name: 'Slett plassering' }).click()
 
-  await expect(homeCard.getByText(name, { exact: true })).not.toBeVisible()
+  // Modal closes automatically on success; location should be gone
+  await expect(homeModal.getByText(name, { exact: true })).not.toBeVisible()
 })
 
 test('delete non-empty location shows error', async ({ authenticatedPage: page }) => {
-  const homeCard = await openHomeDetails(page, 'Testhjemmet')
+  const homeModal = await openHomeManageModal(page, 'Testhjemmet')
 
-  // Kjøleskap has seeded entries — try to delete it
-  const row = getLocationRow(homeCard, 'Kjøleskap')
-  await row.getByTitle('Slett').click()
+  // Kjøleskap has seeded entries — deleting should fail
+  await getLocationItem(homeModal, 'Kjøleskap').click()
+  const locModal = page.getByRole('dialog').last()
+  await locModal.getByRole('button', { name: 'Slett plassering' }).click()
 
-  await expect(row.getByText(/flasker/i)).toBeVisible()
+  await expect(locModal.getByText(/flasker/i)).toBeVisible()
 })
 
 test('default location has no rename or delete buttons', async ({ authenticatedPage: page }) => {
-  const homeCard = await openHomeDetails(page, 'Testhjemmet')
+  const homeModal = await openHomeManageModal(page, 'Testhjemmet')
 
-  const standardRow = getLocationRow(homeCard, 'Standard').first()
-  await expect(standardRow.getByTitle('Endre navn')).not.toBeVisible()
-  await expect(standardRow.getByTitle('Slett')).not.toBeVisible()
+  await getLocationItem(homeModal, 'Standard').first().click()
+  const locModal = page.getByRole('dialog').last()
+
+  // Standard is isDefault — no rename input and no delete button
+  await expect(locModal.locator('input:not([placeholder])')).not.toBeVisible()
+  await expect(locModal.getByRole('button', { name: 'Slett plassering' })).not.toBeVisible()
 })
 
 // --- Sections ---
 
 test('create section appears in location', async ({ authenticatedPage: page }) => {
-  const homeCard = await openHomeDetails(page, 'Testhjemmet')
+  const homeModal = await openHomeManageModal(page, 'Testhjemmet')
   const locName = `SectionHome ${Date.now()}`
   const secName = `Hylle A ${Date.now()}`
 
-  // Create a fresh location to add sections to
-  await homeCard.getByPlaceholder('Ny plassering…').fill(locName)
-  await homeCard.getByRole('button', { name: 'Legg til' }).click()
-  await expect(getLocationRow(homeCard, locName)).toBeVisible()
+  // Create a fresh location
+  await homeModal.getByPlaceholder('Ny plassering…').fill(locName)
+  await homeModal.getByRole('button', { name: 'Legg til' }).click()
+  await expect(getLocationItem(homeModal, locName)).toBeVisible()
 
-  // Expand sections panel
-  const row = getLocationRow(homeCard, locName)
-  await row.getByRole('button', { name: 'Seksjoner' }).click()
+  // Open LocationManageModal and add a section
+  await getLocationItem(homeModal, locName).click()
+  const locModal = page.getByRole('dialog').last()
+  await locModal.getByPlaceholder('Ny seksjon…').fill(secName)
+  await locModal.getByRole('button', { name: 'Legg til' }).click()
 
-  // Add a section
-  await row.getByPlaceholder('Ny seksjon…').fill(secName)
-  await row.getByRole('button', { name: 'Legg til' }).click()
-
-  await expect(row.getByText(secName)).toBeVisible()
+  await expect(locModal.locator('[data-testid="location-row"]').filter({ hasText: secName })).toBeVisible()
 })
 
 test('rename section shows updated name', async ({ authenticatedPage: page }) => {
-  const homeCard = await openHomeDetails(page, 'Testhjemmet')
+  const homeModal = await openHomeManageModal(page, 'Testhjemmet')
   const locName = `SecRenameHome ${Date.now()}`
   const original = `HylleOrig ${Date.now()}`
   const renamed = `HylleRenamed ${Date.now()}`
 
-  await homeCard.getByPlaceholder('Ny plassering…').fill(locName)
-  await homeCard.getByRole('button', { name: 'Legg til' }).click()
+  await homeModal.getByPlaceholder('Ny plassering…').fill(locName)
+  await homeModal.getByRole('button', { name: 'Legg til' }).click()
+  await getLocationItem(homeModal, locName).click()
+  const locModal = page.getByRole('dialog').last()
 
-  const row = getLocationRow(homeCard, locName)
-  await row.getByRole('button', { name: 'Seksjoner' }).click()
-  await row.getByPlaceholder('Ny seksjon…').fill(original)
-  await row.getByRole('button', { name: 'Legg til' }).click()
-  await expect(row.getByText(original)).toBeVisible()
+  // Create a section
+  await locModal.getByPlaceholder('Ny seksjon…').fill(original)
+  await locModal.getByRole('button', { name: 'Legg til' }).click()
+  await expect(locModal.locator('[data-testid="location-row"]').filter({ hasText: original })).toBeVisible()
 
-  // Click pencil next to the section name
-  await row.getByText(original).locator('..').getByTitle('Endre navn').click()
-  // Two textboxes now exist in the row: rename input (no placeholder) and "Ny seksjon…" input
-  await row.locator('input:not([placeholder])').fill(renamed)
-  await row.getByRole('button', { name: 'Lagre' }).click()
+  // Click pencil on the section row
+  await locModal.locator('[data-testid="location-row"]').filter({ hasText: original }).getByTitle('Endre navn').click()
 
-  await expect(row.getByText(renamed)).toBeVisible()
-  await expect(row.getByText(original, { exact: true })).not.toBeVisible()
+  // Fill rename input inside the section rows area and save
+  await locModal.locator('[data-testid="location-row"] input').fill(renamed)
+  await locModal.locator('[data-testid="location-row"]').getByRole('button', { name: 'Lagre' }).click()
+
+  await expect(locModal.locator('[data-testid="location-row"]').filter({ hasText: renamed })).toBeVisible()
+  await expect(locModal.getByText(original, { exact: true })).not.toBeVisible()
 })
 
 test('delete section removes it from location', async ({ authenticatedPage: page }) => {
-  const homeCard = await openHomeDetails(page, 'Testhjemmet')
+  const homeModal = await openHomeManageModal(page, 'Testhjemmet')
   const locName = `SecDeleteHome ${Date.now()}`
   const secName = `HylleDelete ${Date.now()}`
 
-  await homeCard.getByPlaceholder('Ny plassering…').fill(locName)
-  await homeCard.getByRole('button', { name: 'Legg til' }).click()
+  await homeModal.getByPlaceholder('Ny plassering…').fill(locName)
+  await homeModal.getByRole('button', { name: 'Legg til' }).click()
+  await getLocationItem(homeModal, locName).click()
+  const locModal = page.getByRole('dialog').last()
 
-  const row = getLocationRow(homeCard, locName)
-  await row.getByRole('button', { name: 'Seksjoner' }).click()
-  await row.getByPlaceholder('Ny seksjon…').fill(secName)
-  await row.getByRole('button', { name: 'Legg til' }).click()
-  await expect(row.getByText(secName)).toBeVisible()
+  await locModal.getByPlaceholder('Ny seksjon…').fill(secName)
+  await locModal.getByRole('button', { name: 'Legg til' }).click()
+  await expect(locModal.locator('[data-testid="location-row"]').filter({ hasText: secName })).toBeVisible()
 
-  await row.getByText(secName).locator('..').getByTitle('Slett').click()
+  await locModal.locator('[data-testid="location-row"]').filter({ hasText: secName }).getByTitle('Slett').click()
 
-  await expect(row.getByText(secName, { exact: true })).not.toBeVisible()
+  await expect(locModal.getByText(secName, { exact: true })).not.toBeVisible()
 })
 
 test('section count badge updates after adding section', async ({ authenticatedPage: page }) => {
-  const homeCard = await openHomeDetails(page, 'Testhjemmet')
+  const homeModal = await openHomeManageModal(page, 'Testhjemmet')
   const locName = `BadgeHome ${Date.now()}`
 
-  await homeCard.getByPlaceholder('Ny plassering…').fill(locName)
-  await homeCard.getByRole('button', { name: 'Legg til' }).click()
+  await homeModal.getByPlaceholder('Ny plassering…').fill(locName)
+  await homeModal.getByRole('button', { name: 'Legg til' }).click()
+  await getLocationItem(homeModal, locName).click()
+  const locModal = page.getByRole('dialog').last()
 
-  const row = getLocationRow(homeCard, locName)
-  await row.getByRole('button', { name: 'Seksjoner' }).click()
-  await row.getByPlaceholder('Ny seksjon…').fill('Hylle 1')
-  await row.getByRole('button', { name: 'Legg til' }).click()
+  await locModal.getByPlaceholder('Ny seksjon…').fill('Hylle 1')
+  await locModal.getByRole('button', { name: 'Legg til' }).click()
 
-  // After adding 1 section the badge "1 seksjon" should appear
-  await expect(row.getByText('1 seksjon')).toBeVisible()
+  // Go back and check the count badge in the home modal
+  await locModal.getByTitle('Tilbake').click()
+  await expect(getLocationItem(homeModal, locName).getByText('1 seksjon')).toBeVisible()
 })

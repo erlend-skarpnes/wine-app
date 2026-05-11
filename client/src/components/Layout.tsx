@@ -45,7 +45,10 @@ export default function Layout() {
         </div>
       </header>
 
-      <main className="flex-1 overflow-y-auto p-6 pb-[calc(1.5rem+72px)] max-w-[960px] mx-auto w-full">
+      <main
+        className="flex-1 overflow-y-auto p-6 max-w-[960px] mx-auto w-full"
+        style={{ paddingBottom: 'max(calc(1.5rem + 72px), var(--keyboard-height, 0px))' }}
+      >
         <Outlet />
       </main>
     </div>
