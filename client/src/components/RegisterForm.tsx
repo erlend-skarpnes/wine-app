@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { register } from '../api/auth'
+import { ApiError } from '../api/client'
 
 interface Props {
   inviteToken: string
@@ -27,14 +28,12 @@ export default function RegisterForm({ inviteToken, onRegister }: Props) {
       const { username: name } = await register(inviteToken, username, password)
       onRegister(name)
     } catch (err) {
-      const msg = err instanceof Error ? err.message : ''
-      if (msg.includes('409') || msg.includes('Conflict')) {
+      if (err instanceof ApiError && err.code === 'USERNAME_TAKEN')
         setError('Brukernavnet er allerede i bruk.')
-      } else if (msg.includes('400')) {
+      else if (err instanceof ApiError && err.code === 'INVALID_TOKEN')
         setError('Invitasjonen er ugyldig eller utløpt.')
-      } else {
+      else
         setError('Noe gikk galt. Prøv igjen.')
-      }
     } finally {
       setLoading(false)
     }

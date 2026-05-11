@@ -53,7 +53,7 @@ public static class EntryEndpoints
             if (entry is null)
             {
                 if (req.Delta <= 0)
-                    return Results.BadRequest(new { message = "Nothing to remove." });
+                    return Results.BadRequest(new { code = "NOTHING_TO_REMOVE", message = "Nothing to remove." });
                 entry = new Entry { LocationId = locationId, Barcode = req.Barcode, Quantity = req.Delta, SectionId = req.SectionId };
                 db.Entries.Add(entry);
             }

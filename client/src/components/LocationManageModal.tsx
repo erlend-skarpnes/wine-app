@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { ChevronLeft, Pencil, Trash2, X } from 'lucide-react'
 import { renameLocation, deleteLocation, createSection, renameSection, deleteSection } from '../api/locations'
+import { ApiError } from '../api/client'
 import type { Location } from '../api/types'
 
 interface Props {
@@ -36,10 +37,10 @@ export default function LocationManageModal({ homeId, location, isOwner, onBack,
     mutationFn: () => deleteLocation(homeId, location.id),
     onSuccess: () => { invalidate(); onBack() },
     onError: (err) => {
-      const msg = err instanceof Error ? err.message : ''
-      setError(msg.includes('flasker')
-        ? 'Plasseringen inneholder fremdeles flasker. Tøm den før du sletter.'
-        : 'Kunne ikke slette plasseringen.')
+      if (err instanceof ApiError && err.code === 'BOTTLES_REMAINING')
+        setError('Plasseringen inneholder fremdeles flasker. Tøm den før du sletter.')
+      else
+        setError('Kunne ikke slette plasseringen.')
     },
   })
 
@@ -59,8 +60,10 @@ export default function LocationManageModal({ homeId, location, isOwner, onBack,
     mutationFn: (secId: number) => deleteSection(homeId, location.id, secId),
     onSuccess: invalidate,
     onError: (err) => {
-      const msg = err instanceof Error ? err.message : ''
-      setError(msg.includes('flasker') ? 'Seksjonen inneholder fremdeles flasker.' : 'Kunne ikke slette seksjonen.')
+      if (err instanceof ApiError && err.code === 'BOTTLES_REMAINING')
+        setError('Seksjonen inneholder fremdeles flasker.')
+      else
+        setError('Kunne ikke slette seksjonen.')
     },
   })
 

@@ -89,10 +89,10 @@ public static class LocationEndpoints
             if (location is null) return Results.NotFound();
 
             if (location.IsDefault)
-                return Results.Conflict(new { message = "Standardplasseringen kan ikke slettes." });
+                return Results.Conflict(new { code = "DEFAULT_LOCATION", message = "Standardplasseringen kan ikke slettes." });
 
             if (await db.Entries.AnyAsync(e => e.LocationId == locId && e.Quantity > 0))
-                return Results.Conflict(new { message = "Plasseringen inneholder fremdeles flasker. Tøm den før du sletter." });
+                return Results.Conflict(new { code = "BOTTLES_REMAINING", message = "Plasseringen inneholder fremdeles flasker. Tøm den før du sletter." });
 
             db.Locations.Remove(location);
             await db.SaveChangesAsync();
@@ -153,7 +153,7 @@ public static class LocationEndpoints
             if (section is null) return Results.NotFound();
 
             if (await db.Entries.AnyAsync(e => e.SectionId == secId && e.Quantity > 0))
-                return Results.Conflict(new { message = "Seksjonen inneholder fremdeles flasker." });
+                return Results.Conflict(new { code = "BOTTLES_REMAINING", message = "Seksjonen inneholder fremdeles flasker." });
 
             // DB cascade (SetNull) clears SectionId on zero-quantity entries automatically
             db.Sections.Remove(section);

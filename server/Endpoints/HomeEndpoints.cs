@@ -79,11 +79,11 @@ public static class HomeEndpoints
                 return Results.Forbid();
 
             if (await db.Entries.AnyAsync(e => e.Location.HomeId == id && e.Quantity > 0))
-                return Results.Conflict(new { message = "Hjemmet inneholder fremdeles flasker. Tøm det før du sletter." });
+                return Results.Conflict(new { code = "BOTTLES_REMAINING", message = "Hjemmet inneholder fremdeles flasker. Tøm det før du sletter." });
 
             var ownedHomeCount = await db.Homes.CountAsync(h => h.OwnerId == userId);
             if (ownedHomeCount <= 1)
-                return Results.Conflict(new { message = "Du kan ikke slette ditt siste hjem." });
+                return Results.Conflict(new { code = "LAST_HOME", message = "Du kan ikke slette ditt siste hjem." });
 
             var home = await db.Homes.FindAsync(id);
             if (home is null) return Results.NotFound();
@@ -126,7 +126,7 @@ public static class HomeEndpoints
                 return Results.Forbid();
 
             if (isSelf && await db.Homes.AnyAsync(h => h.Id == id && h.OwnerId == userId))
-                return Results.BadRequest(new { message = "Du kan ikke forlate hjemmet som eier. Slett hjemmet i stedet." });
+                return Results.BadRequest(new { code = "OWNER_CANNOT_LEAVE", message = "Du kan ikke forlate hjemmet som eier. Slett hjemmet i stedet." });
 
             var membership = await db.HomeMembers.FindAsync(id, memberId);
             if (membership is null) return Results.NotFound();
@@ -180,10 +180,10 @@ public static class HomeEndpoints
                 .FirstOrDefaultAsync(t => t.Token == token);
 
             if (shareToken is null || shareToken.IsUsed || shareToken.ExpiresAt < DateTime.UtcNow)
-                return Results.BadRequest(new { message = "Invitasjonen er ugyldig eller utløpt." });
+                return Results.BadRequest(new { code = "INVALID_TOKEN", message = "Invitasjonen er ugyldig eller utløpt." });
 
             if (await db.HomeMembers.AnyAsync(m => m.HomeId == shareToken.HomeId && m.UserId == userId))
-                return Results.Conflict(new { message = "Du er allerede medlem av dette hjemmet." });
+                return Results.Conflict(new { code = "ALREADY_MEMBER", message = "Du er allerede medlem av dette hjemmet." });
 
             db.HomeMembers.Add(new HomeMember { HomeId = shareToken.HomeId, UserId = userId });
             shareToken.IsUsed = true;

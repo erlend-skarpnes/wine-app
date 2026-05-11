@@ -1,5 +1,16 @@
 const BASE = '/api'
 
+export class ApiError extends Error {
+  constructor(
+    public readonly status: number,
+    public readonly code: string | undefined,
+    message: string,
+  ) {
+    super(message)
+    this.name = 'ApiError'
+  }
+}
+
 // Called by App when a 401 can't be recovered via refresh (session expired)
 let onUnauthenticated: (() => void) | null = null
 export function setUnauthenticatedHandler(fn: () => void) {
@@ -26,8 +37,15 @@ async function request<T>(path: string, init?: RequestInit, isRetry = false): Pr
   }
 
   if (!res.ok) {
-    const text = await res.text().catch(() => res.statusText)
-    throw new Error(`${init?.method ?? 'GET'} ${path} → ${res.status}: ${text}`)
+    const text = await res.text().catch(() => '')
+    let code: string | undefined
+    let message = text || res.statusText
+    try {
+      const body = JSON.parse(text)
+      if (typeof body.message === 'string') message = body.message
+      if (typeof body.code === 'string') code = body.code
+    } catch { /* not JSON */ }
+    throw new ApiError(res.status, code, message)
   }
   if (res.status === 204 || res.headers.get('content-length') === '0') {
     return undefined as T

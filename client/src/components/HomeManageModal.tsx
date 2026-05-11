@@ -3,6 +3,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { ChevronRight, Copy, Share2, Trash2 } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 import { renameHome, deleteHome, generateShareLink, removeMember, getHomeMembers } from '../api/homes'
+import { ApiError } from '../api/client'
 import { createLocation, getLocations } from '../api/locations'
 import type { HomeMember, HomeSummary, Location } from '../api/types'
 import Modal from './Modal'
@@ -52,14 +53,12 @@ export default function HomeManageModal({ home, onClose, onChanged }: Props) {
     mutationFn: () => deleteHome(home.id),
     onSuccess: () => { invalidateHomes(); onClose() },
     onError: (err) => {
-      const msg = err instanceof Error ? err.message : ''
-      if (msg.includes('409')) {
-        setError(msg.includes('flasker')
-          ? 'Hjemmet inneholder fremdeles flasker. Tøm det før du sletter.'
-          : 'Du kan ikke slette ditt siste hjem.')
-      } else {
+      if (err instanceof ApiError && err.code === 'BOTTLES_REMAINING')
+        setError('Hjemmet inneholder fremdeles flasker. Tøm det før du sletter.')
+      else if (err instanceof ApiError && err.code === 'LAST_HOME')
+        setError('Du kan ikke slette ditt siste hjem.')
+      else
         setError('Kunne ikke slette hjemmet.')
-      }
     },
   })
 
@@ -82,10 +81,10 @@ export default function HomeManageModal({ home, onClose, onChanged }: Props) {
       onClose()
     },
     onError: (err) => {
-      const msg = err instanceof Error ? err.message : ''
-      setError(msg.includes('400')
-        ? 'Du kan ikke forlate hjemmet som eier. Slett hjemmet i stedet.'
-        : 'Noe gikk galt.')
+      if (err instanceof ApiError && err.code === 'OWNER_CANNOT_LEAVE')
+        setError('Du kan ikke forlate hjemmet som eier. Slett hjemmet i stedet.')
+      else
+        setError('Noe gikk galt.')
     },
   })
 

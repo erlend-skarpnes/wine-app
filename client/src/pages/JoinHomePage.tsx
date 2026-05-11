@@ -1,6 +1,7 @@
 import { useParams, useNavigate } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { getShareTokenInfo, joinHome } from '../api/homes'
+import { ApiError } from '../api/client'
 import { useHome } from '../context/HomeContext'
 
 export default function JoinHomePage() {
@@ -40,8 +41,8 @@ export default function JoinHomePage() {
   }
 
   const alreadyMember = joinMutation.isError &&
-    joinMutation.error instanceof Error &&
-    joinMutation.error.message.includes('409')
+    joinMutation.error instanceof ApiError &&
+    joinMutation.error.code === 'ALREADY_MEMBER'
 
   return (
     <div className="flex flex-col items-center gap-6 py-16 text-center max-w-sm mx-auto">

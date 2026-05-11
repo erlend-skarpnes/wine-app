@@ -141,11 +141,11 @@ public static class AuthEndpoints
         {
             var invite = await db.Invitations.FirstOrDefaultAsync(i => i.Token == req.InviteToken);
             if (invite is null || invite.IsUsed || invite.ExpiresAt < DateTime.UtcNow)
-                return Results.BadRequest(new { message = "Invitasjonen er ugyldig eller utløpt." });
+                return Results.BadRequest(new { code = "INVALID_TOKEN", message = "Invitasjonen er ugyldig eller utløpt." });
 
             var normalizedUsername = req.Username.ToLower();
             if (await db.Users.AnyAsync(u => u.Username == normalizedUsername))
-                return Results.Conflict(new { message = "Brukernavnet er allerede i bruk." });
+                return Results.Conflict(new { code = "USERNAME_TAKEN", message = "Brukernavnet er allerede i bruk." });
 
             var user = new AppUser
             {
