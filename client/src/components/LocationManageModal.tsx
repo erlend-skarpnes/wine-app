@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { ChevronLeft, Pencil, Trash2, X } from 'lucide-react'
+import { ChevronLeft, Pencil, Trash2, X, Plus } from 'lucide-react'
 import { renameLocation, deleteLocation, createSection, renameSection, deleteSection } from '../api/locations'
 import { ApiError } from '../api/client'
 import { queryKeys } from '../api/queryKeys'
@@ -13,6 +13,15 @@ interface Props {
   onBack: () => void
   onClose: () => void
   onChanged: () => void
+}
+
+function SectionLabel({ children }: { children: string }) {
+  return (
+    <div className="flex items-center gap-2.5 mb-2.5">
+      <span className="text-[0.62rem] font-semibold text-clay uppercase tracking-widest shrink-0">{children}</span>
+      <div className="flex-1 h-px bg-stone" />
+    </div>
+  )
 }
 
 export default function LocationManageModal({ homeId, location, isOwner, onBack, onClose, onChanged }: Props) {
@@ -77,25 +86,30 @@ export default function LocationManageModal({ homeId, location, isOwner, onBack,
       <div
         role="dialog"
         aria-modal="true"
-        className="bg-surface rounded-lg w-full max-w-md shadow-[0_8px_32px_rgba(0,0,0,0.2)] flex flex-col"
+        className="bg-surface rounded-2xl w-full max-w-md shadow-[0_8px_32px_rgba(0,0,0,0.2)] flex flex-col"
         style={{ maxHeight: 'calc(100dvh - var(--keyboard-height, 0px) - 2rem)' }}
       >
         {/* Header */}
-        <div className="flex items-center gap-2 px-4 py-3 border-b border-stone shrink-0">
-          <button type="button" className="modal-close p-2" onClick={onBack} title="Tilbake">
-            <ChevronLeft size={18} />
+        <div className="flex items-center gap-1 px-4 py-3 border-b border-stone shrink-0">
+          <button type="button" className="modal-close p-2 -ml-1" onClick={onBack} aria-label="Tilbake">
+            <ChevronLeft size={16} />
           </button>
-          <h3 className="text-[1.1rem] font-semibold flex-1">{location.name}</h3>
-          <button type="button" className="modal-close" onClick={onClose}><X size={18} /></button>
+          <h3
+            className="flex-1 leading-tight"
+            style={{ fontFamily: "'Cormorant Garamond', Georgia, serif", fontStyle: 'italic', fontWeight: 400, fontSize: '1.25rem' }}
+          >
+            {location.name}
+          </h3>
+          <button type="button" className="modal-close" onClick={onClose} aria-label="Lukk"><X size={16} /></button>
         </div>
 
-        <div className="p-6 space-y-6 overflow-y-auto flex-1">
+        <div className="p-5 flex flex-col gap-5 overflow-y-auto flex-1">
           {error && <p className="text-red-600 text-sm">{error}</p>}
 
           {/* Rename */}
           {isOwner && (
             <div>
-              <p className="text-xs font-semibold text-clay uppercase tracking-wide mb-2">Navn</p>
+              <SectionLabel>Navn</SectionLabel>
               <div className="flex gap-2">
                 <input
                   className="border border-stone rounded-lg px-3 py-2 text-sm bg-surface flex-1 focus:outline-none focus:border-wine"
@@ -116,8 +130,8 @@ export default function LocationManageModal({ homeId, location, isOwner, onBack,
 
           {/* Sections */}
           <div>
-            <p className="text-xs font-semibold text-clay uppercase tracking-wide mb-2">Seksjoner</p>
-            <div className="divide-y divide-stone border border-stone rounded-lg overflow-hidden">
+            <SectionLabel>Seksjoner</SectionLabel>
+            <div className="rounded-xl border border-stone overflow-hidden divide-y divide-stone">
               {location.sections.length === 0 && (
                 <p className="text-clay text-sm px-4 py-3">Ingen seksjoner ennå.</p>
               )}
@@ -151,25 +165,25 @@ export default function LocationManageModal({ homeId, location, isOwner, onBack,
                     <>
                       <span className="flex-1 text-sm text-bark">{section.name}</span>
                       {isOwner && (
-                        <>
+                        <div className="flex gap-1 shrink-0">
                           <button
                             type="button"
-                            className="secondary p-2.5"
+                            className="secondary p-2"
                             onClick={() => { setRenamingSectionId(section.id); setRenameSectionValue(section.name) }}
-                            title="Endre navn"
+                            aria-label="Endre navn"
                           >
-                            <Pencil size={16} />
+                            <Pencil size={14} />
                           </button>
                           <button
                             type="button"
-                            className="secondary p-2.5 text-red-600 border-red-200 hover:bg-red-50"
+                            className="secondary p-2 bg-transparent border-red-200 text-red-500 hover:bg-red-50"
                             onClick={() => { setError(null); deleteSectionMutation.mutate(section.id) }}
                             disabled={deleteSectionMutation.isPending}
-                            title="Slett"
+                            aria-label="Slett"
                           >
-                            <Trash2 size={16} />
+                            <Trash2 size={14} />
                           </button>
-                        </>
+                        </div>
                       )}
                     </>
                   )}
@@ -180,7 +194,7 @@ export default function LocationManageModal({ homeId, location, isOwner, onBack,
             {isOwner && (
               <form
                 onSubmit={e => { e.preventDefault(); if (newSectionName.trim()) createSectionMutation.mutate() }}
-                className="flex gap-2 mt-3"
+                className="flex gap-2 mt-2.5"
               >
                 <input
                   className="border border-stone rounded-lg px-3 py-2 text-sm bg-surface flex-1 focus:outline-none focus:border-wine"
@@ -190,9 +204,10 @@ export default function LocationManageModal({ homeId, location, isOwner, onBack,
                 />
                 <button
                   type="submit"
-                  className="px-4 py-2 text-sm"
+                  className="flex items-center gap-1.5 px-4 py-2 text-sm"
                   disabled={!newSectionName.trim() || createSectionMutation.isPending}
                 >
+                  <Plus size={13} />
                   {createSectionMutation.isPending ? '…' : 'Legg til'}
                 </button>
               </form>
@@ -201,10 +216,10 @@ export default function LocationManageModal({ homeId, location, isOwner, onBack,
 
           {/* Delete location */}
           {isOwner && (
-            <div className="pt-2 border-t border-stone">
+            <div className="pt-1 border-t border-stone">
               <button
                 type="button"
-                className="w-full py-2.5 text-sm text-red-600 border border-red-200 rounded-lg hover:bg-red-50 transition-colors"
+                className="w-full mt-3 py-2.5 text-sm bg-transparent rounded-xl border border-red-200 text-red-600 hover:bg-red-50 transition-colors"
                 onClick={() => { setError(null); deleteMutation.mutate() }}
                 disabled={deleteMutation.isPending}
               >

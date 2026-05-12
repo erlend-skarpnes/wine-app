@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { ChevronRight, Copy, Share2, Trash2 } from 'lucide-react'
+import { ChevronRight, Copy, Share2, Trash2, Plus } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 import { renameHome, deleteHome, generateShareLink, removeMember, getHomeMembers } from '../api/homes'
 import { ApiError } from '../api/client'
@@ -14,6 +14,15 @@ interface Props {
   home: HomeSummary
   onClose: () => void
   onChanged: () => void
+}
+
+function SectionLabel({ children }: { children: string }) {
+  return (
+    <div className="flex items-center gap-2.5 mb-2.5">
+      <span className="text-[0.62rem] font-semibold text-clay uppercase tracking-widest shrink-0">{children}</span>
+      <div className="flex-1 h-px bg-stone" />
+    </div>
+  )
 }
 
 export default function HomeManageModal({ home, onClose, onChanged }: Props) {
@@ -95,26 +104,30 @@ export default function HomeManageModal({ home, onClose, onChanged }: Props) {
     onError: () => setError('Kunne ikke opprette plasseringen.'),
   })
 
-  // When a location is updated inside LocationManageModal, refresh and sync the location object
   function handleLocationChanged() {
     invalidateLocations()
   }
 
-  // After location list refreshes, keep managingLocation in sync
   const syncedManagingLocation = managingLocation
     ? (locations.find(l => l.id === managingLocation.id) ?? managingLocation)
     : null
 
+  const modalTitle = (
+    <span style={{ fontFamily: "'Cormorant Garamond', Georgia, serif", fontStyle: 'italic', fontWeight: 400, fontSize: '1.3rem' }}>
+      {home.name}
+    </span>
+  )
+
   return (
     <>
-      <Modal title={home.name} onClose={onClose} maxWidth="max-w-md">
-        <div className="space-y-6">
+      <Modal title={modalTitle} onClose={onClose} maxWidth="max-w-md">
+        <div className="flex flex-col gap-5">
           {error && <p className="text-red-600 text-sm">{error}</p>}
 
           {/* Rename */}
           {home.isOwner && (
             <div>
-              <p className="text-xs font-semibold text-clay uppercase tracking-wide mb-2">Navn</p>
+              <SectionLabel>Navn</SectionLabel>
               <div className="flex gap-2">
                 <input
                   className="border border-stone rounded-lg px-3 py-2 text-sm bg-surface flex-1 focus:outline-none focus:border-wine"
@@ -135,26 +148,27 @@ export default function HomeManageModal({ home, onClose, onChanged }: Props) {
 
           {/* Locations */}
           <div>
-            <p className="text-xs font-semibold text-clay uppercase tracking-wide mb-2">Plasseringer</p>
+            <SectionLabel>Plasseringer</SectionLabel>
             {locationsLoading ? (
               <p className="text-clay text-sm">Laster…</p>
             ) : (
-              <div className="divide-y divide-stone border border-stone rounded-lg overflow-hidden">
+              <div className="rounded-xl border border-stone overflow-hidden divide-y divide-stone">
                 {locations.map(loc => (
                   <button
                     key={loc.id}
                     type="button"
                     data-testid="location-row"
-                    className="w-full flex items-center gap-3 px-4 py-3 bg-surface hover:bg-warm transition-colors text-left"
+                    className="w-full flex items-center px-4 py-3 bg-surface hover:bg-warm transition-colors text-left relative"
                     onClick={() => { setError(null); setManagingLocation(loc) }}
                   >
+                    <div className="absolute left-0 top-[18%] bottom-[18%] w-[2px] rounded-r bg-wine" />
                     <span className="flex-1 text-sm font-medium text-bark">{loc.name}</span>
                     {loc.sections.length > 0 && (
-                      <span className="text-xs text-clay shrink-0">
+                      <span className="text-[0.72rem] text-clay mr-3 shrink-0">
                         {loc.sections.length} seksjon{loc.sections.length !== 1 ? 'er' : ''}
                       </span>
                     )}
-                    <ChevronRight size={16} className="text-clay shrink-0" />
+                    <ChevronRight size={14} className="text-clay shrink-0" />
                   </button>
                 ))}
               </div>
@@ -163,7 +177,7 @@ export default function HomeManageModal({ home, onClose, onChanged }: Props) {
             {home.isOwner && (
               <form
                 onSubmit={e => { e.preventDefault(); if (newLocationName.trim()) createLocationMutation.mutate() }}
-                className="flex gap-2 mt-3"
+                className="flex gap-2 mt-2.5"
               >
                 <input
                   className="border border-stone rounded-lg px-3 py-2 text-sm bg-surface flex-1 focus:outline-none focus:border-wine"
@@ -173,9 +187,10 @@ export default function HomeManageModal({ home, onClose, onChanged }: Props) {
                 />
                 <button
                   type="submit"
-                  className="px-4 py-2 text-sm"
+                  className="flex items-center gap-1.5 px-4 py-2 text-sm"
                   disabled={!newLocationName.trim() || createLocationMutation.isPending}
                 >
+                  <Plus size={13} />
                   {createLocationMutation.isPending ? '…' : 'Legg til'}
                 </button>
               </form>
@@ -184,46 +199,52 @@ export default function HomeManageModal({ home, onClose, onChanged }: Props) {
 
           {/* Members */}
           <div>
-            <p className="text-xs font-semibold text-clay uppercase tracking-wide mb-2">Medlemmer</p>
+            <SectionLabel>Medlemmer</SectionLabel>
             {membersLoading ? (
               <p className="text-clay text-sm">Laster…</p>
             ) : (
-              <ul className="space-y-1.5">
+              <div className="flex flex-col gap-2">
                 {members.map(m => (
-                  <li key={m.userId} className="flex items-center gap-2 text-sm">
-                    <span className="text-bark">{m.username}</span>
+                  <div key={m.userId} className="flex items-center gap-2.5">
+                    <div
+                      className="w-7 h-7 rounded-full flex items-center justify-center text-[0.65rem] font-semibold shrink-0"
+                      style={{ background: 'rgba(114,47,55,0.1)', color: '#722F37' }}
+                    >
+                      {m.username[0].toUpperCase()}
+                    </div>
+                    <span className="text-sm text-bark flex-1">{m.username}</span>
                     {m.isOwner && (
-                      <span className="text-xs bg-wine/10 text-wine px-2 py-0.5 rounded-full">Eier</span>
+                      <span className="text-[0.67rem] bg-wine/10 text-wine px-2 py-0.5 rounded-full">Eier</span>
                     )}
-                  </li>
+                  </div>
                 ))}
-              </ul>
+              </div>
             )}
           </div>
 
           {/* Share link */}
           {home.isOwner && (
             <div>
-              <p className="text-xs font-semibold text-clay uppercase tracking-wide mb-2">Del hjem</p>
+              <SectionLabel>Del hjem</SectionLabel>
               <button
                 type="button"
                 className="secondary w-full py-2.5 flex items-center justify-center gap-2 text-sm"
                 onClick={() => { setShareUrl(null); setError(null); shareMutation.mutate() }}
                 disabled={shareMutation.isPending}
               >
-                <Share2 size={16} /> {shareMutation.isPending ? 'Genererer…' : 'Generer delingslenke'}
+                <Share2 size={15} /> {shareMutation.isPending ? 'Genererer…' : 'Generer delingslenke'}
               </button>
               {shareUrl && (
-                <div className="bg-warm rounded-lg p-3 mt-2 space-y-1">
-                  <p className="text-xs text-clay">Gyldig i 7 dager:</p>
-                  <div className="flex items-center gap-2">
-                    <code className="flex-1 text-xs break-all">{shareUrl}</code>
+                <div className="bg-stone/40 rounded-xl p-3.5 mt-2.5">
+                  <p className="text-[0.62rem] text-clay uppercase tracking-widest mb-2">Gyldig i 7 dager</p>
+                  <div className="flex items-start gap-2">
+                    <code className="flex-1 text-xs break-all leading-relaxed text-bark">{shareUrl}</code>
                     <button
                       type="button"
                       className="secondary text-xs px-3 py-1.5 shrink-0 flex items-center gap-1.5"
                       onClick={() => navigator.clipboard.writeText(shareUrl)}
                     >
-                      <Copy size={13} /> Kopier
+                      <Copy size={12} /> Kopier
                     </button>
                   </div>
                 </div>
@@ -232,20 +253,20 @@ export default function HomeManageModal({ home, onClose, onChanged }: Props) {
           )}
 
           {/* Danger zone */}
-          <div className="pt-2 border-t border-stone space-y-2">
+          <div className="pt-1 border-t border-stone">
             {home.isOwner ? (
               <button
                 type="button"
-                className="w-full py-2.5 text-sm text-red-600 border border-red-200 rounded-lg hover:bg-red-50 transition-colors flex items-center justify-center gap-2"
+                className="w-full mt-3 py-2.5 text-sm bg-transparent rounded-xl border border-red-200 text-red-600 hover:bg-red-50 transition-colors flex items-center justify-center gap-2"
                 onClick={() => { setError(null); deleteMutation.mutate() }}
                 disabled={deleteMutation.isPending}
               >
-                <Trash2 size={16} /> {deleteMutation.isPending ? 'Sletter…' : 'Slett hjem'}
+                <Trash2 size={15} /> {deleteMutation.isPending ? 'Sletter…' : 'Slett hjem'}
               </button>
             ) : (
               <button
                 type="button"
-                className="secondary w-full py-2.5 text-sm"
+                className="secondary w-full mt-3 py-2.5 text-sm"
                 onClick={() => { setError(null); leaveMutation.mutate() }}
                 disabled={leaveMutation.isPending}
               >
