@@ -6,7 +6,7 @@ import { VitePWA } from 'vite-plugin-pwa'
 
 export default defineConfig(({ mode }) => {
   const isProd = mode === 'production'
-  const appName = isProd ? 'Vinkjelleren' : 'Vinkjelleren (Dev)'
+  const appName = 'Vinkjelleren'
   const shortName = isProd ? 'Vinkjelleren' : 'Vinkjelleren Dev'
 
   return {
