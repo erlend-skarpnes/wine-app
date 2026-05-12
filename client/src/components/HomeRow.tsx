@@ -11,22 +11,24 @@ export default function HomeRow({ home, onChanged }: Props) {
   const [managing, setManaging] = useState(false)
 
   return (
-    <div data-testid="home-row" className="bg-surface rounded-xl border border-stone p-4 space-y-3">
-      <div className="flex items-center justify-between gap-2">
-        <span className="font-medium text-bark">{home.name}</span>
-        <span className={`text-xs px-2 py-0.5 rounded-full ${home.isOwner ? 'bg-wine/10 text-wine' : 'bg-stone text-clay'}`}>
-          {home.isOwner ? 'Eier' : 'Medlem'}
-        </span>
+    <div data-testid="home-row" className="flex items-center gap-3 py-3 border-b border-stone last:border-0">
+      <div className="flex-1 min-w-0">
+        <p className="text-bark text-sm font-medium truncate">{home.name}</p>
+        <p className="text-clay text-[0.7rem] mt-0.5">
+          {home.memberCount} {home.memberCount === 1 ? 'medlem' : 'medlemmer'}
+        </p>
       </div>
 
-      <p className="text-xs text-clay">{home.memberCount} {home.memberCount === 1 ? 'medlem' : 'medlemmer'}</p>
+      <span className={`text-[0.67rem] px-2 py-0.5 rounded-full shrink-0 ${home.isOwner ? 'bg-wine/10 text-wine' : 'bg-stone text-clay'}`}>
+        {home.isOwner ? 'Eier' : 'Medlem'}
+      </span>
 
       <button
         type="button"
-        className="secondary w-full py-2 text-sm"
+        className="secondary text-xs px-3 py-1.5 shrink-0"
         onClick={() => setManaging(true)}
       >
-        {home.isOwner ? 'Administrer' : 'Vis detaljer'}
+        {home.isOwner ? 'Administrer' : 'Vis'}
       </button>
 
       {managing && (

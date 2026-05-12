@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { LogOut, RefreshCw, KeyRound } from 'lucide-react'
+import { LogOut, RefreshCw, KeyRound, Plus } from 'lucide-react'
 import Modal from '../components/Modal'
 import HomeRow from '../components/HomeRow'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
@@ -87,27 +87,32 @@ function HomeSection() {
   })
 
   return (
-    <section>
-      <h2 className="text-lg font-semibold text-bark mb-4">Mine hjem</h2>
-      <div className="space-y-3">
+    <section className="flex flex-col gap-3">
+      <p className="text-[0.65rem] font-semibold text-clay uppercase tracking-widest">Mine hjem</p>
+
+      <div className="bg-surface rounded-2xl border border-stone px-4">
         {homes.map(h => (
           <HomeRow key={h.id} home={h} onChanged={() => queryClient.invalidateQueries({ queryKey: queryKeys.homes() })} />
         ))}
       </div>
 
-      <div className="mt-4 flex gap-2">
+      <form
+        onSubmit={e => { e.preventDefault(); if (newName.trim()) createMutation.mutate() }}
+        className="flex gap-2"
+      >
         <input
           type="text"
-          placeholder="Navn på nytt hjem"
+          placeholder="Opprett nytt hjem…"
           value={newName}
           onChange={e => setNewName(e.target.value)}
           className="flex-1 border border-stone rounded-lg px-4 py-2.5 text-sm bg-surface text-bark focus:outline-none focus:border-wine"
         />
-        <button onClick={() => createMutation.mutate()} disabled={createMutation.isPending || !newName.trim()}>
+        <button type="submit" disabled={createMutation.isPending || !newName.trim()} className="flex items-center gap-1.5 px-4">
+          <Plus size={14} />
           {createMutation.isPending ? 'Oppretter…' : 'Opprett'}
         </button>
-      </div>
-      {createMutation.isError && <p className="text-red-600 text-xs mt-1">Kunne ikke opprette hjem.</p>}
+      </form>
+      {createMutation.isError && <p className="text-red-600 text-xs">Kunne ikke opprette hjem.</p>}
     </section>
   )
 }
@@ -135,62 +140,72 @@ export default function ProfilePage() {
   }
 
   return (
-    <div className="max-w-2xl mx-auto space-y-6">
-      <div className="flex items-center justify-between gap-4">
-        <p className="text-xs text-clay">
+    <div className="max-w-2xl mx-auto flex flex-col gap-6">
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 items-start">
+
+        {/* Membership card */}
+        <section
+          className="rounded-2xl p-6 flex flex-col gap-5"
+          style={{ background: 'linear-gradient(108deg, #5a1c23 0%, #722F37 55%, #7a3540 100%)' }}
+        >
+          <div>
+            <p className="text-white/40 text-[0.62rem] uppercase tracking-widest mb-2">Min profil</p>
+            <h2
+              className="text-white leading-none"
+              style={{ fontFamily: "'Cormorant Garamond', Georgia, serif", fontSize: '2.1rem', fontStyle: 'italic', fontWeight: 400 }}
+            >
+              {username}
+            </h2>
+          </div>
+
+          <div className="flex items-center gap-2">
+            {isAdmin
+              ? <Link to="/admin" className="no-underline text-[0.72rem] font-medium rounded-full px-2.5 py-1" style={{ background: 'rgba(255,255,255,0.18)', color: 'white' }}>
+                  Admin
+                </Link>
+              : <span className="text-white/40 text-[0.72rem]">Bruker</span>
+            }
+          </div>
+
+          <div className="flex gap-2 flex-wrap">
+            <button
+              onClick={() => setChangingPassword(true)}
+              className="flex items-center gap-1.5 text-[0.75rem] rounded-full px-3 py-1.5"
+              style={{ background: 'rgba(255,255,255,0.10)', border: '1px solid rgba(255,255,255,0.18)', color: 'white' }}
+            >
+              <KeyRound size={12} /> Bytt passord
+            </button>
+            <button
+              onClick={handleLogout}
+              className="flex items-center gap-1.5 text-[0.75rem] rounded-full px-3 py-1.5"
+              style={{ background: 'rgba(255,70,50,0.12)', border: '1px solid rgba(255,100,80,0.25)', color: 'rgba(255,190,170,1)' }}
+            >
+              <LogOut size={12} /> Logg ut
+            </button>
+          </div>
+        </section>
+
+        {/* Homes */}
+        <HomeSection />
+      </div>
+
+      {/* Footer: build info + update */}
+      <div className="flex items-center justify-between gap-4 pt-2">
+        <p className="text-[0.68rem] text-clay/60">
           Bygd {new Date(__BUILD_TIME__).toLocaleString('no-NO', { dateStyle: 'short', timeStyle: 'short' })}
         </p>
         <button
           onClick={handleForceRefresh}
           disabled={refreshing}
-          className="secondary text-xs px-3 py-1.5 flex items-center gap-1.5 shrink-0"
+          className="secondary text-[0.72rem] px-3 py-1.5 flex items-center gap-1.5 shrink-0"
         >
-          <RefreshCw size={14} /> {refreshing ? 'Oppdaterer…' : 'Se etter ny versjon'}
+          <RefreshCw size={12} className={refreshing ? 'animate-spin' : ''} />
+          {refreshing ? 'Oppdaterer…' : 'Se etter ny versjon'}
         </button>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-8 items-start">
-        {/* Left column: profile info */}
-        <div className="space-y-8">
-          <section>
-            <h2 className="text-lg font-semibold text-bark mb-4">Profil</h2>
-            <div className="bg-surface rounded-xl border border-stone p-4 space-y-3">
-              <div className="flex justify-between items-center text-sm">
-                <span className="text-clay">Brukernavn</span>
-                <span className="font-medium">{username}</span>
-              </div>
-              <div className="flex justify-between items-center text-sm">
-                <span className="text-clay">Rolle</span>
-                {isAdmin
-                  ? <Link to="/admin" className="text-xs bg-wine/10 text-wine px-2 py-0.5 rounded-full font-medium no-underline">Admin</Link>
-                  : <span className="text-clay text-xs">Bruker</span>
-                }
-              </div>
-              <div className="pt-1 flex gap-2 flex-wrap">
-                <button
-                  onClick={() => setChangingPassword(true)}
-                  className="secondary text-xs px-3 py-1.5 flex items-center gap-1.5"
-                >
-                  <KeyRound size={14} /> Bytt passord
-                </button>
-                <button
-                  onClick={handleLogout}
-                  className="secondary text-xs px-3 py-1.5 text-red-600 border-red-200 hover:bg-red-50 flex items-center gap-1.5"
-                >
-                  <LogOut size={14} /> Logg ut
-                </button>
-              </div>
-            </div>
-          </section>
-
-          {changingPassword && <PasswordModal onClose={() => setChangingPassword(false)} />}
-        </div>
-
-        {/* Right column: homes */}
-        <div>
-          <HomeSection />
-        </div>
-      </div>
+      {changingPassword && <PasswordModal onClose={() => setChangingPassword(false)} />}
     </div>
   )
 }
