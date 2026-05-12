@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&display=swap');
 
 @theme {
   --color-wine: #722F37;
@@ -8,6 +9,7 @@
   --color-stone: #e8e0d8;
   --color-bark: #2c1810;
   --color-clay: #7a6a5a;
+  --font-cormorant: 'Cormorant Garamond', Georgia, serif;
 }
 
 @layer base {
