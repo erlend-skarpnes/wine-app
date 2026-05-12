@@ -85,6 +85,24 @@
   display: none;
 }
 
+/* Skeleton shimmer */
+@keyframes shimmer {
+  0%   { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+.shimmer {
+  background: linear-gradient(90deg, var(--color-stone) 25%, #f5f0eb 50%, var(--color-stone) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.4s ease-in-out infinite;
+}
+
+/* Global fetch progress bar */
+@keyframes progressSweep {
+  0%   { transform: translateX(-100%); }
+  100% { transform: translateX(350%); }
+}
+
 /* Wine list entry animation */
 @keyframes entrySlideIn {
   from { opacity: 0; transform: translateX(-8px); }

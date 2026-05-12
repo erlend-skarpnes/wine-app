@@ -11,6 +11,7 @@ import ScanModal from '../components/ScanModal'
 import WineDetailModal from '../components/WineDetailModal'
 import FilterBar from '../components/FilterBar'
 import WineTable from '../components/WineTable'
+import WineTableSkeleton from '../components/WineTableSkeleton'
 
 type ModalMode = 'add' | 'remove' | null
 
@@ -41,7 +42,7 @@ export default function CellarPage() {
   const isLoading = homeLoading || entriesLoading
 
   if (homeLoading) {
-    return <p className="text-clay text-sm">Laster…</p>
+    return <WineTableSkeleton />
   }
 
   if (!activeHome) {
@@ -58,7 +59,7 @@ export default function CellarPage() {
       <FilterBar filters={filters} options={options} activeCount={activeCount} onFilterChange={setFilter} />
 
       {isError   && <p className="text-red-600 text-sm mb-4">Kunne ikke laste hjemmet.</p>}
-      {isLoading && <p className="text-clay text-sm">Laster…</p>}
+      {isLoading && <WineTableSkeleton />}
       {!isLoading && !isError && entries.length === 0 && (
         <p className="text-clay text-sm">Hjemmet er tomt. Skann en flaske for å legge den til.</p>
       )}

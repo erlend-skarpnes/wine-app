@@ -230,7 +230,23 @@ export default function WineDetailModal({ barcode, name, homeId, quantity: initi
 
         {/* Scrollable body */}
         <div className="overflow-y-auto flex-1 flex flex-col">
-          {isLoading && <p className="px-6 pb-4 text-clay text-sm">Laster…</p>}
+          {isLoading && (
+            <div className="px-6 py-4 flex flex-col gap-4">
+              <div className="flex gap-6 justify-center py-1">
+                {[0, 1, 2].map(i => (
+                  <div key={i} className="flex flex-col items-center gap-1.5">
+                    <div className="shimmer rounded-full" style={{ width: 44, height: 44, animationDelay: `${i * 100}ms` }} />
+                    <div className="shimmer rounded-full h-2 w-10" style={{ animationDelay: `${i * 100 + 60}ms` }} />
+                  </div>
+                ))}
+              </div>
+              <div className="flex flex-col gap-2.5">
+                {(['55%', '72%', '60%', '45%'] as const).map((w, i) => (
+                  <div key={i} className="shimmer h-3 rounded-full" style={{ width: w, animationDelay: `${i * 55}ms` }} />
+                ))}
+              </div>
+            </div>
+          )}
 
           {!isLoading && !wine && (
             <p className="px-6 pb-4 text-clay text-sm">Ingen detaljer tilgjengelig for denne vinen ennå.</p>

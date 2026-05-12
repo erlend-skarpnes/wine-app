@@ -1,11 +1,13 @@
 import { Outlet, Link } from 'react-router-dom'
 import { User, ChevronDown } from 'lucide-react'
+import { useIsFetching } from '@tanstack/react-query'
 import { useAuth } from '../context/AuthContext'
 import { useHome } from '../context/HomeContext'
 
 export default function Layout() {
   const { isAuthenticated, loading } = useAuth()
   const { homes, activeHome, setActiveHome } = useHome()
+  const isFetching = useIsFetching()
 
   if (loading) {
     return (
@@ -60,6 +62,15 @@ export default function Layout() {
           )}
         </div>
       </header>
+
+      <div className="h-[2px] shrink-0 overflow-hidden" style={{ background: isFetching ? 'rgba(114,47,55,0.12)' : 'transparent' }}>
+        {isFetching > 0 && (
+          <div
+            className="h-full bg-wine w-[40%]"
+            style={{ animation: 'progressSweep 1s cubic-bezier(0.4,0,0.2,1) infinite' }}
+          />
+        )}
+      </div>
 
       <main
         className="flex-1 overflow-y-auto p-6 max-w-[960px] mx-auto w-full"
