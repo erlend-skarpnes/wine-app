@@ -1,5 +1,6 @@
 import { useState } from 'react'
-import { ChevronRight } from 'lucide-react'
+import type { ReactNode } from 'react'
+import { SlidersHorizontal, ChevronDown } from 'lucide-react'
 import type { Filters, FilterOptions } from '../hooks/useFilters'
 
 interface Props {
@@ -9,16 +10,28 @@ interface Props {
   onFilterChange: <K extends keyof Filters>(key: K, value: Filters[K]) => void
 }
 
-function filterBtn(active: boolean) {
-  return `px-3 py-1 text-[0.8rem] rounded-lg border transition-colors cursor-pointer ${
+function chip(active: boolean) {
+  return [
+    'px-3 py-1.5 text-[0.78rem] rounded-full border whitespace-nowrap shrink-0 transition-all cursor-pointer leading-none',
     active
-      ? 'bg-wine text-white border-wine'
-      : 'bg-surface text-clay border-stone hover:bg-warm'
-  }`
+      ? 'bg-bark text-white border-bark'
+      : 'bg-surface text-clay border-stone hover:border-clay',
+  ].join(' ')
+}
+
+function CategoryRow({ label, children }: { label: string; children: ReactNode }) {
+  return (
+    <div>
+      <p className="text-[0.6rem] font-semibold text-clay uppercase tracking-widest mb-1.5">{label}</p>
+      <div className="flex gap-1.5 overflow-x-auto scrollbar-hide pb-0.5">
+        {children}
+      </div>
+    </div>
+  )
 }
 
 export default function FilterBar({ filters, options, activeCount, onFilterChange }: Props) {
-  const [filtersOpen, setFiltersOpen] = useState(false)
+  const [open, setOpen] = useState(false)
 
   function toggleLocation(id: number) {
     const next = filters.location.includes(id)
@@ -27,74 +40,116 @@ export default function FilterBar({ filters, options, activeCount, onFilterChang
     onFilterChange('location', next)
   }
 
-  return (
-    <div className="sticky top-0 z-10 bg-warm pb-3 mb-1">
-      <button
-        type="button"
-        onClick={() => setFiltersOpen(o => !o)}
-        className="flex items-center gap-2 text-base text-clay cursor-pointer mb-2 border-0 bg-transparent p-0"
-      >
-        <ChevronRight size={14} className={`transition-transform duration-200 ${filtersOpen ? 'rotate-90' : ''}`} />
-        <span>Filter</span>
-        {activeCount > 0 && (
-          <span className="inline-flex items-center justify-center w-4 h-4 rounded-full bg-wine text-white text-[0.6rem] font-bold">
-            {activeCount}
-          </span>
-        )}
-      </button>
+  function clearAll() {
+    onFilterChange('location', [])
+    onFilterChange('storage', null)
+    onFilterChange('type', null)
+    onFilterChange('grape', null)
+    onFilterChange('pairing', null)
+  }
 
-      {filtersOpen && (
-        <div className="flex flex-col divide-y divide-stone bg-stone rounded-lg px-3">
+  const activeSummary = [
+    ...filters.location.map(id => options.locations.find(l => l.id === id)?.name).filter(Boolean),
+    filters.storage === 'drink-now' ? 'Drikk nå' : filters.storage === 'store' ? 'Kan lagres' : null,
+    filters.type,
+    filters.grape,
+    filters.pairing,
+  ].filter(Boolean).join(' · ')
+
+  return (
+    <div className="sticky top-0 z-10 bg-warm">
+      {/* Toggle row */}
+      <div className="py-2.5">
+        <button
+          type="button"
+          onClick={() => setOpen(o => !o)}
+          className="flex items-center gap-2 text-[0.72rem] cursor-pointer border-0 bg-transparent p-0 w-full text-left"
+        >
+          <SlidersHorizontal size={11} strokeWidth={2.5} className="text-clay shrink-0" />
+          <span className="uppercase tracking-widest font-semibold text-clay shrink-0">Filter</span>
+          {!open && activeSummary && (
+            <span className="text-bark font-medium text-[0.72rem] truncate normal-case tracking-normal min-w-0">
+              · {activeSummary}
+            </span>
+          )}
+          {open && activeCount > 0 && (
+            <span className="inline-flex items-center justify-center w-4 h-4 rounded-full bg-wine text-white text-[0.58rem] font-bold shrink-0">
+              {activeCount}
+            </span>
+          )}
+          <ChevronDown
+            size={11}
+            strokeWidth={2.5}
+            className={`text-clay ml-auto shrink-0 transition-transform duration-200 ${open ? 'rotate-180' : ''}`}
+          />
+        </button>
+      </div>
+
+      {/* Expandable panel */}
+      <div
+        className="overflow-hidden transition-[max-height] duration-300 ease-out"
+        style={{ maxHeight: open ? '800px' : '0' }}
+      >
+        <div className="bg-stone rounded-xl px-4 pt-3 pb-4 mb-3 flex flex-col gap-3">
           {options.locations.length > 1 && (
-            <div className="flex items-center gap-1.5 flex-wrap py-2">
-              <span className="text-[0.7rem] font-semibold text-clay uppercase tracking-wide w-14 shrink-0">Oppbevaring</span>
+            <CategoryRow label="Oppbevaring">
               {options.locations.map(l => (
-                <button key={l.id} type="button" className={filterBtn(filters.location.includes(l.id))} onClick={() => toggleLocation(l.id)}>
+                <button key={l.id} type="button" className={chip(filters.location.includes(l.id))} onClick={() => toggleLocation(l.id)}>
                   {l.name}
                 </button>
               ))}
-            </div>
+            </CategoryRow>
           )}
-          <div className="flex items-center gap-1.5 flex-wrap py-2">
-            <span className="text-[0.7rem] font-semibold text-clay uppercase tracking-wide w-14 shrink-0">Lagring</span>
+
+          <CategoryRow label="Lagring">
             {(['drink-now', 'store'] as const).map(opt => (
-              <button key={opt} type="button" className={filterBtn(filters.storage === opt)} onClick={() => onFilterChange('storage', filters.storage === opt ? null : opt)}>
+              <button key={opt} type="button" className={chip(filters.storage === opt)} onClick={() => onFilterChange('storage', filters.storage === opt ? null : opt)}>
                 {opt === 'drink-now' ? 'Drikk nå' : 'Kan lagres'}
               </button>
             ))}
-          </div>
+          </CategoryRow>
+
           {options.types.length > 0 && (
-            <div className="flex items-center gap-1.5 flex-wrap py-2">
-              <span className="text-[0.7rem] font-semibold text-clay uppercase tracking-wide w-14 shrink-0">Type</span>
+            <CategoryRow label="Type">
               {options.types.map(type => (
-                <button key={type} type="button" className={filterBtn(filters.type === type)} onClick={() => onFilterChange('type', filters.type === type ? null : type)}>
+                <button key={type} type="button" className={chip(filters.type === type)} onClick={() => onFilterChange('type', filters.type === type ? null : type)}>
                   {type}
                 </button>
               ))}
-            </div>
+            </CategoryRow>
           )}
+
           {options.grapes.length > 0 && (
-            <div className="flex items-center gap-1.5 flex-wrap py-2">
-              <span className="text-[0.7rem] font-semibold text-clay uppercase tracking-wide w-14 shrink-0">Drue</span>
+            <CategoryRow label="Drue">
               {options.grapes.map(grape => (
-                <button key={grape} type="button" className={filterBtn(filters.grape === grape)} onClick={() => onFilterChange('grape', filters.grape === grape ? null : grape)}>
+                <button key={grape} type="button" className={chip(filters.grape === grape)} onClick={() => onFilterChange('grape', filters.grape === grape ? null : grape)}>
                   {grape}
                 </button>
               ))}
-            </div>
+            </CategoryRow>
           )}
+
           {options.pairings.length > 0 && (
-            <div className="flex items-center gap-1.5 flex-wrap py-2">
-              <span className="text-[0.7rem] font-semibold text-clay uppercase tracking-wide w-14 shrink-0">Passer til</span>
+            <CategoryRow label="Passer til">
               {options.pairings.map(pairing => (
-                <button key={pairing} type="button" className={filterBtn(filters.pairing === pairing)} onClick={() => onFilterChange('pairing', filters.pairing === pairing ? null : pairing)}>
+                <button key={pairing} type="button" className={chip(filters.pairing === pairing)} onClick={() => onFilterChange('pairing', filters.pairing === pairing ? null : pairing)}>
                   {pairing}
                 </button>
               ))}
-            </div>
+            </CategoryRow>
+          )}
+
+          {activeCount > 0 && (
+            <button
+              type="button"
+              onClick={clearAll}
+              className="self-start text-[0.7rem] text-clay bg-transparent border-0 p-0 cursor-pointer underline underline-offset-2 decoration-stone hover:decoration-clay transition-colors normal-case tracking-normal font-normal"
+            >
+              Nullstill filter
+            </button>
           )}
         </div>
-      )}
+      </div>
     </div>
   )
 }
