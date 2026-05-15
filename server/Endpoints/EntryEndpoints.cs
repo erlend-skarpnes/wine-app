@@ -1,10 +1,9 @@
 using System.Security.Claims;
-using Microsoft.EntityFrameworkCore;
 using WineApp.Api.Authorization;
 using WineApp.Api.Data;
 using WineApp.Api.Extensions;
-using WineApp.Api.Models;
 using WineApp.Api.Queries;
+using WineApp.Api.Services;
 
 namespace WineApp.Api.Endpoints;
 
@@ -37,53 +36,26 @@ public static class EntryEndpoints
         });
 
         // POST /api/homes/{homeId}/entries/adjust
-        group.MapPost("/adjust", async (int homeId, AdjustRequest req, ClaimsPrincipal user, AppDbContext db) =>
+        group.MapPost("/adjust", async (int homeId, AdjustRequest req, ClaimsPrincipal user, AppDbContext db, IStockAdjuster adjuster) =>
         {
             var userId = user.GetUserId();
             if (!await HomeAuthorization.IsMember(userId, homeId, db))
                 return Results.Forbid();
 
-            if (req.LocationId.HasValue)
+            try
             {
-                var locationExists = await db.Locations.AnyAsync(l => l.Id == req.LocationId.Value && l.HomeId == homeId);
-                if (!locationExists) return Results.NotFound();
+                var result = await adjuster.AdjustAsync(homeId, userId, req.Barcode, req.Delta, req.LocationId, req.SectionId);
+                var entry = result.Entry;
+                return Results.Ok(new { homeId, locationId = entry.LocationId, barcode = entry.Barcode, quantity = entry.Quantity, sectionId = entry.SectionId });
             }
-
-            var entry = await db.Entries.FirstOrDefaultAsync(e =>
-                e.HomeId == homeId &&
-                e.Barcode == req.Barcode &&
-                e.LocationId == req.LocationId);
-
-            if (entry is null)
+            catch (NothingToRemoveException)
             {
-                if (req.Delta <= 0)
-                    return Results.BadRequest(new { code = "NOTHING_TO_REMOVE", message = "Nothing to remove." });
-                entry = new Entry { HomeId = homeId, LocationId = req.LocationId, Barcode = req.Barcode, Quantity = req.Delta, SectionId = req.SectionId };
-                db.Entries.Add(entry);
+                return Results.BadRequest(new { code = "NOTHING_TO_REMOVE", message = "Nothing to remove." });
             }
-            else
+            catch (LocationNotFoundException)
             {
-                var previousQuantity = entry.Quantity;
-                entry.Quantity = Math.Max(0, entry.Quantity + req.Delta);
-                if (req.SectionId.HasValue)
-                    entry.SectionId = req.SectionId;
-
-                var removed = previousQuantity - entry.Quantity;
-                if (removed > 0)
-                {
-                    db.DrinkLogs.Add(new DrinkLog
-                    {
-                        UserId = userId,
-                        HomeId = homeId,
-                        Barcode = req.Barcode,
-                        Quantity = removed,
-                        DrankAt = DateTime.UtcNow,
-                    });
-                }
+                return Results.NotFound();
             }
-
-            await db.SaveChangesAsync();
-            return Results.Ok(new { homeId, locationId = entry.LocationId, barcode = entry.Barcode, quantity = entry.Quantity, sectionId = entry.SectionId });
         });
     }
 
