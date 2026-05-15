@@ -1,8 +1,6 @@
-using System.Security.Claims;
 using Microsoft.EntityFrameworkCore;
-using WineApp.Api.Authorization;
 using WineApp.Api.Data;
-using WineApp.Api.Extensions;
+using WineApp.Api.Filters;
 using WineApp.Api.Models;
 
 namespace WineApp.Api.Endpoints;
@@ -11,15 +9,19 @@ public static class LocationEndpoints
 {
     public static void MapLocationEndpoints(this WebApplication app)
     {
-        var group = app.MapGroup("/api/homes/{homeId}/locations").WithTags("Locations").RequireAuthorization();
+        var memberGroup = app.MapGroup("/api/homes/{homeId}/locations")
+            .WithTags("Locations")
+            .RequireAuthorization()
+            .AddEndpointFilter<HomeMemberFilter>();
+
+        var ownerGroup = app.MapGroup("/api/homes/{homeId}/locations")
+            .WithTags("Locations")
+            .RequireAuthorization()
+            .AddEndpointFilter<HomeOwnerFilter>();
 
         // GET /api/homes/{homeId}/locations
-        group.MapGet("/", async (int homeId, ClaimsPrincipal user, AppDbContext db) =>
+        memberGroup.MapGet("/", async (int homeId, AppDbContext db) =>
         {
-            var userId = user.GetUserId();
-            if (!await HomeAuthorization.IsMember(userId, homeId, db))
-                return Results.Forbid();
-
             var locations = await db.Locations
                 .Where(l => l.HomeId == homeId)
                 .OrderBy(l => l.CreatedAt)
@@ -38,14 +40,10 @@ public static class LocationEndpoints
         });
 
         // POST /api/homes/{homeId}/locations
-        group.MapPost("/", async (int homeId, CreateLocationRequest req, ClaimsPrincipal user, AppDbContext db) =>
+        ownerGroup.MapPost("/", async (int homeId, CreateLocationRequest req, AppDbContext db) =>
         {
             if (string.IsNullOrWhiteSpace(req.Name))
                 return Results.BadRequest(new { message = "Navn kan ikke være tomt." });
-
-            var userId = user.GetUserId();
-            if (!await HomeAuthorization.IsOwner(userId, homeId, db))
-                return Results.Forbid();
 
             var location = new Location { Name = req.Name.Trim(), HomeId = homeId };
             db.Locations.Add(location);
@@ -59,14 +57,10 @@ public static class LocationEndpoints
         });
 
         // PATCH /api/homes/{homeId}/locations/{locId}
-        group.MapPatch("/{locId}", async (int homeId, int locId, RenameLocationRequest req, ClaimsPrincipal user, AppDbContext db) =>
+        ownerGroup.MapPatch("/{locId}", async (int homeId, int locId, RenameLocationRequest req, AppDbContext db) =>
         {
             if (string.IsNullOrWhiteSpace(req.Name))
                 return Results.BadRequest(new { message = "Navn kan ikke være tomt." });
-
-            var userId = user.GetUserId();
-            if (!await HomeAuthorization.IsOwner(userId, homeId, db))
-                return Results.Forbid();
 
             var location = await db.Locations.FirstOrDefaultAsync(l => l.Id == locId && l.HomeId == homeId);
             if (location is null) return Results.NotFound();
@@ -77,12 +71,8 @@ public static class LocationEndpoints
         });
 
         // DELETE /api/homes/{homeId}/locations/{locId}
-        group.MapDelete("/{locId}", async (int homeId, int locId, ClaimsPrincipal user, AppDbContext db) =>
+        ownerGroup.MapDelete("/{locId}", async (int homeId, int locId, AppDbContext db) =>
         {
-            var userId = user.GetUserId();
-            if (!await HomeAuthorization.IsOwner(userId, homeId, db))
-                return Results.Forbid();
-
             var location = await db.Locations.FirstOrDefaultAsync(l => l.Id == locId && l.HomeId == homeId);
             if (location is null) return Results.NotFound();
 
@@ -95,14 +85,10 @@ public static class LocationEndpoints
         });
 
         // POST /api/homes/{homeId}/locations/{locId}/sections
-        group.MapPost("/{locId}/sections", async (int homeId, int locId, CreateSectionRequest req, ClaimsPrincipal user, AppDbContext db) =>
+        ownerGroup.MapPost("/{locId}/sections", async (int homeId, int locId, CreateSectionRequest req, AppDbContext db) =>
         {
             if (string.IsNullOrWhiteSpace(req.Name))
                 return Results.BadRequest(new { message = "Navn kan ikke være tomt." });
-
-            var userId = user.GetUserId();
-            if (!await HomeAuthorization.IsOwner(userId, homeId, db))
-                return Results.Forbid();
 
             if (!await db.Locations.AnyAsync(l => l.Id == locId && l.HomeId == homeId))
                 return Results.NotFound();
@@ -116,14 +102,10 @@ public static class LocationEndpoints
         });
 
         // PATCH /api/homes/{homeId}/locations/{locId}/sections/{secId}
-        group.MapPatch("/{locId}/sections/{secId}", async (int homeId, int locId, int secId, RenameSectionRequest req, ClaimsPrincipal user, AppDbContext db) =>
+        ownerGroup.MapPatch("/{locId}/sections/{secId}", async (int homeId, int locId, int secId, RenameSectionRequest req, AppDbContext db) =>
         {
             if (string.IsNullOrWhiteSpace(req.Name))
                 return Results.BadRequest(new { message = "Navn kan ikke være tomt." });
-
-            var userId = user.GetUserId();
-            if (!await HomeAuthorization.IsOwner(userId, homeId, db))
-                return Results.Forbid();
 
             var section = await db.Sections
                 .Include(s => s.Location)
@@ -136,12 +118,8 @@ public static class LocationEndpoints
         });
 
         // DELETE /api/homes/{homeId}/locations/{locId}/sections/{secId}
-        group.MapDelete("/{locId}/sections/{secId}", async (int homeId, int locId, int secId, ClaimsPrincipal user, AppDbContext db) =>
+        ownerGroup.MapDelete("/{locId}/sections/{secId}", async (int homeId, int locId, int secId, AppDbContext db) =>
         {
-            var userId = user.GetUserId();
-            if (!await HomeAuthorization.IsOwner(userId, homeId, db))
-                return Results.Forbid();
-
             var section = await db.Sections
                 .Include(s => s.Location)
                 .FirstOrDefaultAsync(s => s.Id == secId && s.LocationId == locId && s.Location.HomeId == homeId);
@@ -156,7 +134,6 @@ public static class LocationEndpoints
             return Results.NoContent();
         });
     }
-
 }
 
 record CreateLocationRequest(string Name);
