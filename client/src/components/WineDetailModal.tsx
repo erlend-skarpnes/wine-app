@@ -49,10 +49,7 @@ function PieChart({ label, raw }: { label: string; raw: string }) {
 
 export default function WineDetailModal({ barcode, name, homeId, quantity: initialQuantity, onAdjusted, onClose }: Props) {
   const queryClient = useQueryClient()
-  const [editingStock, setEditingStock] = useState(false)
-  const [selectedLocationId, setSelectedLocationId] = useState<number | null>(null)
-  const [editQuantity, setEditQuantity] = useState(0)
-  const [prevEditQuantity, setPrevEditQuantity] = useState(0)
+  const [editState, setEditState] = useState<{ location: LocationEntry; editQuantity: number } | null>(null)
 
   const { data: favorites = [] } = useQuery({
     queryKey: queryKeys.favorites(),
@@ -80,38 +77,29 @@ export default function WineDetailModal({ barcode, name, homeId, quantity: initi
     ? locationEntries.reduce((sum, le) => sum + le.quantity, 0)
     : initialQuantity
 
-  const selectedEntry = locationEntries.find(le => le.locationId === selectedLocationId) ?? locationEntries[0]
-
   const handleAdjust = useCallback(async (delta: 1 | -1) => {
-    if (!selectedEntry) return
+    if (!editState) return
     try {
-      const result = await adjustEntry(homeId!, barcode, delta, selectedEntry.locationId ?? undefined, selectedEntry.sectionId ?? undefined)
-      setEditQuantity(result.quantity)
+      const result = await adjustEntry(homeId!, barcode, delta, editState.location.locationId ?? undefined, editState.location.sectionId ?? undefined)
+      setEditState(s => s ? { ...s, editQuantity: result.quantity } : null)
       onAdjusted()
     } catch {
       // ignore
     }
-  }, [homeId, selectedEntry, barcode, onAdjusted])
+  }, [homeId, editState, barcode, onAdjusted])
 
   function enterEditStock() {
     const first = locationEntries[0]
-    if (first) {
-      setSelectedLocationId(first.locationId)
-      setEditQuantity(first.quantity)
-      setPrevEditQuantity(first.quantity)
-    }
-    setEditingStock(true)
+    if (first) setEditState({ location: first, editQuantity: first.quantity })
   }
 
   function selectLocation(le: LocationEntry) {
-    setSelectedLocationId(le.locationId)
-    setEditQuantity(le.quantity)
-    setPrevEditQuantity(le.quantity)
+    setEditState({ location: le, editQuantity: le.quantity })
   }
 
   const title = wine?.name ?? name ?? barcode
 
-  if (editingStock) {
+  if (editState) {
     return (
       <Modal title={title} onClose={onClose} maxWidth="max-w-[480px]">
         <div className="flex flex-col gap-4">
@@ -129,7 +117,7 @@ export default function WineDetailModal({ barcode, name, homeId, quantity: initi
                     type="button"
                     onClick={() => selectLocation(le)}
                     className={`px-3 py-1.5 text-sm rounded-lg border transition-colors ${
-                      selectedEntry?.locationId === le.locationId
+                      editState.location.locationId === le.locationId
                         ? 'bg-wine text-white border-wine'
                         : 'bg-surface text-clay border-stone hover:bg-warm'
                     }`}
@@ -143,14 +131,14 @@ export default function WineDetailModal({ barcode, name, homeId, quantity: initi
 
           <div className="text-center">
             <p className="text-clay text-[0.85rem]">
-              Beholdning: {prevEditQuantity} → {editQuantity}
+              Beholdning: {editState.location.quantity} → {editState.editQuantity}
             </p>
           </div>
 
-          <QuantityAdjuster value={editQuantity} onChange={handleAdjust} />
+          <QuantityAdjuster value={editState.editQuantity} onChange={handleAdjust} />
 
           <div className="flex gap-2">
-            <button type="button" className="flex-1 py-3 text-base" onClick={() => { setPrevEditQuantity(editQuantity); setEditingStock(false) }}>
+            <button type="button" className="flex-1 py-3 text-base" onClick={() => setEditState(null)}>
               Tilbake
             </button>
             <button type="button" className="secondary flex-1 py-3 text-base" onClick={onClose}>
