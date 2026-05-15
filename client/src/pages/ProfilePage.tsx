@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { LogOut, RefreshCw, KeyRound, Plus } from 'lucide-react'
+import { LogOut, RefreshCw, KeyRound, Plus, Star } from 'lucide-react'
 import Modal from '../components/Modal'
 import HomeRow from '../components/HomeRow'
 import WineDetailModal from '../components/WineDetailModal'
@@ -10,8 +10,9 @@ import { useHome } from '../context/HomeContext'
 import { api } from '../api/client'
 import { createHome } from '../api/homes'
 import { getDrinkHistory } from '../api/history'
+import { getFavorites } from '../api/favorites'
 import { queryKeys } from '../api/queryKeys'
-import type { DrinkHistoryItem } from '../api/types'
+import type { DrinkHistoryItem, FavoriteItem } from '../api/types'
 
 // --- Password modal ---
 
@@ -72,6 +73,66 @@ function extractPasswordError(err: unknown): string {
   if (!(err instanceof Error)) return 'Noe gikk galt.'
   if (err.message.includes('401')) return 'Nåværende passord er feil.'
   return 'Noe gikk galt. Prøv igjen.'
+}
+
+// --- Favorites ---
+
+function FavoritesSection() {
+  const [selected, setSelected] = useState<FavoriteItem | null>(null)
+
+  const { data: favorites = [], isLoading } = useQuery({
+    queryKey: queryKeys.favorites(),
+    queryFn: getFavorites,
+  })
+
+  if (isLoading) return null
+  if (favorites.length === 0) return null
+
+  return (
+    <section className="flex flex-col gap-3">
+      <p className="text-[0.65rem] font-semibold text-clay uppercase tracking-widest">Favoritter</p>
+
+      <div className="-mx-6">
+        {favorites.map((item, i) => {
+          const accent = typeAccentColor(item.wineType)
+          return (
+            <button
+              key={item.barcode}
+              type="button"
+              onClick={() => setSelected(item)}
+              className="relative w-full flex items-center pl-6 pr-5 py-3 border-b border-stone bg-transparent text-left"
+              style={{ animation: `entrySlideIn 0.3s ease-out ${i * 35}ms both` }}
+            >
+              <div
+                className="absolute left-0 rounded-r-full"
+                style={{ background: accent, width: '3px', top: '18%', bottom: '18%' }}
+              />
+              <div className="flex-1 min-w-0">
+                <p
+                  className="leading-snug truncate"
+                  style={{ fontFamily: "'Cormorant Garamond', Georgia, serif", fontSize: '1.08rem', fontWeight: 600, color: 'var(--color-bark)' }}
+                >
+                  {item.wineName ?? item.barcode}
+                </p>
+                {item.wineType && <p className="text-[0.73rem] text-clay mt-0.5">{item.wineType}</p>}
+              </div>
+              <Star size={14} className="ml-4 shrink-0" style={{ color: '#b5881f' }} fill="#b5881f" />
+            </button>
+          )
+        })}
+      </div>
+
+      {selected && (
+        <WineDetailModal
+          barcode={selected.barcode}
+          name={selected.wineName}
+          quantity={0}
+          onAdjusted={() => {}}
+          onClose={() => setSelected(null)}
+        />
+      )}
+    </section>
+  )
 }
 
 // --- Drink history ---
@@ -272,6 +333,8 @@ export default function ProfilePage() {
         {/* Homes */}
         <HomeSection />
       </div>
+
+      <FavoritesSection />
 
       <DrinkHistorySection />
 

@@ -6,4 +6,5 @@ export const queryKeys = {
   entryLocations: (homeId: number, barcode: string) => ['entry-locations', homeId, barcode] as const,
   wine: (barcode: string) => ['wine', barcode] as const,
   drinkHistory: () => ['drink-history'] as const,
+  favorites: () => ['favorites'] as const,
 }

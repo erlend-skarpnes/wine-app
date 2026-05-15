@@ -16,6 +16,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
     public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
     public DbSet<Invitation> Invitations => Set<Invitation>();
     public DbSet<DrinkLog> DrinkLogs => Set<DrinkLog>();
+    public DbSet<FavoriteWine> FavoriteWines => Set<FavoriteWine>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -131,6 +132,23 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
             .HasOne(d => d.WineData)
             .WithMany()
             .HasForeignKey(d => d.Barcode)
+            .OnDelete(DeleteBehavior.Restrict)
+            .IsRequired(false);
+
+        modelBuilder.Entity<FavoriteWine>()
+            .HasIndex(f => new { f.UserId, f.Barcode })
+            .IsUnique();
+
+        modelBuilder.Entity<FavoriteWine>()
+            .HasOne(f => f.User)
+            .WithMany()
+            .HasForeignKey(f => f.UserId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<FavoriteWine>()
+            .HasOne(f => f.WineData)
+            .WithMany()
+            .HasForeignKey(f => f.Barcode)
             .OnDelete(DeleteBehavior.Restrict)
             .IsRequired(false);
     }

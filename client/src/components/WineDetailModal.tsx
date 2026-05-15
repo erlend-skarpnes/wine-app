@@ -1,9 +1,10 @@
 import { useState, useCallback } from 'react'
-import { useQuery } from '@tanstack/react-query'
-import { MapPin, X } from 'lucide-react'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { MapPin, X, Star } from 'lucide-react'
 import { getWineData } from '../api/wine'
 import { queryKeys } from '../api/queryKeys'
 import { adjustEntry, getEntryLocations } from '../api/locations'
+import { getFavorites, addFavorite, removeFavorite } from '../api/favorites'
 import Modal from './Modal'
 import WineImage from './WineImage'
 import QuantityAdjuster from './QuantityAdjuster'
@@ -12,7 +13,7 @@ import type { LocationEntry } from '../api/types'
 interface Props {
   barcode: string
   name: string | null
-  homeId: number
+  homeId?: number
   quantity: number
   onAdjusted: () => void
   onClose: () => void
@@ -47,14 +48,27 @@ function PieChart({ label, raw }: { label: string; raw: string }) {
 }
 
 export default function WineDetailModal({ barcode, name, homeId, quantity: initialQuantity, onAdjusted, onClose }: Props) {
+  const queryClient = useQueryClient()
   const [editingStock, setEditingStock] = useState(false)
   const [selectedLocationId, setSelectedLocationId] = useState<number | null>(null)
   const [editQuantity, setEditQuantity] = useState(0)
   const [prevEditQuantity, setPrevEditQuantity] = useState(0)
 
+  const { data: favorites = [] } = useQuery({
+    queryKey: queryKeys.favorites(),
+    queryFn: getFavorites,
+  })
+  const isFavorite = favorites.some(f => f.barcode === barcode)
+
+  const toggleFavorite = useMutation({
+    mutationFn: () => isFavorite ? removeFavorite(barcode) : addFavorite(barcode),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: queryKeys.favorites() }),
+  })
+
   const { data: locationEntries = [] } = useQuery<LocationEntry[]>({
-    queryKey: queryKeys.entryLocations(homeId, barcode),
-    queryFn: () => getEntryLocations(homeId, barcode),
+    queryKey: queryKeys.entryLocations(homeId ?? 0, barcode),
+    queryFn: () => getEntryLocations(homeId!, barcode),
+    enabled: !!homeId,
   })
 
   const { data: wine, isLoading } = useQuery({
@@ -71,7 +85,7 @@ export default function WineDetailModal({ barcode, name, homeId, quantity: initi
   const handleAdjust = useCallback(async (delta: 1 | -1) => {
     if (!selectedEntry) return
     try {
-      const result = await adjustEntry(homeId, barcode, delta, selectedEntry.locationId ?? undefined, selectedEntry.sectionId ?? undefined)
+      const result = await adjustEntry(homeId!, barcode, delta, selectedEntry.locationId ?? undefined, selectedEntry.sectionId ?? undefined)
       setEditQuantity(result.quantity)
       onAdjusted()
     } catch {
@@ -314,10 +328,22 @@ export default function WineDetailModal({ barcode, name, homeId, quantity: initi
         </div>
 
         {/* Action bar */}
-        <div className="border-t border-stone px-6 py-4 flex-shrink-0">
-          <button type="button" className="w-full py-3 text-base" onClick={enterEditStock}>
-            Rediger beholdning
+        <div className="border-t border-stone px-6 py-4 flex-shrink-0 flex gap-3">
+          <button
+            type="button"
+            onClick={() => toggleFavorite.mutate()}
+            disabled={toggleFavorite.isPending}
+            aria-label={isFavorite ? 'Fjern fra favoritter' : 'Legg til i favoritter'}
+            className="secondary shrink-0 px-4 py-3 flex items-center justify-center"
+            style={isFavorite ? { color: '#b5881f', borderColor: '#b5881f' } : undefined}
+          >
+            <Star size={18} fill={isFavorite ? 'currentColor' : 'none'} />
           </button>
+          {homeId && (
+            <button type="button" className="flex-1 py-3 text-base" onClick={enterEditStock}>
+              Rediger beholdning
+            </button>
+          )}
         </div>
       </div>
     </div>

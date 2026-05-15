@@ -82,6 +82,14 @@ export type IdentifyResponse =
   | { status: 'identified'; wineData: WineData }
   | { status: 'suggestions'; suggestions: WineSuggestion[] }
 
+export interface FavoriteItem {
+  barcode: string
+  addedAt: string
+  wineName: string | null
+  wineType: string | null
+  wineImageUrl: string | null
+}
+
 export interface DrinkHistoryItem {
   id: number
   barcode: string

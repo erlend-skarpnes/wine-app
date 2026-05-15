@@ -158,5 +158,6 @@ app.MapLocationEndpoints();
 app.MapEntryEndpoints();
 app.MapWineEndpoints();
 app.MapHistoryEndpoints();
+app.MapFavoritesEndpoints();
 
 app.Run();
