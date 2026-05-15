@@ -4,11 +4,12 @@ async function triggerScan(page: import('@playwright/test').Page, barcode: strin
   await page.evaluate((b) => (window as any).__triggerScan(b), barcode)
 }
 
-// Testhjemmet has 2 locations (Standard + Kjøleskap), so the location picker always appears.
+// Scope location/section picker to the dialog to avoid ambiguity with FilterBar chips
 async function pickLocation(page: import('@playwright/test').Page, locationName: string) {
-  await expect(page.getByText('Velg plassering:')).toBeVisible()
-  await page.getByRole('button', { name: locationName, exact: true }).click()
-  await page.getByRole('button', { name: 'Bekreft' }).click()
+  const dialog = page.getByRole('dialog')
+  await expect(dialog.getByText('Velg plassering:')).toBeVisible()
+  await dialog.getByRole('button', { name: locationName, exact: true }).click()
+  await dialog.getByRole('button', { name: 'Bekreft' }).click()
 }
 
 test('scan adds wine and shows success state with quantity', async ({ authenticatedPage: page }) => {
@@ -67,15 +68,15 @@ test('scan with section pick uses seeded Kjøleskap › Hylle A', async ({ authe
 
   await triggerScan(page, '7090016664323')
 
-  // Location picker: pick Kjøleskap (has sections)
-  await expect(page.getByText('Velg plassering:')).toBeVisible()
-  await page.getByRole('button', { name: 'Kjøleskap', exact: true }).click()
-  await page.getByRole('button', { name: 'Bekreft' }).click()
+  const dialog = page.getByRole('dialog')
+  await expect(dialog.getByText('Velg plassering:')).toBeVisible()
+  await dialog.getByRole('button', { name: 'Kjøleskap', exact: true }).click()
+  await dialog.getByRole('button', { name: 'Bekreft' }).click()
 
   // Section picker appears
-  await expect(page.getByText('Velg seksjon (valgfritt):')).toBeVisible()
-  await page.getByRole('button', { name: 'Hylle A', exact: true }).click()
-  await page.getByRole('button', { name: 'Bekreft' }).click()
+  await expect(dialog.getByText('Velg seksjon (valgfritt):')).toBeVisible()
+  await dialog.getByRole('button', { name: 'Hylle A', exact: true }).click()
+  await dialog.getByRole('button', { name: 'Bekreft' }).click()
 
   await expect(page.getByText(/Beholdning:/)).toBeVisible()
 })

@@ -9,7 +9,7 @@ async function openHomeManageModal(page: import('@playwright/test').Page, homeNa
 test('create home appears in profile list', async ({ authenticatedPage: page }) => {
   await page.goto('/profile')
   const name = `Hjem ${Date.now()}`
-  await page.getByPlaceholder('Navn på nytt hjem').fill(name)
+  await page.getByPlaceholder('Opprett nytt hjem…').fill(name)
   await page.getByRole('button', { name: 'Opprett' }).click()
   await expect(page.locator('[data-testid="home-row"]').filter({ hasText: name })).toBeVisible()
 })
@@ -17,7 +17,7 @@ test('create home appears in profile list', async ({ authenticatedPage: page }) 
 test('rename home shows updated name', async ({ authenticatedPage: page }) => {
   await page.goto('/profile')
   const originalName = `ToRename ${Date.now()}`
-  await page.getByPlaceholder('Navn på nytt hjem').fill(originalName)
+  await page.getByPlaceholder('Opprett nytt hjem…').fill(originalName)
   await page.getByRole('button', { name: 'Opprett' }).click()
   await expect(page.locator('[data-testid="home-row"]').filter({ hasText: originalName })).toBeVisible()
 
@@ -34,7 +34,7 @@ test('rename home shows updated name', async ({ authenticatedPage: page }) => {
 test('delete empty home removes it from list', async ({ authenticatedPage: page }) => {
   await page.goto('/profile')
   const name = `ToDelete ${Date.now()}`
-  await page.getByPlaceholder('Navn på nytt hjem').fill(name)
+  await page.getByPlaceholder('Opprett nytt hjem…').fill(name)
   await page.getByRole('button', { name: 'Opprett' }).click()
   await expect(page.locator('[data-testid="home-row"]').filter({ hasText: name })).toBeVisible()
 

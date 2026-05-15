@@ -37,7 +37,7 @@ test('favorited wine appears in profile Favoritter section', async ({ authentica
   await page.getByLabel('Lukk').click()
 
   // Profile page should show Favoritter section with the wine
-  await page.goto('/profile')
+  await page.goto('/favorites')
   await expect(page.getByText('Favoritter')).toBeVisible()
   await expect(page.getByText(/Testvinen|7090016664323/)).toBeVisible()
 
@@ -55,7 +55,7 @@ test('clicking favorite on profile page opens wine detail modal', async ({ authe
   await page.getByRole('button', { name: 'Legg til i favoritter' }).click()
   await page.getByLabel('Lukk').click()
 
-  await page.goto('/profile')
+  await page.goto('/favorites')
   await expect(page.getByText('Favoritter')).toBeVisible()
 
   // Click the favorite row
@@ -77,7 +77,7 @@ test('unfavoriting from profile removes it from Favoritter section', async ({ au
   await page.getByRole('button', { name: 'Legg til i favoritter' }).click()
   await page.getByLabel('Lukk').click()
 
-  await page.goto('/profile')
+  await page.goto('/favorites')
   await expect(page.getByText(/Testvinen|7090016664323/)).toBeVisible()
 
   // Open modal and unfavorite

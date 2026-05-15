@@ -2,9 +2,9 @@ import { test, expect } from './fixtures/auth'
 
 test('cellar page loads seeded wine entries', async ({ authenticatedPage: page }) => {
   await page.goto('/')
-  // Two seeded barcodes should appear
-  await expect(page.getByText('7090016664323')).toBeVisible()
-  await expect(page.getByText('7090016460692')).toBeVisible()
+  // Wine name is shown once WineData is cached, barcode before that — match either
+  await expect(page.getByText(/7090016664323|Testvinen/)).toBeVisible()
+  await expect(page.getByText(/7090016460692|Testvin 2/)).toBeVisible()
 })
 
 test('location filter shows only entries in selected location', async ({ authenticatedPage: page }) => {
@@ -17,7 +17,7 @@ test('location filter shows only entries in selected location', async ({ authent
   await page.getByRole('button', { name: 'Kjøleskap', exact: true }).click()
 
   // Entries from Kjøleskap should still be visible
-  await expect(page.getByText('7090016664323')).toBeVisible()
+  await expect(page.getByText(/7090016664323|Testvinen/)).toBeVisible()
 })
 
 test('filters persist after page reload', async ({ authenticatedPage: page }) => {
@@ -27,16 +27,14 @@ test('filters persist after page reload', async ({ authenticatedPage: page }) =>
 
   await page.reload()
 
-  // Filter button badge should show 1 active filter
-  const filterBtn = page.getByRole('button', { name: 'Filter' })
-  await expect(filterBtn.locator('.bg-wine.text-white')).toBeVisible()
+  // Active filter summary is shown inline in the toggle button when panel is closed
+  await expect(page.getByRole('button', { name: /Filter/ })).toContainText('Kjøleskap')
 })
 
 test('clicking wine entry opens detail modal', async ({ authenticatedPage: page }) => {
   await page.goto('/')
-  // Entry shows barcode before wine data is cached, name after — match either
   await page.getByRole('listitem').filter({ hasText: /7090016664323|Testvinen/ }).first().click()
-  await expect(page.getByText('Testvinen')).toBeVisible()
+  await expect(page.getByRole('dialog').getByText('Testvinen')).toBeVisible()
 })
 
 test('adjust quantity in detail modal updates count', async ({ authenticatedPage: page }) => {
@@ -48,7 +46,7 @@ test('adjust quantity in detail modal updates count', async ({ authenticatedPage
   )
 
   // Mock the adjust endpoint to avoid proxy errors against the real server
-  await page.route('**/api/locations/*/entries/adjust', route =>
+  await page.route('**/api/homes/*/entries/adjust', route =>
     route.fulfill({
       json: { locationId: 1, barcode: '7090016664323', quantity: 4, sectionId: null }
     })

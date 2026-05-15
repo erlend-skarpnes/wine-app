@@ -44,7 +44,7 @@ test('rename location shows updated name', async ({ authenticatedPage: page }) =
   await locModal.getByRole('button', { name: 'Lagre' }).first().click()
 
   // Go back to home modal and verify new name
-  await locModal.getByTitle('Tilbake').click()
+  await locModal.getByLabel('Tilbake').click()
 
   await expect(getLocationItem(homeModal, renamed)).toBeVisible()
   await expect(homeModal.getByText(original, { exact: true })).not.toBeVisible()
@@ -127,7 +127,7 @@ test('rename section shows updated name', async ({ authenticatedPage: page }) =>
   await expect(locModal.locator('[data-testid="location-row"]').filter({ hasText: original })).toBeVisible()
 
   // Click pencil on the section row
-  await locModal.locator('[data-testid="location-row"]').filter({ hasText: original }).getByTitle('Endre navn').click()
+  await locModal.locator('[data-testid="location-row"]').filter({ hasText: original }).getByLabel('Endre navn').click()
 
   // Fill rename input inside the section rows area and save
   await locModal.locator('[data-testid="location-row"] input').fill(renamed)
@@ -151,7 +151,7 @@ test('delete section removes it from location', async ({ authenticatedPage: page
   await locModal.getByRole('button', { name: 'Legg til' }).click()
   await expect(locModal.locator('[data-testid="location-row"]').filter({ hasText: secName })).toBeVisible()
 
-  await locModal.locator('[data-testid="location-row"]').filter({ hasText: secName }).getByTitle('Slett').click()
+  await locModal.locator('[data-testid="location-row"]').filter({ hasText: secName }).getByLabel('Slett').click()
 
   await expect(locModal.getByText(secName, { exact: true })).not.toBeVisible()
 })
@@ -169,6 +169,6 @@ test('section count badge updates after adding section', async ({ authenticatedP
   await locModal.getByRole('button', { name: 'Legg til' }).click()
 
   // Go back and check the count badge in the home modal
-  await locModal.getByTitle('Tilbake').click()
+  await locModal.getByLabel('Tilbake').click()
   await expect(getLocationItem(homeModal, locName).getByText('1 seksjon')).toBeVisible()
 })
