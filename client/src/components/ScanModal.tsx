@@ -8,9 +8,9 @@ import WineImage from './WineImage'
 import QuantityAdjuster from './QuantityAdjuster'
 import { adjustEntry, getLocations } from '../api/locations'
 import { queryKeys } from '../api/queryKeys'
-import { getWineData, identifyWine, linkWine } from '../api/wine'
-import { ApiError } from '../api/client'
+import { identifyWine, linkWine } from '../api/wine'
 import { scanReducer, initialScanState } from './scanReducer'
+import { useScanAdjust } from '../hooks/useScanAdjust'
 import type { Location, WineSuggestion } from '../api/types'
 
 type Mode = 'add' | 'remove'
@@ -30,32 +30,7 @@ export default function ScanModal({ mode, homeId, onClose, onAdjusted }: Props) 
     queryFn: () => getLocations(homeId),
   })
 
-  const doAdjust = useCallback(async (barcode: string, locationId?: number, sectionId?: number) => {
-    dispatch({ type: 'ADJUST_START' })
-    try {
-      const delta = mode === 'add' ? 1 : -1
-      const result = await adjustEntry(homeId, barcode, delta, locationId, sectionId)
-      const loc = locationId ?? null
-      const prevQuantity = result.quantity - delta
-      try {
-        const wineData = await getWineData(barcode)
-        onAdjusted()
-        dispatch({ type: 'ADJUST_SUCCESS', barcode, locationId: loc, quantity: result.quantity, prevQuantity, wineName: wineData.name, imageUrl: wineData.imageUrl })
-      } catch {
-        onAdjusted()
-        if (mode === 'add') {
-          dispatch({ type: 'GO_TO_CAPTURE', barcode, locationId: loc, quantity: result.quantity })
-        } else {
-          dispatch({ type: 'ADJUST_SUCCESS', barcode, locationId: loc, quantity: result.quantity, prevQuantity, wineName: null, imageUrl: null })
-        }
-      }
-    } catch (err) {
-      const message = err instanceof ApiError && err.code === 'NOTHING_TO_REMOVE'
-        ? 'Ingenting å fjerne.'
-        : 'Noe gikk galt.'
-      dispatch({ type: 'ADJUST_ERROR', message })
-    }
-  }, [mode, homeId, onAdjusted])
+  const doAdjust = useScanAdjust(dispatch, homeId, mode, onAdjusted)
 
   const handleScan = useCallback((barcode: string) => {
     if (locationsLoading) return
