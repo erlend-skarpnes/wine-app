@@ -78,6 +78,12 @@ if (vk) {
   update()
 }
 
+navigator.serviceWorker?.ready.then(reg => {
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible') reg.update()
+  })
+})
+
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
     <QueryClientProvider client={queryClient}>
