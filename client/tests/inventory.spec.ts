@@ -35,7 +35,7 @@ test('filters persist after page reload', async ({ authenticatedPage: page }) =>
 test('clicking wine entry opens detail modal', async ({ authenticatedPage: page }) => {
   await page.goto('/')
   // Entry shows barcode before wine data is cached, name after — match either
-  await page.locator('tr').filter({ hasText: /7090016664323|Testvinen/ }).first().click()
+  await page.getByRole('listitem').filter({ hasText: /7090016664323|Testvinen/ }).first().click()
   await expect(page.getByText('Testvinen')).toBeVisible()
 })
 
@@ -56,7 +56,7 @@ test('adjust quantity in detail modal updates count', async ({ authenticatedPage
 
   await page.goto('/')
   // Entry shows barcode before wine data is cached, name after — match either
-  await page.locator('tr').filter({ hasText: /7090016664323|Testvinen/ }).first().click()
+  await page.getByRole('listitem').filter({ hasText: /7090016664323|Testvinen/ }).first().click()
   await page.getByRole('button', { name: 'Rediger beholdning' }).click()
 
   const modal = page.getByRole('dialog')
