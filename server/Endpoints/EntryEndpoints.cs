@@ -63,9 +63,23 @@ public static class EntryEndpoints
             }
             else
             {
+                var previousQuantity = entry.Quantity;
                 entry.Quantity = Math.Max(0, entry.Quantity + req.Delta);
                 if (req.SectionId.HasValue)
                     entry.SectionId = req.SectionId;
+
+                var removed = previousQuantity - entry.Quantity;
+                if (removed > 0)
+                {
+                    db.DrinkLogs.Add(new DrinkLog
+                    {
+                        UserId = userId,
+                        HomeId = homeId,
+                        Barcode = req.Barcode,
+                        Quantity = removed,
+                        DrankAt = DateTime.UtcNow,
+                    });
+                }
             }
 
             await db.SaveChangesAsync();

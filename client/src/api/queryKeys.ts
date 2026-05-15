@@ -5,4 +5,5 @@ export const queryKeys = {
   homeEntries: (homeId: number) => ['home-entries', homeId] as const,
   entryLocations: (homeId: number, barcode: string) => ['entry-locations', homeId, barcode] as const,
   wine: (barcode: string) => ['wine', barcode] as const,
+  drinkHistory: () => ['drink-history'] as const,
 }
