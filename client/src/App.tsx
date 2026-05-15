@@ -5,6 +5,8 @@ import Layout from './components/Layout'
 import CellarPage from './pages/CellarPage'
 import AdminPage from './pages/AdminPage'
 import ProfilePage from './pages/ProfilePage'
+import FavoritesPage from './pages/FavoritesPage'
+import HistoryPage from './pages/HistoryPage'
 import JoinHomePage from './pages/JoinHomePage'
 import LoginForm from './components/LoginForm'
 import RegisterForm from './components/RegisterForm'
@@ -50,6 +52,8 @@ const router = createBrowserRouter([
       { index: true, element: <RequireAuth><CellarPage /></RequireAuth> },
       { path: 'admin', element: <RequireAdmin><AdminPage /></RequireAdmin> },
       { path: 'profile', element: <RequireAuth><ProfilePage /></RequireAuth> },
+      { path: 'favorites', element: <RequireAuth><FavoritesPage /></RequireAuth> },
+      { path: 'history', element: <RequireAuth><HistoryPage /></RequireAuth> },
       { path: 'homes/join/:token', element: <RequireAuth><JoinHomePage /></RequireAuth> },
       { path: 'invite/:token', element: <InvitePage /> },
       { path: 'login', element: <LoginPage /> },

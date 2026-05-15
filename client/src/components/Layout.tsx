@@ -1,5 +1,6 @@
-import { Outlet, Link } from 'react-router-dom'
-import { User, ChevronDown } from 'lucide-react'
+import { useState, useRef, useEffect } from 'react'
+import { Outlet, Link, useNavigate } from 'react-router-dom'
+import { ChevronDown, Menu, Star, GlassWater, User } from 'lucide-react'
 import { useIsFetching } from '@tanstack/react-query'
 import { useAuth } from '../context/AuthContext'
 import { useHome } from '../context/HomeContext'
@@ -8,6 +9,23 @@ export default function Layout() {
   const { isAuthenticated, loading } = useAuth()
   const { homes, activeHome, setActiveHome } = useHome()
   const isFetching = useIsFetching()
+  const [menuOpen, setMenuOpen] = useState(false)
+  const menuRef = useRef<HTMLDivElement>(null)
+  const navigate = useNavigate()
+
+  useEffect(() => {
+    if (!menuOpen) return
+    function handleClick(e: MouseEvent) {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) setMenuOpen(false)
+    }
+    document.addEventListener('mousedown', handleClick)
+    return () => document.removeEventListener('mousedown', handleClick)
+  }, [menuOpen])
+
+  function navTo(path: string) {
+    setMenuOpen(false)
+    navigate(path)
+  }
 
   if (loading) {
     return (
@@ -54,13 +72,43 @@ export default function Layout() {
           )}
         </div>
 
-        <div className="flex items-center">
-          {isAuthenticated && (
-            <Link to="/profile" className="text-white/55 hover:text-white no-underline transition-colors" aria-label="Min profil">
-              <User size={17} />
-            </Link>
-          )}
-        </div>
+        {isAuthenticated && (
+          <div className="relative shrink-0" ref={menuRef}>
+            <button
+              type="button"
+              onClick={() => setMenuOpen(o => !o)}
+              aria-label="Meny"
+              className="flex items-center justify-center"
+              style={{ background: 'transparent', border: 'none', color: 'rgba(255,255,255,0.7)', padding: '4px', width: 28, height: 28 }}
+            >
+              <Menu size={18} strokeWidth={1.75} />
+            </button>
+
+            {menuOpen && (
+              <div
+                className="absolute top-full right-0 mt-2 bg-surface rounded-xl border border-stone overflow-hidden z-[200]"
+                style={{ minWidth: '160px', boxShadow: '0 8px 32px rgba(44,24,16,0.18)' }}
+              >
+                {[
+                  { icon: Star,       label: 'Favoritter', path: '/favorites' },
+                  { icon: GlassWater, label: 'Historikk',  path: '/history' },
+                  { icon: User,       label: 'Profil',     path: '/profile' },
+                ].map(({ icon: Icon, label, path }) => (
+                  <button
+                    key={path}
+                    type="button"
+                    onClick={() => navTo(path)}
+                    className="w-full flex items-center gap-3 px-4 py-3 text-sm text-bark hover:bg-warm transition-colors"
+                    style={{ background: 'transparent', border: 'none', borderRadius: 0, justifyContent: 'flex-start' }}
+                  >
+                    <Icon size={15} className="text-clay shrink-0" />
+                    {label}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
       </header>
 
       <div className="h-[2px] shrink-0 overflow-hidden" style={{ background: isFetching ? 'rgba(114,47,55,0.12)' : 'transparent' }}>
