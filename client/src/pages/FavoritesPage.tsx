@@ -26,8 +26,8 @@ export default function FavoritesPage() {
   return (
     <div className="max-w-2xl mx-auto">
       <h1
-        className="text-bark mb-6"
-        style={{ fontFamily: "'Cormorant Garamond', Georgia, serif", fontSize: '2rem', fontWeight: 600 }}
+        className="text-clay mb-6"
+        style={{ fontFamily: "'Cormorant Garamond', Georgia, serif", fontSize: '1.2rem', fontWeight: 400, fontStyle: 'italic', letterSpacing: '0.04em' }}
       >
         Favoritter
       </h1>

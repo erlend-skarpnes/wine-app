@@ -26,10 +26,10 @@ export default function HistoryPage() {
   return (
     <div className="max-w-2xl mx-auto">
       <h1
-        className="text-bark mb-6"
-        style={{ fontFamily: "'Cormorant Garamond', Georgia, serif", fontSize: '2rem', fontWeight: 600 }}
+        className="text-clay mb-6"
+        style={{ fontFamily: "'Cormorant Garamond', Georgia, serif", fontSize: '1.2rem', fontWeight: 400, fontStyle: 'italic', letterSpacing: '0.04em' }}
       >
-        Drukket
+        Historikk
       </h1>
 
       {isLoading && (
@@ -56,46 +56,67 @@ export default function HistoryPage() {
         </div>
       )}
 
-      {!isLoading && history.length > 0 && (
-        <div className="-mx-6">
-          {history.map((item, i) => {
-            const accent = typeAccentColor(item.wineType)
-            const dateStr = new Date(item.drankAt).toLocaleDateString('no-NO', { day: 'numeric', month: 'short', year: 'numeric' })
-            return (
-              <button
-                key={item.id}
-                type="button"
-                onClick={() => setSelected(item)}
-                className="relative w-full flex items-center pl-6 pr-5 py-3.5 border-b border-stone bg-transparent text-left"
-                style={{ animation: `entrySlideIn 0.3s ease-out ${i * 35}ms both` }}
-              >
-                <div
-                  className="absolute left-0 rounded-r-full"
-                  style={{ background: accent, width: '3px', top: '18%', bottom: '18%', opacity: 0.6 }}
-                />
-                <div className="flex-1 min-w-0">
-                  <p
-                    className="leading-snug truncate"
-                    style={{ fontFamily: "'Cormorant Garamond', Georgia, serif", fontSize: '1.08rem', fontWeight: 600, color: 'var(--color-bark)' }}
-                  >
-                    {item.wineName ?? item.barcode}
-                  </p>
-                  <p className="text-[0.73rem] text-clay mt-0.5">{dateStr} · {item.homeName}</p>
-                </div>
-                <div className="ml-4 shrink-0 text-right">
-                  <span
-                    className="text-[1.35rem] leading-none font-semibold"
-                    style={{ fontFamily: "'Cormorant Garamond', Georgia, serif", color: accent }}
-                  >
-                    {item.quantity}
-                  </span>
-                  <p className="text-[0.6rem] text-clay uppercase tracking-wide">fl.</p>
-                </div>
-              </button>
-            )
-          })}
-        </div>
-      )}
+      {!isLoading && history.length > 0 && (() => {
+        const groups = history.reduce<{ key: string; label: string; items: DrinkHistoryItem[] }[]>((acc, item) => {
+          const d = new Date(item.drankAt)
+          const key = `${d.getFullYear()}-${d.getMonth()}`
+          const label = `${d.toLocaleDateString('no-NO', { month: 'long' })}, ${d.getFullYear()}`
+          const last = acc[acc.length - 1]
+          if (last?.key === key) last.items.push(item)
+          else acc.push({ key, label, items: [item] })
+          return acc
+        }, [])
+
+        let rowIndex = 0
+        return (
+          <div className="-mx-6">
+            {groups.map(group => (
+              <div key={group.key}>
+                <p className="px-6 pt-5 pb-1.5 text-[0.65rem] text-clay font-semibold uppercase tracking-widest">
+                  {group.label}
+                </p>
+                {group.items.map(item => {
+                  const i = rowIndex++
+                  const accent = typeAccentColor(item.wineType)
+                  const day = new Date(item.drankAt).getDate() + '.'
+                  return (
+                    <button
+                      key={item.id}
+                      type="button"
+                      onClick={() => setSelected(item)}
+                      className="relative w-full flex items-center pl-6 pr-5 py-3.5 border-b border-stone bg-transparent text-left"
+                      style={{ animation: `entrySlideIn 0.3s ease-out ${i * 35}ms both` }}
+                    >
+                      <div
+                        className="absolute left-0 rounded-r-full"
+                        style={{ background: accent, width: '3px', top: '18%', bottom: '18%', opacity: 0.6 }}
+                      />
+                      <div className="flex-1 min-w-0">
+                        <p
+                          className="leading-snug truncate"
+                          style={{ fontFamily: "'Cormorant Garamond', Georgia, serif", fontSize: '1.08rem', fontWeight: 600, color: 'var(--color-bark)' }}
+                        >
+                          {item.wineName ?? item.barcode}
+                        </p>
+                        <p className="text-[0.73rem] text-clay mt-0.5">{day} · {item.homeName}</p>
+                      </div>
+                      <div className="ml-4 shrink-0 text-right">
+                        <span
+                          className="text-[1.35rem] leading-none font-semibold"
+                          style={{ fontFamily: "'Cormorant Garamond', Georgia, serif", color: accent }}
+                        >
+                          {item.quantity}
+                        </span>
+                        <p className="text-[0.6rem] text-clay uppercase tracking-wide">fl.</p>
+                      </div>
+                    </button>
+                  )
+                })}
+              </div>
+            ))}
+          </div>
+        )
+      })()}
 
       {selected && (
         <WineDetailModal
