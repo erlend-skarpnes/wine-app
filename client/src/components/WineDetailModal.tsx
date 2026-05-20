@@ -50,6 +50,7 @@ function PieChart({ label, raw }: { label: string; raw: string }) {
 export default function WineDetailModal({ barcode, name, homeId, quantity: initialQuantity, onAdjusted, onClose }: Props) {
   const queryClient = useQueryClient()
   const [editState, setEditState] = useState<{ location: LocationEntry; editQuantity: number } | null>(null)
+  const [activeTab, setActiveTab] = useState<'oversikt' | 'smak'>('oversikt')
 
   const { data: favorites = [] } = useQuery({
     queryKey: queryKeys.favorites(),
@@ -164,7 +165,7 @@ export default function WineDetailModal({ barcode, name, homeId, quantity: initi
         {/* Header: bottle image left, primary info right */}
         <div className="relative flex flex-shrink-0" style={{ minHeight: '240px' }}>
           {/* Image column */}
-          <div className="flex-shrink-0 relative" style={{ width: '120px', background: '#f5efe8' }}>
+          <div className="flex-shrink-0 relative" style={{ width: '120px', background: '#fff' }}>
             {wine?.imageUrl
               ? <WineImage src={wine.imageUrl} alt={wine.name} className="absolute inset-0 w-full h-full object-contain p-3" />
               : <div className="absolute inset-0 flex items-center justify-center select-none" style={{ color: '#e8e0d8', fontSize: '3rem' }}>◇</div>
@@ -232,87 +233,136 @@ export default function WineDetailModal({ barcode, name, homeId, quantity: initi
 
         {/* Scrollable body */}
         <div className="overflow-y-auto flex-1 flex flex-col">
-          {isLoading && (
-            <div className="px-6 py-4 flex flex-col gap-4">
-              <div className="flex gap-6 justify-center py-1">
-                {[0, 1, 2].map(i => (
-                  <div key={i} className="flex flex-col items-center gap-1.5">
-                    <div className="shimmer rounded-full" style={{ width: 44, height: 44, animationDelay: `${i * 100}ms` }} />
-                    <div className="shimmer rounded-full h-2 w-10" style={{ animationDelay: `${i * 100 + 60}ms` }} />
-                  </div>
-                ))}
-              </div>
-              <div className="flex flex-col gap-2.5">
-                {(['55%', '72%', '60%', '45%'] as const).map((w, i) => (
-                  <div key={i} className="shimmer h-3 rounded-full" style={{ width: w, animationDelay: `${i * 55}ms` }} />
-                ))}
-              </div>
-            </div>
-          )}
-
-          {!isLoading && !wine && (
-            <p className="px-6 pb-4 text-clay text-sm">Ingen detaljer tilgjengelig for denne vinen ennå.</p>
-          )}
-
-          {wine && (
-            <>
-              <div className="border-t border-stone mx-6" />
-              <div className="px-6 py-4 flex flex-col gap-5">
-
-                {(wine.body || wine.acidity || wine.tannins) && (
-                  <div className="flex gap-6 justify-center py-1">
-                    {wine.body    && <PieChart label="Fylde"        raw={wine.body} />}
-                    {wine.acidity && <PieChart label="Friskhet"     raw={wine.acidity} />}
-                    {wine.tannins && <PieChart label="Garvestoffer" raw={wine.tannins} />}
-                  </div>
-                )}
-
+          {/* Both panels always rendered; inactive is visibility:hidden to hold height */}
+          <div style={{ display: 'grid' }}>
+            {/* Oversikt panel */}
+            <div
+              className="px-6 py-4 flex flex-col gap-5"
+              style={{ gridArea: '1/1', visibility: activeTab === 'oversikt' ? 'visible' : 'hidden' }}
+            >
+              {isLoading ? (
+                <div className="flex flex-col gap-2.5 pt-1">
+                  {(['55%', '72%', '60%', '45%', '38%'] as const).map((w, i) => (
+                    <div key={i} className="shimmer h-3 rounded-full" style={{ width: w, animationDelay: `${i * 55}ms` }} />
+                  ))}
+                </div>
+              ) : !wine || (!wine.type && !wine.winery && !wine.region && !wine.country && wine.alcoholContent == null && !wine.storagePotential) ? (
+                <p className="text-clay text-sm">Ingen detaljer tilgjengelig for denne vinen ennå.</p>
+              ) : (
                 <dl className="grid grid-cols-[auto_1fr] gap-x-5 gap-y-1.5 text-sm">
-                  {wine.type     && <><dt className="text-clay">Type</dt>          <dd>{wine.type}</dd></>}
-                  {wine.winery   && <><dt className="text-clay">Produsent</dt>     <dd>{wine.winery}</dd></>}
-                  {wine.region   && <><dt className="text-clay">Region</dt>        <dd>{[wine.region, wine.country].filter(Boolean).join(', ')}</dd></>}
-                  {!wine.region && wine.country && <><dt className="text-clay">Land</dt><dd>{wine.country}</dd></>}
-                  {wine.alcoholContent != null && <><dt className="text-clay">Alkohol</dt>   <dd>{wine.alcoholContent}%</dd></>}
-                  {wine.storagePotential && <><dt className="text-clay">Lagringsevne</dt><dd>{wine.storagePotential}</dd></>}
+                  {wine.type            && <><dt className="text-clay">Type</dt>          <dd>{wine.type}</dd></>}
+                  {wine.winery          && <><dt className="text-clay">Produsent</dt>     <dd>{wine.winery}</dd></>}
+                  {wine.region          && <><dt className="text-clay">Region</dt>        <dd>{[wine.region, wine.country].filter(Boolean).join(', ')}</dd></>}
+                  {!wine.region && wine.country && <><dt className="text-clay">Land</dt>  <dd>{wine.country}</dd></>}
+                  {wine.alcoholContent != null  && <><dt className="text-clay">Alkohol</dt>      <dd>{wine.alcoholContent}%</dd></>}
+                  {wine.storagePotential        && <><dt className="text-clay">Lagringsevne</dt> <dd>{wine.storagePotential}</dd></>}
                 </dl>
+              )}
+            </div>
 
-                {wine.grapes.length > 0 && (
-                  <div>
-                    <p className="text-clay text-xs font-semibold mb-2 uppercase tracking-wide">Druer</p>
-                    <div className="flex flex-col gap-1">
-                      {wine.grapes.map((g, i) => {
-                        const parts = g.split(' ')
-                        const hasPct = parts.length > 1 && parts[parts.length - 1].endsWith('%')
-                        const gname = hasPct ? parts.slice(0, -1).join(' ') : g
-                        const pct   = hasPct ? parts[parts.length - 1] : null
-                        return (
-                          <div key={i} className="flex justify-between text-sm">
-                            <span>{gname}</span>
-                            {pct && <span className="text-clay">{pct}</span>}
-                          </div>
-                        )
-                      })}
-                    </div>
+            {/* Smak & mat panel */}
+            <div
+              className="px-6 py-4 flex flex-col gap-5"
+              style={{ gridArea: '1/1', visibility: activeTab === 'smak' ? 'visible' : 'hidden' }}
+            >
+              {isLoading ? (
+                <div className="flex flex-col gap-5">
+                  <div className="flex gap-6 justify-center py-1">
+                    {[0, 1, 2].map(i => (
+                      <div key={i} className="flex flex-col items-center gap-1.5">
+                        <div className="shimmer rounded-full" style={{ width: 44, height: 44, animationDelay: `${i * 100}ms` }} />
+                        <div className="shimmer rounded-full h-2 w-10" style={{ animationDelay: `${i * 100 + 60}ms` }} />
+                      </div>
+                    ))}
                   </div>
-                )}
-
-                {wine.pairings.length > 0 && (
-                  <div>
-                    <p className="text-clay text-xs font-semibold mb-2 uppercase tracking-wide">Passer til</p>
-                    <div className="flex flex-wrap gap-1.5">
-                      {wine.pairings.map(p => (
-                        <span key={p} className="inline-block bg-stone text-bark rounded-full px-2.5 py-0.5 text-xs">{p}</span>
-                      ))}
-                    </div>
+                  <div className="flex flex-col gap-2.5">
+                    {(['72%', '55%', '80%', '45%'] as const).map((w, i) => (
+                      <div key={i} className="shimmer h-3 rounded-full" style={{ width: w, animationDelay: `${i * 55}ms` }} />
+                    ))}
                   </div>
-                )}
+                </div>
+              ) : !wine || (!wine.body && !wine.acidity && !wine.tannins && wine.grapes.length === 0 && wine.pairings.length === 0 && !wine.description) ? (
+                <p className="text-clay text-sm">Ingen smaks- eller matinformasjon tilgjengelig.</p>
+              ) : (
+                <div className="flex flex-col gap-5">
+                  <div className="flex flex-col gap-4 min-w-0">
+                    {wine.grapes.length > 0 && (
+                      <div>
+                        <p className="text-clay text-xs font-semibold mb-2 uppercase tracking-wide">Druer</p>
+                        <div className="flex flex-col gap-1">
+                          {wine.grapes.map((g, i) => {
+                            const parts = g.split(' ')
+                            const hasPct = parts.length > 1 && parts[parts.length - 1].endsWith('%')
+                            const gname = hasPct ? parts.slice(0, -1).join(' ') : g
+                            const pct   = hasPct ? parts[parts.length - 1] : null
+                            return (
+                              <div key={i} className="flex justify-between text-sm">
+                                <span>{gname}</span>
+                                {pct && <span className="text-clay">{pct}</span>}
+                              </div>
+                            )
+                          })}
+                        </div>
+                      </div>
+                    )}
+                    {wine.pairings.length > 0 && (
+                      <div>
+                        <p className="text-clay text-xs font-semibold mb-2 uppercase tracking-wide">Passer til</p>
+                        <div className="flex flex-wrap gap-1.5">
+                          {wine.pairings.map(p => (
+                            <span key={p} className="inline-block bg-stone text-bark rounded-full px-2.5 py-0.5 text-xs">{p}</span>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                    {wine.description && (
+                      <p className="text-[0.85rem] text-clay leading-relaxed">{wine.description}</p>
+                    )}
+                  </div>
+                  {(wine.body || wine.acidity || wine.tannins) && (
+                    <div className="flex gap-6 py-1">
+                      {wine.body    && <PieChart label="Fylde"    raw={wine.body} />}
+                      {wine.acidity && <PieChart label="Friskhet" raw={wine.acidity} />}
+                      {wine.tannins && <PieChart label="Garve"    raw={wine.tannins} />}
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
 
-                {wine.description && (
-                  <p className="text-[0.85rem] text-clay leading-relaxed">{wine.description}</p>
-                )}
-              </div>
-            </>
-          )}
+        {/* Tab bar — segmented pill control */}
+        <div className="border-t border-stone px-5 py-3 flex-shrink-0">
+          <div
+            className="flex gap-1 p-1 rounded-xl"
+            style={{ background: 'rgba(44,24,16,0.06)' }}
+          >
+            {(['oversikt', 'smak'] as const).map(tab => (
+              <button
+                key={tab}
+                type="button"
+                onClick={() => setActiveTab(tab)}
+                className="flex-1 py-2 rounded-lg transition-all duration-200"
+                style={{
+                  fontFamily: "'Cormorant Garamond', Georgia, serif",
+                  fontWeight: 600,
+                  fontSize: '0.875rem',
+                  letterSpacing: '0.03em',
+                  ...(activeTab === tab ? {
+                    background: '#722F37',
+                    color: '#fff',
+                    boxShadow: '0 1px 4px rgba(114,47,55,0.32)',
+                  } : {
+                    background: 'transparent',
+                    color: 'var(--color-clay)',
+                  }),
+                }}
+              >
+                {tab === 'oversikt' ? 'Oversikt' : 'Smak & mat'}
+              </button>
+            ))}
+          </div>
         </div>
 
         {/* Action bar */}
