@@ -160,5 +160,6 @@ app.MapEntryEndpoints();
 app.MapWineEndpoints();
 app.MapHistoryEndpoints();
 app.MapFavoritesEndpoints();
+app.MapNoteEndpoints();
 
 app.Run();

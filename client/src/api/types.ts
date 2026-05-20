@@ -90,6 +90,14 @@ export interface FavoriteItem {
   wineImageUrl: string | null
 }
 
+export interface WineNote {
+  drinkFromYear: number | null
+  drinkToYear: number | null
+  personalNote: string | null
+  authorUsername: string
+  isOwn: boolean
+}
+
 export interface DrinkHistoryItem {
   id: number
   barcode: string

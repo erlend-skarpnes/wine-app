@@ -7,4 +7,5 @@ export const queryKeys = {
   wine: (barcode: string) => ['wine', barcode] as const,
   drinkHistory: () => ['drink-history'] as const,
   favorites: () => ['favorites'] as const,
+  note: (barcode: string) => ['note', barcode] as const,
 }

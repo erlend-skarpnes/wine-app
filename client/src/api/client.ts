@@ -74,6 +74,11 @@ export const api = {
   // a 401 means "wrong credentials", not "expired session".
   postDirect:  <T>(path: string, body: unknown)  => request<T>(path, jsonPost(body), true),
   postForm:    <T>(path: string, body: FormData) => request<T>(path, { method: 'POST', body }),
+  put:         <T>(path: string, body: unknown)  => request<T>(path, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  }),
   patch:       <T>(path: string, body: unknown)  => request<T>(path, {
     method: 'PATCH',
     headers: { 'Content-Type': 'application/json' },
