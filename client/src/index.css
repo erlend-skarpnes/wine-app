@@ -42,6 +42,11 @@
     @apply opacity-60 cursor-default;
   }
 
+  button:focus-visible {
+    outline: 2px solid var(--color-wine);
+    outline-offset: 2px;
+  }
+
   button.secondary {
     @apply bg-surface text-bark border border-stone;
   }
