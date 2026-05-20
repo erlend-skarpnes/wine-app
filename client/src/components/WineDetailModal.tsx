@@ -70,7 +70,7 @@ export default function WineDetailModal({ barcode, name, homeId, quantity: initi
     enabled: !!homeId,
   })
 
-  const { data: wine, isLoading } = useQuery({
+  const { data: wine, isLoading, isError } = useQuery({
     queryKey: queryKeys.wine(barcode),
     queryFn: () => getWineData(barcode),
   })
@@ -262,6 +262,8 @@ export default function WineDetailModal({ barcode, name, homeId, quantity: initi
                     <div key={i} className="shimmer h-3 rounded-full" style={{ width: w, animationDelay: `${i * 55}ms` }} />
                   ))}
                 </div>
+              ) : isError ? (
+                <p className="text-clay text-sm">Kunne ikke laste vindata.</p>
               ) : !wine || (!wine.type && !wine.winery && !wine.region && !wine.country && wine.alcoholContent == null && !wine.storagePotential) ? (
                 <p className="text-clay text-sm">Ingen detaljer tilgjengelig for denne vinen ennå.</p>
               ) : (
@@ -297,6 +299,8 @@ export default function WineDetailModal({ barcode, name, homeId, quantity: initi
                     ))}
                   </div>
                 </div>
+              ) : isError ? (
+                <p className="text-clay text-sm">Kunne ikke laste vindata.</p>
               ) : !wine || (!wine.body && !wine.acidity && !wine.tannins && wine.grapes.length === 0 && wine.pairings.length === 0 && !wine.description) ? (
                 <p className="text-clay text-sm">Ingen smaks- eller matinformasjon tilgjengelig.</p>
               ) : (
