@@ -283,7 +283,7 @@ export default function WineDetailModal({ barcode, name, homeId, quantity: initi
 
             {/* Smak & mat panel */}
             <div
-              className="px-6 py-4 flex flex-col gap-5"
+              className="px-6 py-4 flex flex-col gap-5 justify-end"
               style={{ gridArea: '1/1', visibility: activeTab === 'smak' ? 'visible' : 'hidden' }}
             >
               {isLoading ? (
@@ -354,7 +354,7 @@ export default function WineDetailModal({ barcode, name, homeId, quantity: initi
             </div>
             {/* Notater panel */}
             <div
-              className="px-6 py-4 flex flex-col gap-4"
+              className="px-6 py-4 flex flex-col gap-4 justify-end"
               style={{ gridArea: '1/1', visibility: activeTab === 'notater' ? 'visible' : 'hidden' }}
             >
               <NotesPanel barcode={barcode} />
@@ -373,7 +373,7 @@ export default function WineDetailModal({ barcode, name, homeId, quantity: initi
                 key={tab}
                 type="button"
                 onClick={() => setActiveTab(tab)}
-                className={`flex-1 rounded-lg transition-all duration-200 ${tab === 'oversikt' ? 'flex items-center justify-center py-3' : 'flex items-end justify-center pt-4 pb-2'}`}
+                className="flex-1 py-2 rounded-lg transition-all duration-200"
                 style={{
                   fontFamily: "'Cormorant Garamond', Georgia, serif",
                   fontWeight: 600,
