@@ -137,6 +137,18 @@ using (var scope = app.Services.CreateScope())
             new Entry { HomeId = home.Id, LocationId = locCool.Id, Barcode = "7090016664323", Quantity = 2 }
         );
         await db.SaveChangesAsync();
+
+        var adminHome = new Home { Name = "Adminhjemmet", OwnerId = admin.Id, CreatedAt = DateTime.UtcNow };
+        db.Homes.Add(adminHome);
+        await db.SaveChangesAsync();
+
+        var adminLoc = new Location { Name = "Standard", HomeId = adminHome.Id, CreatedAt = DateTime.UtcNow };
+        db.Locations.Add(adminLoc);
+        db.HomeMembers.Add(new HomeMember { HomeId = adminHome.Id, UserId = admin.Id, JoinedAt = DateTime.UtcNow });
+        await db.SaveChangesAsync();
+
+        db.Entries.Add(new Entry { HomeId = adminHome.Id, LocationId = adminLoc.Id, Barcode = "7090016664323", Quantity = 2 });
+        await db.SaveChangesAsync();
     }
 }
 
