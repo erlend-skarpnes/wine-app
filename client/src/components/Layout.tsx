@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react'
 import { Outlet, Link, useNavigate } from 'react-router-dom'
-import { ChevronDown, Menu, Star, GlassWater, User } from 'lucide-react'
+import { ChevronDown, Menu, Star, GlassWater, User, Wine } from 'lucide-react'
 import { useIsFetching } from '@tanstack/react-query'
 import { useAuth } from '../context/AuthContext'
 import { useHome } from '../context/HomeContext'
@@ -90,6 +90,7 @@ export default function Layout() {
                 style={{ minWidth: '160px', boxShadow: '0 8px 32px rgba(44,24,16,0.18)' }}
               >
                 {[
+                  { icon: Wine,       label: 'Kjeller',    path: '/' },
                   { icon: Star,       label: 'Favoritter', path: '/favorites' },
                   { icon: GlassWater, label: 'Historikk',  path: '/history' },
                   { icon: User,       label: 'Profil',     path: '/profile' },
