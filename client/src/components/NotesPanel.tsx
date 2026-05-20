@@ -85,8 +85,7 @@ export default function NotesPanel({ barcode }: Props) {
               placeholder="f.eks. 2025"
               value={fromYear}
               onChange={e => setFromYear(e.target.value)}
-              className="w-full"
-            />
+              />
           </div>
           <span className="text-clay mt-5">–</span>
           <div className="flex flex-col gap-1 flex-1">
@@ -97,7 +96,6 @@ export default function NotesPanel({ barcode }: Props) {
               placeholder="f.eks. 2035"
               value={toYear}
               onChange={e => setToYear(e.target.value)}
-              className="w-full"
             />
           </div>
         </div>
@@ -109,7 +107,7 @@ export default function NotesPanel({ barcode }: Props) {
           placeholder="Egne tanker om denne vinen…"
           value={personalNote}
           onChange={e => setPersonalNote(e.target.value)}
-          className="w-full resize-none"
+          className="resize-none"
         />
       </div>
       <button

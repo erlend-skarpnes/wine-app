@@ -47,14 +47,11 @@ function PasswordModal({ onClose }: { onClose: () => void }) {
     <Modal title="Bytt passord" onClose={onClose}>
       <form onSubmit={handleSubmit} className="space-y-3">
         <input type="password" placeholder="Nåværende passord" autoComplete="current-password"
-          value={currentPassword} onChange={e => setCurrentPassword(e.target.value)}
-          className="w-full border border-stone rounded-lg px-4 py-2.5 text-sm bg-surface text-bark focus:outline-none focus:border-wine" required />
+          value={currentPassword} onChange={e => setCurrentPassword(e.target.value)} required />
         <input type="password" placeholder="Nytt passord" autoComplete="new-password"
-          value={newPassword} onChange={e => setNewPassword(e.target.value)}
-          className="w-full border border-stone rounded-lg px-4 py-2.5 text-sm bg-surface text-bark focus:outline-none focus:border-wine" required />
+          value={newPassword} onChange={e => setNewPassword(e.target.value)} required />
         <input type="password" placeholder="Bekreft nytt passord" autoComplete="new-password"
-          value={confirm} onChange={e => setConfirm(e.target.value)}
-          className="w-full border border-stone rounded-lg px-4 py-2.5 text-sm bg-surface text-bark focus:outline-none focus:border-wine" required />
+          value={confirm} onChange={e => setConfirm(e.target.value)} required />
         {error && <p className="text-red-600 text-sm">{error}</p>}
         {success && <p className="text-green-700 text-sm">Passord oppdatert.</p>}
         <button type="submit" disabled={mutation.isPending}>
@@ -105,7 +102,7 @@ function HomeSection() {
           placeholder="Opprett nytt hjem…"
           value={newName}
           onChange={e => setNewName(e.target.value)}
-          className="flex-1 border border-stone rounded-lg px-4 py-2.5 text-sm bg-surface text-bark focus:outline-none focus:border-wine"
+          className="flex-1"
         />
         <button type="submit" disabled={createMutation.isPending || !newName.trim()} className="flex items-center gap-1.5 px-4">
           <Plus size={14} />
