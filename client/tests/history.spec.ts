@@ -19,7 +19,7 @@ test('drink history section appears after scanning out a wine', async ({ authent
   await dialog.getByRole('button', { name: 'Ferdig' }).click()
 
   await page.goto('/history')
-  await expect(page.getByText('Drukket')).toBeVisible()
+  await expect(page.getByText('Historikk')).toBeVisible()
   await expect(page.getByText(/Testvinen|7090016664323/)).toBeVisible()
 })
 
@@ -41,7 +41,7 @@ test('drink history shows wine name, date, and home name', async ({ authenticate
   )
 
   await page.goto('/history')
-  await expect(page.getByText('Drukket')).toBeVisible()
+  await expect(page.getByText('Historikk')).toBeVisible()
   await expect(page.locator('main').getByText('Testvinen')).toBeVisible()
   await expect(page.locator('main').getByText('Testhjemmet')).toBeVisible()
 })
@@ -64,7 +64,7 @@ test('clicking drink history entry opens wine detail modal', async ({ authentica
   )
 
   await page.goto('/history')
-  await expect(page.getByText('Drukket')).toBeVisible()
+  await expect(page.getByText('Historikk')).toBeVisible()
 
   await page.getByRole('button').filter({ hasText: 'Testvinen' }).first().click()
 

@@ -31,7 +31,7 @@ test('valid share token shows home preview and join button', async ({ authentica
   await page2.waitForURL('/')
 
   await page2.goto('/profile')
-  await expect(page2.getByText('Testhjemmet')).toBeVisible()
+  await expect(page2.getByRole('main').getByText('Testhjemmet')).toBeVisible()
 
   await context2.close()
 })
