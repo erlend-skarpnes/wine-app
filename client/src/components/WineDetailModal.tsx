@@ -183,7 +183,7 @@ export default function WineDetailModal({ barcode, name, homeId, quantity: initi
             <div className="flex flex-col gap-3 pr-8">
               <h2
                 className="text-bark leading-tight"
-                style={{ fontFamily: "'Cormorant Garamond', Georgia, serif", fontWeight: 600, fontSize: '1.75rem' }}
+                style={{ fontFamily: "'Cormorant Garamond', Georgia, serif", fontWeight: 600, fontSize: '1.75rem', overflowWrap: 'break-word', hyphens: 'auto' }}
               >
                 {title}
               </h2>
