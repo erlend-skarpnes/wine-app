@@ -373,7 +373,7 @@ export default function WineDetailModal({ barcode, name, homeId, quantity: initi
                 key={tab}
                 type="button"
                 onClick={() => setActiveTab(tab)}
-                className="flex-1 py-2 rounded-lg transition-all duration-200"
+                className={`flex-1 rounded-lg transition-all duration-200 ${tab === 'oversikt' ? 'flex items-center justify-center py-2' : 'flex items-end justify-center pt-2 pb-1.5'}`}
                 style={{
                   fontFamily: "'Cormorant Garamond', Georgia, serif",
                   fontWeight: 600,
