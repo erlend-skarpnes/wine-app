@@ -206,29 +206,39 @@ export default function WineDetailModal({ barcode, name, homeId, quantity: initi
             </div>
           </div>
 
-          {/* Close button */}
+          {/* Close button — 44×44 tap target, 30×30 visual */}
           <button
             type="button"
             aria-label="Lukk"
             onClick={onClose}
             style={{
               position: 'absolute',
-              top: '12px',
-              right: '12px',
-              width: '30px',
-              height: '30px',
+              top: '5px',
+              right: '5px',
+              width: '44px',
+              height: '44px',
               borderRadius: '50%',
-              background: 'rgba(232,224,216,0.9)',
+              background: 'transparent',
               border: 'none',
               padding: 0,
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              color: '#2c1810',
               cursor: 'pointer',
             }}
           >
-            <X size={14} />
+            <span style={{
+              width: '30px',
+              height: '30px',
+              borderRadius: '50%',
+              background: 'rgba(232,224,216,0.9)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              color: '#2c1810',
+            }}>
+              <X size={14} />
+            </span>
           </button>
         </div>
 
