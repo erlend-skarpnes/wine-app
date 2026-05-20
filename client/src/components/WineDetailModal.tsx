@@ -1,14 +1,14 @@
-import { useState, useCallback, useEffect } from 'react'
+import { useState, useCallback } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { MapPin, X, Star } from 'lucide-react'
 import { getWineData } from '../api/wine'
 import { queryKeys } from '../api/queryKeys'
 import { adjustEntry, getEntryLocations } from '../api/locations'
 import { getFavorites, addFavorite, removeFavorite } from '../api/favorites'
-import { getNote, upsertNote } from '../api/notes'
 import Modal from './Modal'
 import WineImage from './WineImage'
 import QuantityAdjuster from './QuantityAdjuster'
+import NotesPanel from './NotesPanel'
 import type { LocationEntry } from '../api/types'
 
 interface Props {
@@ -52,10 +52,6 @@ export default function WineDetailModal({ barcode, name, homeId, quantity: initi
   const queryClient = useQueryClient()
   const [editState, setEditState] = useState<{ location: LocationEntry; editQuantity: number } | null>(null)
   const [activeTab, setActiveTab] = useState<'oversikt' | 'smak' | 'notater'>('oversikt')
-  const [noteFromYear, setNoteFromYear] = useState('')
-  const [noteToYear, setNoteToYear] = useState('')
-  const [notePersonalNote, setNotePersonalNote] = useState('')
-  const [showOwnNoteForm, setShowOwnNoteForm] = useState(false)
 
   const { data: favorites = [] } = useQuery({
     queryKey: queryKeys.favorites(),
@@ -78,26 +74,6 @@ export default function WineDetailModal({ barcode, name, homeId, quantity: initi
     queryKey: queryKeys.wine(barcode),
     queryFn: () => getWineData(barcode),
   })
-
-  const { data: note } = useQuery({
-    queryKey: queryKeys.note(barcode),
-    queryFn: () => getNote(barcode),
-    retry: false,
-  })
-
-  const upsertNoteMutation = useMutation({
-    mutationFn: (body: { drinkFromYear: number | null; drinkToYear: number | null; personalNote: string | null }) =>
-      upsertNote(barcode, body),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: queryKeys.note(barcode) }),
-  })
-
-  useEffect(() => {
-    if (note?.isOwn) {
-      setNoteFromYear(note.drinkFromYear?.toString() ?? '')
-      setNoteToYear(note.drinkToYear?.toString() ?? '')
-      setNotePersonalNote(note.personalNote ?? '')
-    }
-  }, [note])
 
   const totalQuantity = locationEntries.length > 0
     ? locationEntries.reduce((sum, le) => sum + le.quantity, 0)
@@ -359,89 +335,7 @@ export default function WineDetailModal({ barcode, name, homeId, quantity: initi
               className="px-6 py-4 flex flex-col gap-4"
               style={{ gridArea: '1/1', visibility: activeTab === 'notater' ? 'visible' : 'hidden' }}
             >
-              {note && !note.isOwn && !showOwnNoteForm ? (
-                <div className="flex flex-col gap-4">
-                  <div>
-                    <p className="text-clay text-xs font-semibold mb-2 uppercase tracking-wide">Drikkeklar</p>
-                    <p className="text-bark text-base" style={{ fontFamily: "'Cormorant Garamond', Georgia, serif", fontSize: '1.35rem' }}>
-                      {note.drinkFromYear && note.drinkToYear
-                        ? `${note.drinkFromYear} – ${note.drinkToYear}`
-                        : note.drinkFromYear
-                          ? `Fra ${note.drinkFromYear}`
-                          : note.drinkToYear
-                            ? `Innen ${note.drinkToYear}`
-                            : '–'}
-                    </p>
-                    <p className="text-clay text-xs mt-1">— {note.authorUsername}</p>
-                  </div>
-                  <button
-                    type="button"
-                    className="secondary self-start text-sm py-2 px-4"
-                    onClick={() => setShowOwnNoteForm(true)}
-                  >
-                    Legg til din egen
-                  </button>
-                </div>
-              ) : (
-                <form
-                  className="flex flex-col gap-4"
-                  onSubmit={e => {
-                    e.preventDefault()
-                    upsertNoteMutation.mutate({
-                      drinkFromYear: noteFromYear ? parseInt(noteFromYear, 10) : null,
-                      drinkToYear: noteToYear ? parseInt(noteToYear, 10) : null,
-                      personalNote: notePersonalNote.trim() || null,
-                    })
-                    setShowOwnNoteForm(false)
-                  }}
-                >
-                  <div>
-                    <p className="text-clay text-xs font-semibold mb-3 uppercase tracking-wide">Drikkeklar</p>
-                    <div className="flex gap-3 items-center">
-                      <div className="flex flex-col gap-1 flex-1">
-                        <label className="text-clay text-xs">Fra år</label>
-                        <input
-                          type="number"
-                          inputMode="numeric"
-                          placeholder="f.eks. 2025"
-                          value={noteFromYear}
-                          onChange={e => setNoteFromYear(e.target.value)}
-                          className="w-full"
-                        />
-                      </div>
-                      <span className="text-clay mt-5">–</span>
-                      <div className="flex flex-col gap-1 flex-1">
-                        <label className="text-clay text-xs">Til år</label>
-                        <input
-                          type="number"
-                          inputMode="numeric"
-                          placeholder="f.eks. 2035"
-                          value={noteToYear}
-                          onChange={e => setNoteToYear(e.target.value)}
-                          className="w-full"
-                        />
-                      </div>
-                    </div>
-                  </div>
-                  <div className="flex flex-col gap-1">
-                    <label className="text-clay text-xs font-semibold uppercase tracking-wide">Personlig notat</label>
-                    <textarea
-                      rows={3}
-                      placeholder="Egne tanker om denne vinen…"
-                      value={notePersonalNote}
-                      onChange={e => setNotePersonalNote(e.target.value)}
-                      className="w-full resize-none"
-                    />
-                  </div>
-                  <button
-                    type="submit"
-                    className="secondary self-start py-2 px-5 text-sm"
-                    disabled={upsertNoteMutation.isPending}
-                  >
-                    {upsertNoteMutation.isPending ? 'Lagrer…' : 'Lagre'}
-                  </button>
-                </form>
-              )}
+              <NotesPanel barcode={barcode} />
             </div>
           </div>
         </div>
