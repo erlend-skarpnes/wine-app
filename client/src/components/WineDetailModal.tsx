@@ -160,7 +160,7 @@ export default function WineDetailModal({ barcode, name, homeId, quantity: initi
       <div
         role="dialog"
         aria-modal="true"
-        className="relative bg-surface w-full sm:max-w-[460px] rounded-t-3xl sm:rounded-2xl overflow-hidden flex flex-col shadow-[0_-8px_48px_rgba(0,0,0,0.18)] sm:shadow-[0_8px_48px_rgba(0,0,0,0.22)] h-[92dvh] sm:h-auto"
+        className="relative bg-surface w-full sm:max-w-[460px] rounded-t-3xl sm:rounded-2xl overflow-hidden flex flex-col shadow-[0_-8px_48px_rgba(0,0,0,0.18)] sm:shadow-[0_8px_48px_rgba(0,0,0,0.22)]"
         style={{ maxHeight: '92dvh' }}
       >
         {/* Close button — always visible, positioned relative to dialog */}
@@ -253,7 +253,7 @@ export default function WineDetailModal({ barcode, name, homeId, quantity: initi
         {/* Scrollable body */}
         <div className="overflow-y-auto flex-1 flex flex-col">
           {/* Both panels always rendered; inactive is visibility:hidden to hold height */}
-          <div style={{ display: 'grid' }} className="min-h-full">
+          <div style={{ display: 'grid' }}>
             {/* Oversikt panel */}
             <div
               className="px-6 py-4 flex flex-col gap-5"
@@ -283,7 +283,7 @@ export default function WineDetailModal({ barcode, name, homeId, quantity: initi
 
             {/* Smak & mat panel */}
             <div
-              className="px-6 py-4 flex flex-col gap-5 justify-end h-full"
+              className="px-6 py-4 flex flex-col gap-5"
               style={{ gridArea: '1/1', visibility: activeTab === 'smak' ? 'visible' : 'hidden' }}
             >
               {isLoading ? (
@@ -354,7 +354,7 @@ export default function WineDetailModal({ barcode, name, homeId, quantity: initi
             </div>
             {/* Notater panel */}
             <div
-              className="px-6 py-4 flex flex-col gap-4 justify-end h-full"
+              className="px-6 py-4 flex flex-col gap-4"
               style={{ gridArea: '1/1', visibility: activeTab === 'notater' ? 'visible' : 'hidden' }}
             >
               <NotesPanel barcode={barcode} />
