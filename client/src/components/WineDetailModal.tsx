@@ -199,10 +199,10 @@ export default function WineDetailModal({ barcode, name, homeId, quantity: initi
           </span>
         </button>
 
-        {/* Header: bottle image left, primary info right — only on Oversikt */}
-        {activeTab === 'oversikt' && (
-          <div className="flex flex-shrink-0" style={{ minHeight: '240px' }}>
-            {/* Image column */}
+        {/* Header: bottle image (Oversikt only) left, primary info right */}
+        <div className="flex flex-shrink-0" style={{ minHeight: activeTab === 'oversikt' ? '240px' : undefined }}>
+          {/* Image column — only on Oversikt */}
+          {activeTab === 'oversikt' && (
             <div className="flex-shrink-0 relative" style={{ width: '120px', background: '#fff' }}>
               {wine?.imageUrl
                 ? <WineImage src={wine.imageUrl} alt={wine.name} className="absolute inset-0 w-full h-full object-contain p-3" />
@@ -214,41 +214,41 @@ export default function WineDetailModal({ barcode, name, homeId, quantity: initi
                   </div>
               }
             </div>
+          )}
 
-            {/* Info column */}
-            <div className="flex-1 px-5 pt-4 pb-4 flex flex-col justify-between min-w-0 pr-12">
-              <div className="flex flex-col gap-3">
-                <h2
-                  className="text-bark leading-tight"
-                  style={{ fontFamily: "'Cormorant Garamond', Georgia, serif", fontWeight: 600, fontSize: '1.75rem', overflowWrap: 'break-word', hyphens: 'auto' }}
-                >
-                  {title}
-                </h2>
+          {/* Info column */}
+          <div className="flex-1 px-5 pt-4 pb-4 flex flex-col justify-between min-w-0 pr-12">
+            <div className="flex flex-col gap-3">
+              <h2
+                className="text-bark leading-tight"
+                style={{ fontFamily: "'Cormorant Garamond', Georgia, serif", fontWeight: 600, fontSize: '1.75rem', overflowWrap: 'break-word', hyphens: 'auto' }}
+              >
+                {title}
+              </h2>
 
-                {locationEntries.length > 0 && (
-                  <div className="flex flex-wrap gap-1.5">
-                    {locationEntries.map((le, i) => (
-                      <span
-                        key={le.locationId ?? `unlocated-${i}`}
-                        className="inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-medium"
-                        style={{ background: 'rgba(114,47,55,0.09)', color: '#722F37', border: '1px solid rgba(114,47,55,0.18)' }}
-                      >
-                        <MapPin size={10} />
-                        {le.locationName ?? 'Uten plassering'}
-                        {le.sectionName ? ` › ${le.sectionName}` : ''}
-                        {locationEntries.length > 1 ? ` · ${le.quantity}` : ''}
-                      </span>
-                    ))}
-                  </div>
-                )}
+              {locationEntries.length > 0 && (
+                <div className="flex flex-wrap gap-1.5">
+                  {locationEntries.map((le, i) => (
+                    <span
+                      key={le.locationId ?? `unlocated-${i}`}
+                      className="inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-medium"
+                      style={{ background: 'rgba(114,47,55,0.09)', color: '#722F37', border: '1px solid rgba(114,47,55,0.18)' }}
+                    >
+                      <MapPin size={10} />
+                      {le.locationName ?? 'Uten plassering'}
+                      {le.sectionName ? ` › ${le.sectionName}` : ''}
+                      {locationEntries.length > 1 ? ` · ${le.quantity}` : ''}
+                    </span>
+                  ))}
+                </div>
+              )}
 
-                <p className="text-clay text-sm">
-                  {totalQuantity} {totalQuantity === 1 ? 'flaske' : 'flasker'} totalt
-                </p>
-              </div>
+              <p className="text-clay text-sm">
+                {totalQuantity} {totalQuantity === 1 ? 'flaske' : 'flasker'} totalt
+              </p>
             </div>
           </div>
-        )}
+        </div>
 
         {/* Scrollable body */}
         <div className="overflow-y-auto flex-1 flex flex-col">
