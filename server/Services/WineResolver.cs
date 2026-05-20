@@ -3,7 +3,7 @@ using WineApp.Api.Models;
 
 namespace WineApp.Api.Services;
 
-public class WineResolver(IVinmonopoletService vinmonopolet, AppDbContext db) : IWineResolver
+public class WineResolver(IVinmonopoletService vinmonopolet, AppDbContext db, IWineCache wineCache) : IWineResolver
 {
     public async Task<WineData?> GetAsync(string barcode)
     {
@@ -15,13 +15,7 @@ public class WineResolver(IVinmonopoletService vinmonopolet, AppDbContext db) : 
         if (fetched is null)
             return cached; // serve stale if Vinmonopolet is unreachable
 
-        var existing = await db.WineData.FindAsync(fetched.Barcode);
-        if (existing is not null)
-            db.Entry(existing).CurrentValues.SetValues(fetched);
-        else
-            db.WineData.Add(fetched);
-        await db.SaveChangesAsync();
-
+        await wineCache.StoreAsync(fetched);
         return fetched;
     }
 }
