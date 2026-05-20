@@ -160,7 +160,7 @@ export default function WineDetailModal({ barcode, name, homeId, quantity: initi
       <div
         role="dialog"
         aria-modal="true"
-        className="relative bg-surface w-full sm:max-w-[460px] rounded-t-3xl sm:rounded-2xl overflow-hidden flex flex-col shadow-[0_-8px_48px_rgba(0,0,0,0.18)] sm:shadow-[0_8px_48px_rgba(0,0,0,0.22)]"
+        className="relative bg-surface w-full sm:max-w-[460px] rounded-t-3xl sm:rounded-2xl overflow-hidden flex flex-col shadow-[0_-8px_48px_rgba(0,0,0,0.18)] sm:shadow-[0_8px_48px_rgba(0,0,0,0.22)] h-[92dvh] sm:h-auto"
         style={{ maxHeight: '92dvh' }}
       >
         {/* Close button — always visible, positioned relative to dialog */}
