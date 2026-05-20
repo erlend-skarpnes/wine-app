@@ -110,13 +110,18 @@ export default function NotesPanel({ barcode }: Props) {
           className="resize-none"
         />
       </div>
-      <button
-        type="submit"
-        className="secondary self-start py-2 px-5 text-sm"
-        disabled={upsertMutation.isPending}
-      >
-        {upsertMutation.isPending ? 'Lagrer…' : 'Lagre'}
-      </button>
+      <div className="flex items-center gap-3">
+        <button
+          type="submit"
+          className="secondary self-start py-2 px-5 text-sm"
+          disabled={upsertMutation.isPending}
+        >
+          {upsertMutation.isPending ? 'Lagrer…' : 'Lagre'}
+        </button>
+        {upsertMutation.isSuccess && (
+          <span className="text-xs text-clay">Lagret</span>
+        )}
+      </div>
     </form>
   )
 }
