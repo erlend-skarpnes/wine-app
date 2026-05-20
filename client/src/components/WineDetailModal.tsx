@@ -169,7 +169,12 @@ export default function WineDetailModal({ barcode, name, homeId, quantity: initi
           <div className="flex-shrink-0 relative" style={{ width: '120px', background: '#fff' }}>
             {wine?.imageUrl
               ? <WineImage src={wine.imageUrl} alt={wine.name} className="absolute inset-0 w-full h-full object-contain p-3" />
-              : <div className="absolute inset-0 flex items-center justify-center select-none" style={{ color: '#e8e0d8', fontSize: '3rem' }}>◇</div>
+              : <div className="absolute inset-0 flex items-center justify-center" aria-hidden="true">
+                  <svg width="36" height="80" viewBox="0 0 36 80" fill="none" xmlns="http://www.w3.org/2000/svg" opacity="0.35">
+                    <path d="M14 0h8v8c0 0 8 8 8 24v36c0 6.627-4.477 12-10 12H16C10.477 80 6 74.627 6 68V32C6 16 14 8 14 8V0Z" fill="var(--color-stone)" stroke="var(--color-clay)" strokeWidth="1.5"/>
+                    <rect x="12" y="0" width="12" height="2" rx="1" fill="var(--color-clay)" opacity="0.4"/>
+                  </svg>
+                </div>
             }
           </div>
 
