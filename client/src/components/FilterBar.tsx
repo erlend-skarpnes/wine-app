@@ -42,7 +42,6 @@ export default function FilterBar({ filters, options, activeCount, onFilterChang
 
   function clearAll() {
     onFilterChange('location', [])
-    onFilterChange('storage', null)
     onFilterChange('type', null)
     onFilterChange('grape', null)
     onFilterChange('pairing', null)
@@ -50,7 +49,6 @@ export default function FilterBar({ filters, options, activeCount, onFilterChang
 
   const activeSummary = [
     ...filters.location.map(id => options.locations.find(l => l.id === id)?.name).filter(Boolean),
-    filters.storage === 'drink-now' ? 'Drikk nå' : filters.storage === 'store' ? 'Kan lagres' : null,
     filters.type,
     filters.grape,
     filters.pairing,
@@ -100,14 +98,6 @@ export default function FilterBar({ filters, options, activeCount, onFilterChang
               ))}
             </CategoryRow>
           )}
-
-          <CategoryRow label="Lagring">
-            {(['drink-now', 'store'] as const).map(opt => (
-              <button key={opt} type="button" className={chip(filters.storage === opt)} onClick={() => onFilterChange('storage', filters.storage === opt ? null : opt)}>
-                {opt === 'drink-now' ? 'Drikk nå' : 'Kan lagres'}
-              </button>
-            ))}
-          </CategoryRow>
 
           {options.types.length > 0 && (
             <CategoryRow label="Type">

@@ -4,7 +4,7 @@ import { type Filters, extractFilterOptions, filterEntries } from '../stockFilte
 
 export type { Filters, FilterOptions } from '../stockFilters'
 
-const EMPTY: Filters = { location: [], storage: null, type: null, pairing: null, grape: null }
+const EMPTY: Filters = { location: [], type: null, pairing: null, grape: null }
 
 function loadLocationFilter(): number[] {
   try {
@@ -31,7 +31,7 @@ export function useFilters(entries: Entry[]) {
   const visibleEntries = filterEntries(entries, filters)
   const activeCount =
     (filters.location.length > 0 ? 1 : 0) +
-    [filters.storage, filters.type, filters.pairing, filters.grape].filter(Boolean).length
+    [filters.type, filters.pairing, filters.grape].filter(Boolean).length
 
   return { filters, options, visibleEntries, setFilter, activeCount }
 }

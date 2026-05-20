@@ -2,7 +2,6 @@ import type { Entry } from './api/types'
 
 export interface Filters {
   location: number[]
-  storage: 'drink-now' | 'store' | null
   type: string | null
   pairing: string | null
   grape: string | null
@@ -36,10 +35,6 @@ export function filterEntries(entries: Entry[], filters: Filters): Entry[] {
     if (filters.type    && e.type !== filters.type) return false
     if (filters.pairing && !e.pairings.includes(filters.pairing)) return false
     if (filters.grape   && !e.grapes.includes(filters.grape)) return false
-    if (filters.storage) {
-      const isDrinkNow = !e.storagePotential || !e.storagePotential.toLowerCase().includes('kan også lagres')
-      if (filters.storage === 'drink-now' ? !isDrinkNow : isDrinkNow) return false
-    }
     return true
   })
 }
