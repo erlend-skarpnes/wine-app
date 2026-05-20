@@ -33,7 +33,10 @@ public class StockQuery(AppDbContext db) : IStockQuery
                     wine?.Name,
                     wine?.Type,
                     wine?.Pairings ?? [],
-                    wine?.Grapes.Select(WineDataHelpers.StripGrapePercentage).ToArray() ?? [],
+                    wine?.Grapes.Select(g => {
+                        var parts = g.Split(' ');
+                        return parts.Length > 1 && parts[^1].EndsWith('%') ? string.Join(' ', parts[..^1]) : g;
+                    }).ToArray() ?? [],
                     wine?.StoragePotential,
                     wine?.AlcoholContent,
                     locations
