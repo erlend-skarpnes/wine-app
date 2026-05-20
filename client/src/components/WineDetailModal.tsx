@@ -160,92 +160,95 @@ export default function WineDetailModal({ barcode, name, homeId, quantity: initi
       <div
         role="dialog"
         aria-modal="true"
-        className="bg-surface w-full sm:max-w-[460px] rounded-t-3xl sm:rounded-2xl overflow-hidden flex flex-col shadow-[0_-8px_48px_rgba(0,0,0,0.18)] sm:shadow-[0_8px_48px_rgba(0,0,0,0.22)]"
+        className="relative bg-surface w-full sm:max-w-[460px] rounded-t-3xl sm:rounded-2xl overflow-hidden flex flex-col shadow-[0_-8px_48px_rgba(0,0,0,0.18)] sm:shadow-[0_8px_48px_rgba(0,0,0,0.22)]"
         style={{ maxHeight: '92dvh' }}
       >
-        {/* Header: bottle image left, primary info right */}
-        <div className="relative flex flex-shrink-0" style={{ minHeight: '240px' }}>
-          {/* Image column */}
-          <div className="flex-shrink-0 relative" style={{ width: '120px', background: '#fff' }}>
-            {wine?.imageUrl
-              ? <WineImage src={wine.imageUrl} alt={wine.name} className="absolute inset-0 w-full h-full object-contain p-3" />
-              : <div className="absolute inset-0 flex items-center justify-center" aria-hidden="true">
-                  <svg width="36" height="80" viewBox="0 0 36 80" fill="none" xmlns="http://www.w3.org/2000/svg" opacity="0.35">
-                    <path d="M14 0h8v8c0 0 8 8 8 24v36c0 6.627-4.477 12-10 12H16C10.477 80 6 74.627 6 68V32C6 16 14 8 14 8V0Z" fill="var(--color-stone)" stroke="var(--color-clay)" strokeWidth="1.5"/>
-                    <rect x="12" y="0" width="12" height="2" rx="1" fill="var(--color-clay)" opacity="0.4"/>
-                  </svg>
-                </div>
-            }
-          </div>
+        {/* Close button — always visible, positioned relative to dialog */}
+        <button
+          type="button"
+          aria-label="Lukk"
+          onClick={onClose}
+          style={{
+            position: 'absolute',
+            top: '5px',
+            right: '5px',
+            width: '44px',
+            height: '44px',
+            borderRadius: '50%',
+            background: 'transparent',
+            border: 'none',
+            padding: 0,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            cursor: 'pointer',
+            zIndex: 10,
+          }}
+        >
+          <span style={{
+            width: '30px',
+            height: '30px',
+            borderRadius: '50%',
+            background: 'rgba(232,224,216,0.9)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            color: '#2c1810',
+          }}>
+            <X size={14} />
+          </span>
+        </button>
 
-          {/* Info column */}
-          <div className="flex-1 px-5 pt-4 pb-4 flex flex-col justify-between min-w-0">
-            <div className="flex flex-col gap-3 pr-8">
-              <h2
-                className="text-bark leading-tight"
-                style={{ fontFamily: "'Cormorant Garamond', Georgia, serif", fontWeight: 600, fontSize: '1.75rem', overflowWrap: 'break-word', hyphens: 'auto' }}
-              >
-                {title}
-              </h2>
+        {/* Header: bottle image left, primary info right — only on Oversikt */}
+        {activeTab === 'oversikt' && (
+          <div className="flex flex-shrink-0" style={{ minHeight: '240px' }}>
+            {/* Image column */}
+            <div className="flex-shrink-0 relative" style={{ width: '120px', background: '#fff' }}>
+              {wine?.imageUrl
+                ? <WineImage src={wine.imageUrl} alt={wine.name} className="absolute inset-0 w-full h-full object-contain p-3" />
+                : <div className="absolute inset-0 flex items-center justify-center" aria-hidden="true">
+                    <svg width="36" height="80" viewBox="0 0 36 80" fill="none" xmlns="http://www.w3.org/2000/svg" opacity="0.35">
+                      <path d="M14 0h8v8c0 0 8 8 8 24v36c0 6.627-4.477 12-10 12H16C10.477 80 6 74.627 6 68V32C6 16 14 8 14 8V0Z" fill="var(--color-stone)" stroke="var(--color-clay)" strokeWidth="1.5"/>
+                      <rect x="12" y="0" width="12" height="2" rx="1" fill="var(--color-clay)" opacity="0.4"/>
+                    </svg>
+                  </div>
+              }
+            </div>
 
-              {locationEntries.length > 0 && (
-                <div className="flex flex-wrap gap-1.5">
-                  {locationEntries.map((le, i) => (
-                    <span
-                      key={le.locationId ?? `unlocated-${i}`}
-                      className="inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-medium"
-                      style={{ background: 'rgba(114,47,55,0.09)', color: '#722F37', border: '1px solid rgba(114,47,55,0.18)' }}
-                    >
-                      <MapPin size={10} />
-                      {le.locationName ?? 'Uten plassering'}
-                      {le.sectionName ? ` › ${le.sectionName}` : ''}
-                      {locationEntries.length > 1 ? ` · ${le.quantity}` : ''}
-                    </span>
-                  ))}
-                </div>
-              )}
+            {/* Info column */}
+            <div className="flex-1 px-5 pt-4 pb-4 flex flex-col justify-between min-w-0 pr-12">
+              <div className="flex flex-col gap-3">
+                <h2
+                  className="text-bark leading-tight"
+                  style={{ fontFamily: "'Cormorant Garamond', Georgia, serif", fontWeight: 600, fontSize: '1.75rem', overflowWrap: 'break-word', hyphens: 'auto' }}
+                >
+                  {title}
+                </h2>
 
-              <p className="text-clay text-sm">
-                {totalQuantity} {totalQuantity === 1 ? 'flaske' : 'flasker'} totalt
-              </p>
+                {locationEntries.length > 0 && (
+                  <div className="flex flex-wrap gap-1.5">
+                    {locationEntries.map((le, i) => (
+                      <span
+                        key={le.locationId ?? `unlocated-${i}`}
+                        className="inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-medium"
+                        style={{ background: 'rgba(114,47,55,0.09)', color: '#722F37', border: '1px solid rgba(114,47,55,0.18)' }}
+                      >
+                        <MapPin size={10} />
+                        {le.locationName ?? 'Uten plassering'}
+                        {le.sectionName ? ` › ${le.sectionName}` : ''}
+                        {locationEntries.length > 1 ? ` · ${le.quantity}` : ''}
+                      </span>
+                    ))}
+                  </div>
+                )}
+
+                <p className="text-clay text-sm">
+                  {totalQuantity} {totalQuantity === 1 ? 'flaske' : 'flasker'} totalt
+                </p>
+              </div>
             </div>
           </div>
-
-          {/* Close button — 44×44 tap target, 30×30 visual */}
-          <button
-            type="button"
-            aria-label="Lukk"
-            onClick={onClose}
-            style={{
-              position: 'absolute',
-              top: '5px',
-              right: '5px',
-              width: '44px',
-              height: '44px',
-              borderRadius: '50%',
-              background: 'transparent',
-              border: 'none',
-              padding: 0,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              cursor: 'pointer',
-            }}
-          >
-            <span style={{
-              width: '30px',
-              height: '30px',
-              borderRadius: '50%',
-              background: 'rgba(232,224,216,0.9)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              color: '#2c1810',
-            }}>
-              <X size={14} />
-            </span>
-          </button>
-        </div>
+        )}
 
         {/* Scrollable body */}
         <div className="overflow-y-auto flex-1 flex flex-col">
