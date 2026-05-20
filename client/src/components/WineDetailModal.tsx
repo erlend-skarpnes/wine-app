@@ -253,7 +253,7 @@ export default function WineDetailModal({ barcode, name, homeId, quantity: initi
         {/* Scrollable body */}
         <div className="overflow-y-auto flex-1 flex flex-col">
           {/* Both panels always rendered; inactive is visibility:hidden to hold height */}
-          <div style={{ display: 'grid' }}>
+          <div style={{ display: 'grid' }} className="min-h-full">
             {/* Oversikt panel */}
             <div
               className="px-6 py-4 flex flex-col gap-5"
@@ -283,7 +283,7 @@ export default function WineDetailModal({ barcode, name, homeId, quantity: initi
 
             {/* Smak & mat panel */}
             <div
-              className="px-6 py-4 flex flex-col gap-5 justify-end"
+              className="px-6 py-4 flex flex-col gap-5 justify-end h-full"
               style={{ gridArea: '1/1', visibility: activeTab === 'smak' ? 'visible' : 'hidden' }}
             >
               {isLoading ? (
@@ -354,7 +354,7 @@ export default function WineDetailModal({ barcode, name, homeId, quantity: initi
             </div>
             {/* Notater panel */}
             <div
-              className="px-6 py-4 flex flex-col gap-4 justify-end"
+              className="px-6 py-4 flex flex-col gap-4 justify-end h-full"
               style={{ gridArea: '1/1', visibility: activeTab === 'notater' ? 'visible' : 'hidden' }}
             >
               <NotesPanel barcode={barcode} />
