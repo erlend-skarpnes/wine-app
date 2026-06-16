@@ -18,6 +18,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
     public DbSet<DrinkLog> DrinkLogs => Set<DrinkLog>();
     public DbSet<FavoriteWine> FavoriteWines => Set<FavoriteWine>();
     public DbSet<WineNote> WineNotes => Set<WineNote>();
+    public DbSet<WineSample> WineSamples => Set<WineSample>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -129,13 +130,6 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
             .HasForeignKey(d => d.HomeId)
             .OnDelete(DeleteBehavior.Cascade);
 
-        modelBuilder.Entity<DrinkLog>()
-            .HasOne(d => d.WineData)
-            .WithMany()
-            .HasForeignKey(d => d.Barcode)
-            .OnDelete(DeleteBehavior.Restrict)
-            .IsRequired(false);
-
         modelBuilder.Entity<FavoriteWine>()
             .HasIndex(f => new { f.UserId, f.Barcode })
             .IsUnique();
@@ -145,13 +139,6 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
             .WithMany()
             .HasForeignKey(f => f.UserId)
             .OnDelete(DeleteBehavior.Cascade);
-
-        modelBuilder.Entity<FavoriteWine>()
-            .HasOne(f => f.WineData)
-            .WithMany()
-            .HasForeignKey(f => f.Barcode)
-            .OnDelete(DeleteBehavior.Restrict)
-            .IsRequired(false);
 
         modelBuilder.Entity<WineNote>()
             .HasIndex(n => new { n.UserId, n.Barcode })
@@ -163,11 +150,17 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
             .HasForeignKey(n => n.UserId)
             .OnDelete(DeleteBehavior.Cascade);
 
-        modelBuilder.Entity<WineNote>()
-            .HasOne(n => n.WineData)
+        modelBuilder.Entity<WineSample>(entity =>
+        {
+            entity.Property(e => e.LabelGrapes).HasColumnType("text[]");
+            entity.Property(e => e.LabelPairings).HasColumnType("text[]");
+        });
+
+        modelBuilder.Entity<WineSample>()
+            .HasOne(s => s.User)
             .WithMany()
-            .HasForeignKey(n => n.Barcode)
-            .OnDelete(DeleteBehavior.Restrict)
+            .HasForeignKey(s => s.UserId)
+            .OnDelete(DeleteBehavior.SetNull)
             .IsRequired(false);
     }
 }

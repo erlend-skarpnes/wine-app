@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using WineApp.Api.Data;
@@ -11,13 +12,15 @@ using WineApp.Api.Data;
 namespace WineApp.Api.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260521204922_AddWineSamples")]
+    partial class AddWineSamples
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "9.0.17")
+                .HasAnnotation("ProductVersion", "9.0.15")
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
@@ -64,7 +67,6 @@ namespace WineApp.Api.Migrations
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
                     b.Property<string>("Barcode")
-                        .IsRequired()
                         .HasColumnType("text");
 
                     b.Property<DateTime>("DrankAt")
@@ -80,6 +82,8 @@ namespace WineApp.Api.Migrations
                         .HasColumnType("integer");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("Barcode");
 
                     b.HasIndex("HomeId");
 
@@ -141,13 +145,14 @@ namespace WineApp.Api.Migrations
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("Barcode")
-                        .IsRequired()
                         .HasColumnType("text");
 
                     b.Property<int>("UserId")
                         .HasColumnType("integer");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("Barcode");
 
                     b.HasIndex("UserId", "Barcode")
                         .IsUnique();
@@ -413,7 +418,6 @@ namespace WineApp.Api.Migrations
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
                     b.Property<string>("Barcode")
-                        .IsRequired()
                         .HasColumnType("text");
 
                     b.Property<DateTime>("CreatedAt")
@@ -435,6 +439,8 @@ namespace WineApp.Api.Migrations
                         .HasColumnType("integer");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("Barcode");
 
                     b.HasIndex("UserId", "Barcode")
                         .IsUnique();
@@ -492,6 +498,11 @@ namespace WineApp.Api.Migrations
 
             modelBuilder.Entity("WineApp.Api.Models.DrinkLog", b =>
                 {
+                    b.HasOne("WineApp.Api.Models.WineData", "WineData")
+                        .WithMany()
+                        .HasForeignKey("Barcode")
+                        .OnDelete(DeleteBehavior.Restrict);
+
                     b.HasOne("WineApp.Api.Models.Home", "Home")
                         .WithMany()
                         .HasForeignKey("HomeId")
@@ -507,6 +518,8 @@ namespace WineApp.Api.Migrations
                     b.Navigation("Home");
 
                     b.Navigation("User");
+
+                    b.Navigation("WineData");
                 });
 
             modelBuilder.Entity("WineApp.Api.Models.Entry", b =>
@@ -536,6 +549,11 @@ namespace WineApp.Api.Migrations
 
             modelBuilder.Entity("WineApp.Api.Models.FavoriteWine", b =>
                 {
+                    b.HasOne("WineApp.Api.Models.WineData", "WineData")
+                        .WithMany()
+                        .HasForeignKey("Barcode")
+                        .OnDelete(DeleteBehavior.Restrict);
+
                     b.HasOne("WineApp.Api.Models.AppUser", "User")
                         .WithMany()
                         .HasForeignKey("UserId")
@@ -543,6 +561,8 @@ namespace WineApp.Api.Migrations
                         .IsRequired();
 
                     b.Navigation("User");
+
+                    b.Navigation("WineData");
                 });
 
             modelBuilder.Entity("WineApp.Api.Models.Home", b =>
@@ -621,6 +641,11 @@ namespace WineApp.Api.Migrations
 
             modelBuilder.Entity("WineApp.Api.Models.WineNote", b =>
                 {
+                    b.HasOne("WineApp.Api.Models.WineData", "WineData")
+                        .WithMany()
+                        .HasForeignKey("Barcode")
+                        .OnDelete(DeleteBehavior.Restrict);
+
                     b.HasOne("WineApp.Api.Models.AppUser", "User")
                         .WithMany()
                         .HasForeignKey("UserId")
@@ -628,6 +653,8 @@ namespace WineApp.Api.Migrations
                         .IsRequired();
 
                     b.Navigation("User");
+
+                    b.Navigation("WineData");
                 });
 
             modelBuilder.Entity("WineApp.Api.Models.WineSample", b =>

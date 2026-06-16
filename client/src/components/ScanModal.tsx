@@ -1,6 +1,6 @@
-import { useReducer, useCallback } from 'react'
+import { useReducer, useCallback, useRef, useState, useEffect } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { ScanBarcode, RotateCcw, ChevronsRight } from 'lucide-react'
+import { ScanBarcode, RotateCcw, ChevronsRight, Camera } from 'lucide-react'
 import BarcodeScanner from './BarcodeScanner'
 import LabelCamera from './LabelCamera'
 import Modal from './Modal'
@@ -9,6 +9,7 @@ import QuantityAdjuster from './QuantityAdjuster'
 import { adjustEntry, getLocations } from '../api/locations'
 import { queryKeys } from '../api/queryKeys'
 import { identifyWine, linkWine } from '../api/wine'
+import { submitSample } from '../api/samples'
 import { scanReducer, initialScanState } from './scanReducer'
 import { useScanAdjust } from '../hooks/useScanAdjust'
 import type { Location, WineSuggestion } from '../api/types'
@@ -24,6 +25,12 @@ interface Props {
 
 export default function ScanModal({ mode, homeId, onClose, onAdjusted }: Props) {
   const [state, dispatch] = useReducer(scanReducer, initialScanState)
+  const [sampleDone, setSampleDone] = useState(false)
+  const fileInputRef = useRef<HTMLInputElement>(null)
+
+  useEffect(() => {
+    if (state.status === 'scanning') setSampleDone(false)
+  }, [state.status])
 
   const { data: locations = [], isLoading: locationsLoading } = useQuery<Location[]>({
     queryKey: queryKeys.locations(homeId),
@@ -74,6 +81,18 @@ export default function ScanModal({ mode, homeId, onClose, onAdjusted }: Props) 
     } catch {
       dispatch({ type: 'LINKED', wineName: suggestion.name, imageUrl: null })
     }
+  }, [state])
+
+  const handleSampleFile = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file || state.status !== 'success') return
+    e.target.value = ''
+    try {
+      await submitSample(state.barcode, file)
+    } catch {
+      // fire-and-forget
+    }
+    setSampleDone(true)
   }, [state])
 
   const handleInlineAdjust = useCallback(async (delta: 1 | -1) => {
@@ -232,6 +251,31 @@ export default function ScanModal({ mode, homeId, onClose, onAdjusted }: Props) 
                 Ferdig
               </button>
             </div>
+            {state.sampleEligible && (
+              <div className="border-t border-stone pt-3">
+                {sampleDone ? (
+                  <p className="text-sm text-clay text-center">Takk! 👍</p>
+                ) : (
+                  <>
+                    <button
+                      type="button"
+                      className="secondary w-full flex items-center justify-center gap-1.5 text-sm"
+                      onClick={() => fileInputRef.current?.click()}
+                    >
+                      <Camera size={16} /> Hjelp oss forbedre vingjenkjenning
+                    </button>
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      accept="image/*"
+                      capture="environment"
+                      className="hidden"
+                      onChange={handleSampleFile}
+                    />
+                  </>
+                )}
+              </div>
+            )}
           </div>
         )}
 

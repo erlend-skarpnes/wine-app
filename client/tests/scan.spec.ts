@@ -81,6 +81,27 @@ test('scan with section pick uses seeded Kjøleskap › Hylle A', async ({ authe
   await expect(page.getByText(/Beholdning:/)).toBeVisible()
 })
 
+test('scan removes wine not in Vinmonopolet shows success', async ({ authenticatedPage: page }) => {
+  const barcode = '2000000000008'
+
+  // Add the unknown wine (entry created before capture screen shown)
+  await page.goto('/')
+  await page.getByRole('button', { name: 'Legg til vin' }).click()
+  await expect(page.getByText('Skann strekkoden på flasken.')).toBeVisible()
+  await triggerScan(page, barcode)
+  await pickLocation(page, 'Standard')
+  await expect(page.getByText('Pek kameraet mot etiketten og ta et bilde.')).toBeVisible()
+  await page.getByRole('button', { name: 'Lukk' }).click()
+
+  // Remove it — should succeed, not throw FK error
+  await page.getByRole('button', { name: 'Fjern vin' }).click()
+  await expect(page.getByText('Skann strekkoden på flasken.')).toBeVisible()
+  await triggerScan(page, barcode)
+  await pickLocation(page, 'Standard')
+  await expect(page.getByText(/Beholdning:/)).toBeVisible()
+  await page.getByRole('button', { name: 'Ferdig' }).click()
+})
+
 test('scan again button returns to scanning state', async ({ authenticatedPage: page }) => {
   await page.goto('/')
   await page.getByRole('button', { name: 'Legg til vin' }).click()

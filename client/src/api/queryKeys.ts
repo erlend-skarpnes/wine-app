@@ -8,4 +8,5 @@ export const queryKeys = {
   drinkHistory: () => ['drink-history'] as const,
   favorites: () => ['favorites'] as const,
   note: (barcode: string) => ['note', barcode] as const,
+  adminSamples: () => ['admin', 'samples'] as const,
 }

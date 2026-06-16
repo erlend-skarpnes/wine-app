@@ -22,9 +22,9 @@ public static class FavoritesEndpoints
                 {
                     f.Barcode,
                     AddedAt = f.AddedAt,
-                    WineName = f.WineData != null ? f.WineData.Name : null,
-                    WineType = f.WineData != null ? f.WineData.Type : null,
-                    WineImageUrl = f.WineData != null ? f.WineData.ImageUrl : null,
+                    WineName = db.WineData.Where(w => w.Barcode == f.Barcode).Select(w => (string?)w.Name).FirstOrDefault(),
+                    WineType = db.WineData.Where(w => w.Barcode == f.Barcode).Select(w => (string?)w.Type).FirstOrDefault(),
+                    WineImageUrl = db.WineData.Where(w => w.Barcode == f.Barcode).Select(w => (string?)w.ImageUrl).FirstOrDefault(),
                 })
                 .ToListAsync();
 

@@ -24,9 +24,9 @@ public static class HistoryEndpoints
                     HomeName = d.Home.Name,
                     d.Quantity,
                     DrankAt = d.DrankAt,
-                    WineName = d.WineData != null ? d.WineData.Name : null,
-                    WineType = d.WineData != null ? d.WineData.Type : null,
-                    WineImageUrl = d.WineData != null ? d.WineData.ImageUrl : null,
+                    WineName = db.WineData.Where(w => w.Barcode == d.Barcode).Select(w => (string?)w.Name).FirstOrDefault(),
+                    WineType = db.WineData.Where(w => w.Barcode == d.Barcode).Select(w => (string?)w.Type).FirstOrDefault(),
+                    WineImageUrl = db.WineData.Where(w => w.Barcode == d.Barcode).Select(w => (string?)w.ImageUrl).FirstOrDefault(),
                 })
                 .Take(100)
                 .ToListAsync();

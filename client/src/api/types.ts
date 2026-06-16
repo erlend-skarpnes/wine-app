@@ -98,6 +98,22 @@ export interface WineNote {
   isOwn: boolean
 }
 
+export interface WineSampleSummary {
+  id: number
+  barcode: string
+  vinmonopoletName: string | null
+  vinmonopoletType: string | null
+  vinmonopoletGrapes: string[]
+  vinmonopoletPairings: string[]
+  labelName: string | null
+  labelType: string | null
+  labelGrapes: string[]
+  labelPairings: string[]
+  confidence: number
+  username: string | null
+  createdAt: string
+}
+
 export interface DrinkHistoryItem {
   id: number
   barcode: string

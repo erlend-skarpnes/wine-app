@@ -132,5 +132,6 @@ app.MapWineEndpoints();
 app.MapHistoryEndpoints();
 app.MapFavoritesEndpoints();
 app.MapNoteEndpoints();
+app.MapSampleEndpoints();
 
 app.Run();

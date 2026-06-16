@@ -6,7 +6,6 @@ public class WineNote
     public int UserId { get; set; }
     public AppUser User { get; set; } = null!;
     public required string Barcode { get; set; }
-    public WineData? WineData { get; set; }
     public int? DrinkFromYear { get; set; }
     public int? DrinkToYear { get; set; }
     public string? PersonalNote { get; set; }

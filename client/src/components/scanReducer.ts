@@ -5,7 +5,7 @@ export type ScanState =
   | { status: 'location-pick'; barcode: string; selectedLocationId: number }
   | { status: 'section-pick'; barcode: string; locationId: number; selectedSectionId: number | null }
   | { status: 'loading' }
-  | { status: 'success'; barcode: string; locationId: number | null; quantity: number; prevQuantity: number; wineName: string | null; imageUrl: string | null }
+  | { status: 'success'; barcode: string; locationId: number | null; quantity: number; prevQuantity: number; wineName: string | null; imageUrl: string | null; sampleEligible: boolean }
   | { status: 'error'; message: string }
   | { status: 'capture'; barcode: string; locationId: number | null; quantity: number }
   | { status: 'identifying'; barcode: string; locationId: number | null; quantity: number }
@@ -54,7 +54,7 @@ export function scanReducer(state: ScanState, action: ScanAction): ScanState {
       return { status: 'loading' }
 
     case 'ADJUST_SUCCESS':
-      return { status: 'success', barcode: action.barcode, locationId: action.locationId, quantity: action.quantity, prevQuantity: action.prevQuantity, wineName: action.wineName, imageUrl: action.imageUrl }
+      return { status: 'success', barcode: action.barcode, locationId: action.locationId, quantity: action.quantity, prevQuantity: action.prevQuantity, wineName: action.wineName, imageUrl: action.imageUrl, sampleEligible: true }
 
     case 'GO_TO_CAPTURE':
       return { status: 'capture', barcode: action.barcode, locationId: action.locationId, quantity: action.quantity }
@@ -68,7 +68,7 @@ export function scanReducer(state: ScanState, action: ScanAction): ScanState {
 
     case 'IDENTIFIED':
       if (state.status !== 'identifying') return state
-      return { status: 'success', barcode: state.barcode, locationId: state.locationId, quantity: state.quantity, prevQuantity: state.quantity - 1, wineName: action.wineName, imageUrl: action.imageUrl }
+      return { status: 'success', barcode: state.barcode, locationId: state.locationId, quantity: state.quantity, prevQuantity: state.quantity - 1, wineName: action.wineName, imageUrl: action.imageUrl, sampleEligible: false }
 
     case 'SUGGESTIONS':
       if (state.status !== 'identifying') return state
@@ -84,11 +84,11 @@ export function scanReducer(state: ScanState, action: ScanAction): ScanState {
 
     case 'LINKED':
       if (state.status !== 'linking') return state
-      return { status: 'success', barcode: state.barcode, locationId: state.locationId, quantity: state.quantity, prevQuantity: state.quantity - 1, wineName: action.wineName, imageUrl: action.imageUrl }
+      return { status: 'success', barcode: state.barcode, locationId: state.locationId, quantity: state.quantity, prevQuantity: state.quantity - 1, wineName: action.wineName, imageUrl: action.imageUrl, sampleEligible: false }
 
     case 'SKIP_IDENTIFY':
       if (state.status !== 'suggestions') return state
-      return { status: 'success', barcode: state.barcode, locationId: state.locationId, quantity: state.quantity, prevQuantity: state.quantity - 1, wineName: null, imageUrl: null }
+      return { status: 'success', barcode: state.barcode, locationId: state.locationId, quantity: state.quantity, prevQuantity: state.quantity - 1, wineName: null, imageUrl: null, sampleEligible: false }
 
     case 'INLINE_ADJUST_SUCCESS':
       if (state.status !== 'success') return state
